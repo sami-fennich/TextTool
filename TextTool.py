@@ -2,9 +2,10 @@ import importlib
 import subprocess
 import sys
 import inspect
+import shlex
 
 # List of required libraries
-required_libraries = ['cmd2', 'regex', 'os','pandas']
+required_libraries = ['cmd2', 'regex', 'os','pandas','shlex','inspect']
 
 def install_library(library):
     """Install a library using pip."""
@@ -1403,62 +1404,72 @@ class TextTool(cmd2.Cmd):
 
 
     def do_select_from_file(self, arg):
-        """Select lines from the loaded text that contain at least one string from a list in a file.
+        """Select or exclude lines from the loaded text based on a list from a file or an Excel sheet.
 
         Usage:
-            select_from_file <file_path>  - Select lines containing strings from the specified file.
+            select_from_file "<file_path>" [negate]
+
+        Arguments:
+            "<file_path>"  - Path to the text or Excel file containing the selection strings.
+            [negate]       - Optional flag to exclude matching lines instead of selecting them.
 
         Examples:
-            select_from_file "C:/strings.txt"  - Selects lines containing strings from 'strings.txt'.
+            select_from_file "C:/strings.txt"        - Selects lines containing strings from 'strings.txt'.
+            select_from_file "C:/strings.xlsx"       - Selects lines containing values from the first column of 'strings.xlsx'.
+            select_from_file "C:/strings.txt" negate - Excludes lines containing strings from 'strings.txt'.
         """
         help_text = (
-            f"{self.COLOR_HEADER}\nSelect lines from the loaded text that contain at least one string from a list in a file.{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_HEADER}\nSelect or exclude lines from the loaded text based on a list from a file or an Excel sheet.{self.COLOR_RESET}\n\n"
             f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
-            f"  {self.COLOR_EXAMPLE}select_from_file <file_path>{self.COLOR_RESET}  - Select lines containing strings from the specified file.\n\n"
-            f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
-            f"  {self.COLOR_EXAMPLE}select_from_file \"C:/strings.txt\"{self.COLOR_RESET}  - Selects lines containing strings from 'strings.txt'.\n"
+            f"  {self.COLOR_EXAMPLE}select_from_file \"<file_path>\" [negate]{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Arguments:{self.COLOR_RESET}\n"
+			f"  {self.COLOR_EXAMPLE}\"<file_path>\"  - Path to the text or Excel file containing the selection strings.{self.COLOR_RESET}\n"
+			f"  {self.COLOR_EXAMPLE}[negate]       - Optional flag to exclude matching lines instead of selecting them.\n\n"
         )
         if arg.strip() == "?":  # Check if the argument is just "?"
             self.poutput(help_text)
             return  # Exit the function
 
-        if not self.current_lines:
-            self.poutput("Error: No file is loaded.")
+        args = shlex.split(arg)
+        if not args:
+            self.poutput("Error: No file specified.")
             return
-
-        self.previous_lines = self.current_lines.copy()
-
-        # Remove surrounding quotes if present
-        file_path = arg.strip('"').strip("'")
-
+        
+        file_path = args[0].strip('"').strip("'")
+        negate = "negate" in args
+        
         if not os.path.exists(file_path):
             self.poutput(f"Error: File '{file_path}' does not exist.")
             return
-
-        # Read the list of strings from the file
-        with open(file_path, 'r') as file:
-            strings = [line.strip() for line in file if line.strip()]
-
+        
+        # Read list of strings
+        strings = []
+        if file_path.lower().endswith(('.xls', '.xlsx')):
+            try:
+                df = pd.read_excel(file_path, usecols=[0], header=None)
+                strings = df[0].dropna().astype(str).tolist()
+            except Exception as e:
+                self.poutput(f"Error reading Excel file: {e}")
+                return
+        else:
+            with open(file_path, 'r', encoding='utf-8') as file:
+                strings = [line.strip() for line in file if line.strip()]
+        
         if not strings:
             self.poutput("Error: The file is empty or contains no valid strings.")
             return
-
-        # Save the current state for revert functionality
+        
+        # Save previous state
         self.previous_lines = self.current_lines.copy()
+        
+        if negate:
+            self.current_lines = [line for line in self.current_lines if not any(s in line for s in strings)]
+        else:
+            self.current_lines = [line for line in self.current_lines if any(s in line for s in strings)]
+        
+        action = "Excluded" if negate else "Selected"
+        self.poutput(f"{action} {len(self.current_lines)} lines based on '{file_path}'.")
 
-        # Filter the loaded text to select lines containing at least one of the strings
-        selected_lines = [
-            line for line in self.current_lines
-            if any(s in line for s in strings)
-        ]
-
-        if not selected_lines:
-            self.poutput("No lines matched the strings from the file.")
-            return
-
-        # Update the current lines with the filtered lines
-        self.current_lines = selected_lines
-        self.poutput(f"Selected {len(self.current_lines)} lines containing strings from '{file_path}'.")
 
 
 

@@ -126,6 +126,24 @@ class TextTool(cmd2.Cmd):
             f"- Save the modified text: {self.COLOR_EXAMPLE}`save \"C:/output.txt\"`{self.COLOR_RESET}\n"
             f"- Revert the last action: {self.COLOR_EXAMPLE}`revert`{self.COLOR_RESET}\n"
             f"- Unselect the last selection: {self.COLOR_EXAMPLE}`unselect`{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_HEADER}Advanced Functions (Enable with `advanced` command):{self.COLOR_RESET}\n"
+            "This tool also provides additional advanced text processing functions, which are disabled by default.\n"
+            f"To enable them, use `{self.COLOR_COMMAND}advanced{self.COLOR_RESET}`.\n\n"
+            "Once enabled, you can use the following commands:\n\n"
+            f"- {self.COLOR_COMMAND}extract_between{self.COLOR_RESET}: Extract text between two patterns.\n"
+            f"- {self.COLOR_COMMAND}insert_line{self.COLOR_RESET}: Insert a new line at a specific position.\n"
+            f"- {self.COLOR_COMMAND}merge_lines{self.COLOR_RESET}: Merge multiple lines into a single line.\n"
+            f"- {self.COLOR_COMMAND}split_lines{self.COLOR_RESET}: Split lines using a specified delimiter.\n"
+            f"- {self.COLOR_COMMAND}convert_case{self.COLOR_RESET}: Change text case (upper, lower, title).\n"
+            f"- {self.COLOR_COMMAND}trim_whitespace{self.COLOR_RESET}: Remove leading and trailing spaces.\n"
+            f"- {self.COLOR_COMMAND}reverse_lines{self.COLOR_RESET}: Reverse the order of lines.\n"
+            f"- {self.COLOR_COMMAND}extract_emails{self.COLOR_RESET}: Extract email addresses from text.\n"
+            f"- {self.COLOR_COMMAND}extract_urls{self.COLOR_RESET}: Extract URLs from text.\n"
+            f"- {self.COLOR_COMMAND}replace_confirm{self.COLOR_RESET}: Interactive find-and-replace with user confirmation.\n"
+            f"- {self.COLOR_COMMAND}replace_in_lines{self.COLOR_RESET}: Replace text only in matching lines.\n"
+			f"- {self.COLOR_COMMAND}multiple_replace{self.COLOR_RESET}: Replace multiple strings in the current text using a mapping file.\n"
+            f"- {self.COLOR_COMMAND}select_from_file{self.COLOR_RESET}: Select lines containing strings from a file.\n\n"
+            f"To disable these functions and return to standard mode, use `{self.COLOR_COMMAND}standard{self.COLOR_RESET}`.\n\n"			
             f"{self.COLOR_COMMAND}Remember: Type 'tutorial' for an interactive guide through these features!{self.COLOR_RESET}\n\n"
             f"Type {self.COLOR_COMMAND}`[command] ?`{self.COLOR_RESET} for more details on each command.\n"
         )
@@ -147,6 +165,8 @@ class TextTool(cmd2.Cmd):
         self.hidden_commands.append('extract_urls')
         self.hidden_commands.append('replace_confirm')
         self.hidden_commands.append('replace_in_lines')
+        self.hidden_commands.append('select_from_file')	
+        self.hidden_commands.append('multiple_replace')			
 
         
 
@@ -1008,7 +1028,16 @@ class TextTool(cmd2.Cmd):
         try:
             self.hidden_commands.remove('replace_in_lines')
         except:
-            a = 0             
+            a = 0        
+        try:
+            self.hidden_commands.remove('select_from_file')
+        except:
+            a = 0    
+        try:
+            self.hidden_commands.remove('multiple_replace')
+        except:
+            a = 0       			
+   			
 
 
     def do_standard(self, arg):
@@ -1061,7 +1090,15 @@ class TextTool(cmd2.Cmd):
         try:
             self.hidden_commands.append('replace_in_lines')
         except:
-            a = 0            
+            a = 0   
+        try:
+            self.hidden_commands.append('select_from_file')
+        except:
+            a = 0 		
+        try:
+            self.hidden_commands.append('multiple_replace')
+        except:
+            a = 0 			
 
     def do_replace_confirm(self, arg):
         """Interactive find and replace with user confirmation.
@@ -1363,6 +1400,66 @@ class TextTool(cmd2.Cmd):
         merged_line = delimiter.join(line.strip() for line in self.current_lines)
         self.current_lines = [merged_line + "\n"]
         self.poutput("Lines merged successfully.")
+
+
+    def do_select_from_file(self, arg):
+        """Select lines from the loaded text that contain at least one string from a list in a file.
+
+        Usage:
+            select_from_file <file_path>  - Select lines containing strings from the specified file.
+
+        Examples:
+            select_from_file "C:/strings.txt"  - Selects lines containing strings from 'strings.txt'.
+        """
+        help_text = (
+            f"{self.COLOR_HEADER}\nSelect lines from the loaded text that contain at least one string from a list in a file.{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}select_from_file <file_path>{self.COLOR_RESET}  - Select lines containing strings from the specified file.\n\n"
+            f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}select_from_file \"C:/strings.txt\"{self.COLOR_RESET}  - Selects lines containing strings from 'strings.txt'.\n"
+        )
+        if arg.strip() == "?":  # Check if the argument is just "?"
+            self.poutput(help_text)
+            return  # Exit the function
+
+        if not self.current_lines:
+            self.poutput("Error: No file is loaded.")
+            return
+
+        self.previous_lines = self.current_lines.copy()
+
+        # Remove surrounding quotes if present
+        file_path = arg.strip('"').strip("'")
+
+        if not os.path.exists(file_path):
+            self.poutput(f"Error: File '{file_path}' does not exist.")
+            return
+
+        # Read the list of strings from the file
+        with open(file_path, 'r') as file:
+            strings = [line.strip() for line in file if line.strip()]
+
+        if not strings:
+            self.poutput("Error: The file is empty or contains no valid strings.")
+            return
+
+        # Save the current state for revert functionality
+        self.previous_lines = self.current_lines.copy()
+
+        # Filter the loaded text to select lines containing at least one of the strings
+        selected_lines = [
+            line for line in self.current_lines
+            if any(s in line for s in strings)
+        ]
+
+        if not selected_lines:
+            self.poutput("No lines matched the strings from the file.")
+            return
+
+        # Update the current lines with the filtered lines
+        self.current_lines = selected_lines
+        self.poutput(f"Selected {len(self.current_lines)} lines containing strings from '{file_path}'.")
+
 
 
     def do_convert_case(self, arg):

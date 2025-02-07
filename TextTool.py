@@ -813,7 +813,7 @@ class TextTool(cmd2.Cmd):
             self.poutput(f"Error: Invalid regex pattern or replacement string. Details: {e}")
             self.poutput(f"Literal replacement will be now tried")
             try:
-                self.current_lines = [line.replace(string1, string2) for line in self.current_lines]
+                self.current_lines = [line.replace(string1.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',"[^\S\r\n]+"), string2.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',"[^\S\r\n]+")) for line in self.current_lines]
                 self.poutput("Literal Replacement completed.")
             except re.error as d:
                 self.poutput(f"Literal Replacement failed. Details: {d}")
@@ -1261,15 +1261,21 @@ class TextTool(cmd2.Cmd):
         target_pattern = args[5]
 
         try:
-            target_regex = re.compile(target_pattern)
-            search_regex = re.compile(search_pattern)
+            target_regex = re.compile(target_pattern.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',"[^\S\r\n]+"))
+            search_regex = re.compile(search_pattern.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',"[^\S\r\n]+"))
             self.current_lines = [
-                search_regex.sub(replace_pattern, line) if target_regex.search(line) else line
+                search_regex.sub(replace_pattern.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',"[^\S\r\n]+"), line) if target_regex.search(line) else line
                 for line in self.current_lines
             ]
             self.poutput("Replacement completed in specified lines.")
         except re.error:
             self.poutput("Error: Invalid regex pattern.")
+            self.poutput(f"Literal replacement will be now tried")
+            try:
+                self.current_lines = [line.replace(search_pattern.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',"[^\S\r\n]+"), replace_pattern.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',"[^\S\r\n]+")) if target_pattern.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',"[^\S\r\n]+") in line else line for line in self.current_lines]
+                self.poutput("Literal Replacement completed.")
+            except re.error as d:
+                self.poutput(f"Literal Replacement failed. Details: {d}")                
 
 
     def do_extract_between(self, arg):

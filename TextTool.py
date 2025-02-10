@@ -5,7 +5,7 @@ import inspect
 import shlex
 
 # List of required libraries
-required_libraries = ['cmd2', 'regex', 'os','pandas','shlex','inspect']
+required_libraries = ['cmd2', 'regex', 'os','pandas']
 
 def install_library(library):
     """Install a library using pip."""

@@ -563,7 +563,7 @@ class TextTool(cmd2.Cmd):
 
         try:
             # Compile regex patterns for each search term
-            regexes = [re.compile(term.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',"[^\S\r\n]+")) for term in search_terms]
+            regexes = [re.compile(term.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+")) for term in search_terms]
             if negate:
                 # Select lines that do NOT match any of the regex patterns
                 self.current_lines = [
@@ -796,24 +796,24 @@ class TextTool(cmd2.Cmd):
 
         try:
             # Compile the regex pattern
-            regex = re.compile(string1.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',"[^\S\r\n]+"))
+            regex = re.compile(string1.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+"))
 
             # Replace \0 with the entire match
             if "\\0" in string2:
                 def replacement(match):
-                    return string2.replace("\\0", match.group(0)).replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',"[^\S\r\n]+")
+                    return string2.replace("\\0", match.group(0)).replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+")
 
                 self.current_lines = [regex.sub(replacement, line) for line in self.current_lines]
             else:
                 # Perform the replacement using the regex pattern and the replacement string
-                self.current_lines = [regex.sub(string2.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',"[^\S\r\n]+"), line) for line in self.current_lines]
+                self.current_lines = [regex.sub(string2.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+"), line) for line in self.current_lines]
 
             self.poutput("Replacement completed.")
         except re.error as e:
             self.poutput(f"Error: Invalid regex pattern or replacement string. Details: {e}")
             self.poutput(f"Literal replacement will be now tried")
             try:
-                self.current_lines = [line.replace(string1.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',"[^\S\r\n]+"), string2.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',"[^\S\r\n]+")) for line in self.current_lines]
+                self.current_lines = [line.replace(string1.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+"), string2.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+")) for line in self.current_lines]
                 self.poutput("Literal Replacement completed.")
             except re.error as d:
                 self.poutput(f"Literal Replacement failed. Details: {d}")
@@ -869,62 +869,62 @@ class TextTool(cmd2.Cmd):
             f"    quantifiers, anchors, character classes, groups, and special characters.\n"
         )        
         if arg.strip() == "?":  # Check if the argument is just "?"
-
             self.poutput(help_text)
             return  # Exit the function
+
         cheat_sheet = f"""
-    {self.COLOR_HEADER}Regex Cheat Sheet{self.COLOR_RESET}
-    
-    {self.COLOR_COMMAND}1. Basic Patterns:{self.COLOR_RESET}
-        - {self.COLOR_EXAMPLE}`abc`{self.COLOR_RESET}: Matches the exact sequence "abc".
-        - {self.COLOR_EXAMPLE}`a OR b`{self.COLOR_RESET}: Matches either "a" or "b".
-        - {self.COLOR_EXAMPLE}`[abc]`{self.COLOR_RESET}: Matches any single character from the set "a", "b", or "c".
-        - {self.COLOR_EXAMPLE}`[^abc]`{self.COLOR_RESET}: Matches any single character NOT in the set "a", "b", or "c".
-        - {self.COLOR_EXAMPLE}`[a-z]`{self.COLOR_RESET}: Matches any single lowercase letter from "a" to "z".
-        - {self.COLOR_EXAMPLE}`[A-Z]`{self.COLOR_RESET}: Matches any single uppercase letter from "A" to "Z".
-        - {self.COLOR_EXAMPLE}`[0-9]`{self.COLOR_RESET}: Matches any single digit from "0" to "9".
-    
-    {self.COLOR_COMMAND}2. Quantifiers:{self.COLOR_RESET}
-        - {self.COLOR_EXAMPLE}`a*`{self.COLOR_RESET}: Matches zero or more occurrences of "a".
-        - {self.COLOR_EXAMPLE}`a+`{self.COLOR_RESET}: Matches one or more occurrences of "a".
-        - {self.COLOR_EXAMPLE}`a?`{self.COLOR_RESET}: Matches zero or one occurrence of "a".
-        - {self.COLOR_EXAMPLE}`a{{3}}`{self.COLOR_RESET}: Matches exactly 3 occurrences of "a".
-        - {self.COLOR_EXAMPLE}`a{{3,}}`{self.COLOR_RESET}: Matches 3 or more occurrences of "a".
-        - {self.COLOR_EXAMPLE}`a{{3,5}}`{self.COLOR_RESET}: Matches between 3 and 5 occurrences of "a".
-    
-    {self.COLOR_COMMAND}3. Anchors:{self.COLOR_RESET}
-        - {self.COLOR_EXAMPLE}`^abc`{self.COLOR_RESET}: Matches "abc" only at the start of a line.
-        - {self.COLOR_EXAMPLE}`abc$`{self.COLOR_RESET}: Matches "abc" only at the end of a line.
-        - {self.COLOR_EXAMPLE}`\Aabc`{self.COLOR_RESET}: Matches "abc" only at the start of the string.
-        - {self.COLOR_EXAMPLE}`abc\Z`{self.COLOR_RESET}: Matches "abc" only at the end of the string.
-        - {self.COLOR_EXAMPLE}`\bword\b`{self.COLOR_RESET}: Matches "word" as a whole word (word boundary).
-    
-    {self.COLOR_COMMAND}4. Character Classes:{self.COLOR_RESET}
-        - {self.COLOR_EXAMPLE}`\d`{self.COLOR_RESET}: Matches any digit (equivalent to `[0-9]`).
-        - {self.COLOR_EXAMPLE}`\D`{self.COLOR_RESET}: Matches any non-digit (equivalent to `[^0-9]`).
-        - {self.COLOR_EXAMPLE}`\w`{self.COLOR_RESET}: Matches any word character (alphanumeric + underscore).
-        - {self.COLOR_EXAMPLE}`\W`{self.COLOR_RESET}: Matches any non-word character.
-        - {self.COLOR_EXAMPLE}`\s`{self.COLOR_RESET}: Matches any whitespace character (space, tab, newline).
-        - {self.COLOR_EXAMPLE}`\S`{self.COLOR_RESET}: Matches any non-whitespace character.
-        - {self.COLOR_EXAMPLE}`.`{self.COLOR_RESET}: Matches any character except a newline.
-    
-    {self.COLOR_COMMAND}5. Groups and Capturing:{self.COLOR_RESET}
-        - {self.COLOR_EXAMPLE}`(abc)`{self.COLOR_RESET}: Matches "abc" and captures it as a group.
-        - {self.COLOR_EXAMPLE}`\\1`{self.COLOR_RESET}: Refers to the first captured group (valid in replacement).
-        - {self.COLOR_EXAMPLE}`\\0`{self.COLOR_RESET}: Refers to the entire match (implemented in this tool).
-    
-    {self.COLOR_COMMAND}6. Special Characters:{self.COLOR_RESET}
-        - {self.COLOR_EXAMPLE}`\.`{self.COLOR_RESET}: Matches a literal period (escape special characters).
-        - {self.COLOR_EXAMPLE}`\\`{self.COLOR_RESET}: Matches a literal backslash.
-        - {self.COLOR_EXAMPLE}`\n`{self.COLOR_RESET}: Matches a newline character (valid in replacement).
-        - {self.COLOR_EXAMPLE}`\t`{self.COLOR_RESET}: Matches a tab character (valid in replacement).
-        - {self.COLOR_EXAMPLE}`\r`{self.COLOR_RESET}: Matches a carriage return character.
-    
-    {self.COLOR_COMMAND}7. Replacement String Rules:{self.COLOR_RESET}
-        - {self.COLOR_EXAMPLE}`\\1`, `\\2`, etc.{self.COLOR_RESET}: Backreferences to captured groups (valid in replacement).
-        - {self.COLOR_EXAMPLE}`\\0`{self.COLOR_RESET}: Refers to the entire match (implemented in this tool).
-        - {self.COLOR_EXAMPLE}`\s`, `\d`, `\w`, etc.{self.COLOR_RESET}: NOT valid in replacement (only in pattern).
-        """
+        {self.COLOR_HEADER}Regex Cheat Sheet{self.COLOR_RESET}
+        
+        {self.COLOR_COMMAND}1. Basic Patterns:{self.COLOR_RESET}
+            - {self.COLOR_EXAMPLE}`abc`{self.COLOR_RESET}: Matches the exact sequence "abc".
+            - {self.COLOR_EXAMPLE}`a OR b`{self.COLOR_RESET}: Matches either "a" or "b".
+            - {self.COLOR_EXAMPLE}`[abc]`{self.COLOR_RESET}: Matches any single character from the set "a", "b", or "c".
+            - {self.COLOR_EXAMPLE}`[^abc]`{self.COLOR_RESET}: Matches any single character NOT in the set "a", "b", or "c".
+            - {self.COLOR_EXAMPLE}`[a-z]`{self.COLOR_RESET}: Matches any single lowercase letter from "a" to "z".
+            - {self.COLOR_EXAMPLE}`[A-Z]`{self.COLOR_RESET}: Matches any single uppercase letter from "A" to "Z".
+            - {self.COLOR_EXAMPLE}`[0-9]`{self.COLOR_RESET}: Matches any single digit from "0" to "9".
+        
+        {self.COLOR_COMMAND}2. Quantifiers:{self.COLOR_RESET}
+            - {self.COLOR_EXAMPLE}`a*`{self.COLOR_RESET}: Matches zero or more occurrences of "a".
+            - {self.COLOR_EXAMPLE}`a+`{self.COLOR_RESET}: Matches one or more occurrences of "a".
+            - {self.COLOR_EXAMPLE}`a?`{self.COLOR_RESET}: Matches zero or one occurrence of "a".
+            - {self.COLOR_EXAMPLE}`a{{3}}`{self.COLOR_RESET}: Matches exactly 3 occurrences of "a".
+            - {self.COLOR_EXAMPLE}`a{{3,}}`{self.COLOR_RESET}: Matches 3 or more occurrences of "a".
+            - {self.COLOR_EXAMPLE}`a{{3,5}}`{self.COLOR_RESET}: Matches between 3 and 5 occurrences of "a".
+        
+        {self.COLOR_COMMAND}3. Anchors:{self.COLOR_RESET}
+            - {self.COLOR_EXAMPLE}`^abc`{self.COLOR_RESET}: Matches "abc" only at the start of a line.
+            - {self.COLOR_EXAMPLE}`abc$`{self.COLOR_RESET}: Matches "abc" only at the end of a line.
+            - {self.COLOR_EXAMPLE}`\\Aabc`{self.COLOR_RESET}: Matches "abc" only at the start of the string.
+            - {self.COLOR_EXAMPLE}`abc\\Z`{self.COLOR_RESET}: Matches "abc" only at the end of the string.
+            - {self.COLOR_EXAMPLE}`\\bword\\b`{self.COLOR_RESET}: Matches "word" as a whole word (word boundary).
+        
+        {self.COLOR_COMMAND}4. Character Classes:{self.COLOR_RESET}
+            - {self.COLOR_EXAMPLE}`\\d`{self.COLOR_RESET}: Matches any digit (equivalent to `[0-9]`).
+            - {self.COLOR_EXAMPLE}`\\D`{self.COLOR_RESET}: Matches any non-digit (equivalent to `[^0-9]`).
+            - {self.COLOR_EXAMPLE}`\\w`{self.COLOR_RESET}: Matches any word character (alphanumeric + underscore).
+            - {self.COLOR_EXAMPLE}`\\W`{self.COLOR_RESET}: Matches any non-word character.
+            - {self.COLOR_EXAMPLE}`\\s`{self.COLOR_RESET}: Matches any whitespace character (space, tab, newline).
+            - {self.COLOR_EXAMPLE}`\\S`{self.COLOR_RESET}: Matches any non-whitespace character.
+            - {self.COLOR_EXAMPLE}`.`{self.COLOR_RESET}: Matches any character except a newline.
+        
+        {self.COLOR_COMMAND}5. Groups and Capturing:{self.COLOR_RESET}
+            - {self.COLOR_EXAMPLE}`(abc)`{self.COLOR_RESET}: Matches "abc" and captures it as a group.
+            - {self.COLOR_EXAMPLE}`\\1`{self.COLOR_RESET}: Refers to the first captured group (valid in replacement).
+            - {self.COLOR_EXAMPLE}`\\0`{self.COLOR_RESET}: Refers to the entire match (implemented in this tool).
+        
+        {self.COLOR_COMMAND}6. Special Characters:{self.COLOR_RESET}
+            - {self.COLOR_EXAMPLE}`\\.`{self.COLOR_RESET}: Matches a literal period (escape special characters).
+            - {self.COLOR_EXAMPLE}`\\\\`{self.COLOR_RESET}: Matches a literal backslash.
+            - {self.COLOR_EXAMPLE}`\\n`{self.COLOR_RESET}: Matches a newline character (valid in replacement).
+            - {self.COLOR_EXAMPLE}`\\t`{self.COLOR_RESET}: Matches a tab character (valid in replacement).
+            - {self.COLOR_EXAMPLE}`\\r`{self.COLOR_RESET}: Matches a carriage return character.
+        
+        {self.COLOR_COMMAND}7. Replacement String Rules:{self.COLOR_RESET}
+            - {self.COLOR_EXAMPLE}`\\1`, `\\2`, etc.{self.COLOR_RESET}: Backreferences to captured groups (valid in replacement).
+            - {self.COLOR_EXAMPLE}`\\0`{self.COLOR_RESET}: Refers to the entire match (implemented in this tool).
+            - {self.COLOR_EXAMPLE}`\\s`, `\\d`, `\\w`, etc.{self.COLOR_RESET}: NOT valid in replacement (only in pattern).
+            """
         self.poutput(cheat_sheet)
 
     def do_save(self, arg):
@@ -1261,10 +1261,10 @@ class TextTool(cmd2.Cmd):
         target_pattern = args[5]
 
         try:
-            target_regex = re.compile(target_pattern.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',"[^\S\r\n]+"))
-            search_regex = re.compile(search_pattern.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',"[^\S\r\n]+"))
+            target_regex = re.compile(target_pattern.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+"))
+            search_regex = re.compile(search_pattern.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+"))
             self.current_lines = [
-                search_regex.sub(replace_pattern.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',"[^\S\r\n]+"), line) if target_regex.search(line) else line
+                search_regex.sub(replace_pattern.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+"), line) if target_regex.search(line) else line
                 for line in self.current_lines
             ]
             self.poutput("Replacement completed in specified lines.")
@@ -1272,7 +1272,7 @@ class TextTool(cmd2.Cmd):
             self.poutput("Error: Invalid regex pattern.")
             self.poutput(f"Literal replacement will be now tried")
             try:
-                self.current_lines = [line.replace(search_pattern.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',"[^\S\r\n]+"), replace_pattern.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',"[^\S\r\n]+")) if target_pattern.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',"[^\S\r\n]+") in line else line for line in self.current_lines]
+                self.current_lines = [line.replace(search_pattern.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+"), replace_pattern.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+")) if target_pattern.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+") in line else line for line in self.current_lines]
                 self.poutput("Literal Replacement completed.")
             except re.error as d:
                 self.poutput(f"Literal Replacement failed. Details: {d}")                

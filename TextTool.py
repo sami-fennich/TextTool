@@ -873,7 +873,6 @@ class TextTool(cmd2.Cmd):
             f"    quantifiers, anchors, character classes, groups, and special characters.\n"
         )        
         if arg.strip() == "?":  # Check if the argument is just "?"
-                          
             self.poutput(help_text)
             return  # Exit the function
 
@@ -1429,6 +1428,7 @@ class TextTool(cmd2.Cmd):
             select_from_file "C:/strings.xlsx"       - Selects lines containing values from the first column of 'strings.xlsx'.
             select_from_file "C:/strings.txt" negate - Excludes lines containing strings from 'strings.txt'.
         """
+        import pandas as pd
         help_text = (
             f"{self.COLOR_HEADER}\nSelect or exclude lines from the loaded text based on a list from a file or an Excel sheet.{self.COLOR_RESET}\n\n"
             f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"

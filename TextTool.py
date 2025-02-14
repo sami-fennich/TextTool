@@ -61,6 +61,10 @@ def read_mapping_file(map_file, separator):
                         replacements[key] = value
         return replacements
 
+def change_inside_quotes(s, old, new):
+    """Helper function to replace old substring with new substring inside quotes."""
+    return re.sub(r'(["\']).*?\1', lambda m: m.group().replace(old, new), s)
+
 def remove_spaces(s):
     return change_inside_quotes(s, ' ', 'hahi')
 
@@ -869,6 +873,7 @@ class TextTool(cmd2.Cmd):
             f"    quantifiers, anchors, character classes, groups, and special characters.\n"
         )        
         if arg.strip() == "?":  # Check if the argument is just "?"
+                          
             self.poutput(help_text)
             return  # Exit the function
 

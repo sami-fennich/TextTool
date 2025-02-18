@@ -634,10 +634,11 @@ class TextTool(cmd2.Cmd):
     
 
     def do_multiple_replace(self, arg):
-        """Replace multiple strings in the current text using a mapping file.
+        """Replace multiple strings in the current text using a mapping file or clipboard content.
 
         Usage:
             multiple_replace <map_file> [separator] [ > output_file ]
+            multiple_replace             - Use clipboard content as the mapping file with space as the separator.
 
         Arguments:
             <map_file>     - Path to the mapping file (can be a text file or Excel file with two columns).
@@ -654,19 +655,16 @@ class TextTool(cmd2.Cmd):
             multiple_replace map.xlsx     - Replaces text using an Excel mapping file.
             multiple_replace map.xlsx > output.txt - Saves the output to 'output.txt'.
             multiple_replace map.xlsx >   - Outputs the result to the clipboard.
-
-        Notes:
-            - The mapping file should have two columns: the first column contains the text to be replaced,
-              and the second column contains the replacement text.
-            - For Excel files, only the first two columns are used.
+            multiple_replace              - Uses clipboard content as the mapping file with space as the separator.
         """
         import sys
         import os
         import pandas as pd  # Required for reading Excel files    
         help_text = (
-            f"{self.COLOR_HEADER}\nReplace multiple strings in the current text using a mapping file.{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_HEADER}\nReplace multiple strings in the current text using a mapping file or clipboard content.{self.COLOR_RESET}\n\n"
             f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
-            f"  {self.COLOR_EXAMPLE}multiple_replace <map_file> [separator] [ > output_file ]{self.COLOR_RESET}\n\n"
+            f"  {self.COLOR_EXAMPLE}multiple_replace <map_file> [separator] [ > output_file ]{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}multiple_replace{self.COLOR_RESET}             - Use clipboard content as the mapping file with space as the separator.\n\n"
             f"{self.COLOR_COMMAND}Arguments:{self.COLOR_RESET}\n"
             f"  {self.COLOR_EXAMPLE}<map_file>{self.COLOR_RESET}     - Path to the mapping file (can be a text file or Excel file with two columns).\n"
             f"  {self.COLOR_EXAMPLE}<separator>{self.COLOR_RESET}    - Separator for text mapping files. Use \"tab\" for tab characters, \"space\" for spaces,\n"
@@ -679,7 +677,8 @@ class TextTool(cmd2.Cmd):
             f"  {self.COLOR_EXAMPLE}multiple_replace map.txt tab{self.COLOR_RESET}  - Replaces text using a tab-separated mapping file.\n"
             f"  {self.COLOR_EXAMPLE}multiple_replace map.xlsx{self.COLOR_RESET}     - Replaces text using an Excel mapping file.\n"
             f"  {self.COLOR_EXAMPLE}multiple_replace map.xlsx > output.txt{self.COLOR_RESET} - Saves the output to 'output.txt'.\n"
-            f"  {self.COLOR_EXAMPLE}multiple_replace map.xlsx >{self.COLOR_RESET}   - Outputs the result to the clipboard.\n\n"
+            f"  {self.COLOR_EXAMPLE}multiple_replace map.xlsx >{self.COLOR_RESET}   - Outputs the result to the clipboard.\n"
+            f"  {self.COLOR_EXAMPLE}multiple_replace{self.COLOR_RESET}              - Uses clipboard content as the mapping file with space as the separator.\n\n"
             f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
             f"  - The mapping file should have two columns: the first column contains the text to be replaced,\n"
             f"    and the second column contains the replacement text.\n"
@@ -698,6 +697,35 @@ class TextTool(cmd2.Cmd):
         except:
             a=0 
         arg=remove_spaces(arg)  
+        
+        if not arg:  # If no arguments are provided, use clipboard content
+            clipboard_content = cmd2.clipboard.get_paste_buffer()
+            if not clipboard_content:
+                self.poutput("Error: Clipboard is empty or does not contain text.")
+                return
+            
+            # Split clipboard content into lines and then into key-value pairs
+            replacements = {}
+            for line in clipboard_content.splitlines():
+                parts = line.strip().split(" ", 1)  # Split on the first space
+                if len(parts) == 2:
+                    key, value = parts
+                    replacements[key] = value
+                else:
+                    self.poutput(f"Warning: Skipping invalid line in clipboard: {line}")
+            
+            if not replacements:
+                self.poutput("Error: No valid key-value pairs found in clipboard.")
+                return
+            
+            # Perform the replacements
+            for old_text, new_text in replacements.items():
+                self.current_lines = [line.replace(old_text, new_text) for line in self.current_lines]
+            
+            self.poutput("Replacement completed using clipboard content.")
+            return
+        
+        # If arguments are provided, proceed with the original logic
         if len(arg.split())==2:
             separator = _unquote(arg.split()[1])
         elif len(arg.split())==1:
@@ -705,23 +733,17 @@ class TextTool(cmd2.Cmd):
         else:
             self.poutput(help_text)
             return
-        #input_file=_unquote(retrieve_spaces(arg.split()[0]))
+        
         map_file=_unquote(retrieve_spaces(arg.split()[0]))
-        #if not os.path.exists(input_file):
-            #print(f"Error: Input file '{input_file}' does not exist.")
-            #sys.exit(1)
         if not os.path.exists(map_file):
             print(f"Error: Mapping file '{map_file}' does not exist.")
             sys.exit(1)  
         replacements = read_mapping_file(map_file, separator)      
-        #with open(input_file, "r", encoding="utf-8") as input_f:
-            #content = input_f.read()
         for old_text, new_text in replacements.items():
             self.current_lines = [line.replace(old_text, new_text) for line in self.current_lines]
-            #content = content.replace(old_text, new_text)  
-           
+               
         self.poutput("Replacement completed.")
-
+        
     def do_replace(self, arg):
         """Replace a string with another in the current text. Supports regex and capture groups.
 

@@ -3,6 +3,7 @@ import subprocess
 import sys
 import inspect
 import shlex
+import win32clipboard
 
 # List of required libraries
 required_libraries = ['cmd2', 'regex', 'os','pandas']
@@ -60,6 +61,17 @@ def read_mapping_file(map_file, separator):
                         key, value = parts
                         replacements[key] = value
         return replacements
+
+def get_copied_file():
+    win32clipboard.OpenClipboard()
+    try:
+        if win32clipboard.IsClipboardFormatAvailable(win32clipboard.CF_HDROP):
+            data = win32clipboard.GetClipboardData(win32clipboard.CF_HDROP)
+            if data and len(data) > 0:
+                return data[0]  # Return the first file path
+    finally:
+        win32clipboard.CloseClipboard()
+    return None
 
 def change_inside_quotes(s, old, new):
     """Helper function to replace old substring with new substring inside quotes."""
@@ -421,7 +433,11 @@ class TextTool(cmd2.Cmd):
                 self.original_file_path = None  # No file path for clipboard content
                 self.poutput("Clipboard content loaded successfully.")
             else:
-                self.poutput("Error: Clipboard is empty or does not contain text.")
+                file_path = get_copied_file()
+                if file_path:
+                    self.do_load(file_path)
+                else:                
+                    self.poutput("Error: Clipboard is empty or does not contain text.")
 
     def do_show(self, arg):
         """Show lines containing the given string(s) or regex pattern(s).

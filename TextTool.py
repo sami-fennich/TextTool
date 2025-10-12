@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 
 import subprocess
 import sys
@@ -2214,3 +2215,4 @@ class TextTool(cmd2.Cmd):
 if __name__ == '__main__':
     app = TextTool()
     app.cmdloop()
+

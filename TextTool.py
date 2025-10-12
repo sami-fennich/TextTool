@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 
 import subprocess
 import sys
@@ -103,7 +102,7 @@ class TextTool(cmd2.Cmd):
         self.COLOR_COMMAND = "\033[1;32m"  # Green
         self.COLOR_EXAMPLE = "\033[1;33m"  # Yellow
         self.COLOR_RESET = "\033[0m"  # Reset to default color        
-        self.original_file_path = "c:/clipboard.txt"  # Default file path for clipboard content
+        #self.original_file_path = "c:/clipboard.txt"  # Default file path for clipboard content
         self.prompt= "TextTool> "
         self.intro = (
             f"{self.COLOR_HEADER}Welcome to the Text Manipulation Tool!{self.COLOR_RESET}\n\n"
@@ -201,17 +200,49 @@ class TextTool(cmd2.Cmd):
         import tkinter as tk
         from tkinter.scrolledtext import ScrolledText
 
-        # If a window already exists but was closed, clean up
+        # If a window already exists and is still valid, bring it to front
         if hasattr(self, "liveview_root") and self.liveview_root:
             try:
-                self.liveview_root.destroy()
+                if self.liveview_root.winfo_exists():
+                    self.liveview_root.lift()
+                    self.liveview_root.focus_force()
+                    return
             except:
                 pass
-            self.liveview_root = None
+        
+        # Clean up any lingering references
+        self.liveview_root = None
+        self.liveview_box = None
+        self.file_path_label = None
+        self.update_file_path_display = None
 
         def run_viewer():
             self.liveview_root = tk.Tk()
             self.liveview_root.title("Live Text Viewer – 0 lines")
+            
+            # File path label at the top
+            file_path_frame = tk.Frame(self.liveview_root, bg="#f0f0f0")
+            self.file_path_label = tk.Label(file_path_frame, text="", anchor="w", 
+                                         font=("Consolas", 9), bg="#f0f0f0", fg="#333333")
+            self.file_path_label.pack(fill="x", padx=5, pady=2)
+            file_path_frame.pack(fill="x", side="top")
+            
+            def update_file_path_display():
+                """Update the file path display."""
+                try:
+                    if hasattr(self, 'original_file_path') and self.original_file_path:
+                        self.file_path_label.config(text=f"📄 File: {self.original_file_path}")
+                    else:
+                        self.file_path_label.config(text="📄 File: (Unsaved)")
+                except:
+                    pass
+            
+            # Store the function as instance method so it can be called from outside
+            self.update_file_path_display = update_file_path_display
+            
+            # Initial file path display
+            update_file_path_display()
+            
             self.liveview_box = ScrolledText(
                 self.liveview_root, width=100, height=40, font=("Consolas", 10)
             )
@@ -256,7 +287,6 @@ class TextTool(cmd2.Cmd):
             close_button = tk.Button(search_frame, text="✕", width=3, font=("Consolas", 8),
                                    command=lambda: search_frame.pack_forget())
             close_button.pack(side="right", padx=2)
-
 
             # Store match positions
             match_positions = []
@@ -365,6 +395,108 @@ class TextTool(cmd2.Cmd):
             self.liveview_root.bind("<F3>", next_match)
             self.liveview_root.bind("<Shift-F3>", prev_match)
 
+            # Save button frame
+            save_frame = tk.Frame(self.liveview_root)
+            
+            save_button = tk.Button(save_frame, text="💾 Save", font=("Consolas", 10), 
+                                    command=lambda: save_from_liveview())
+            save_button.pack(side="left", padx=5, pady=2)
+            
+            save_as_button = tk.Button(save_frame, text="💾 Save As...", font=("Consolas", 10), 
+                                        command=lambda: save_as_from_liveview())
+            save_as_button.pack(side="left", padx=5, pady=2)
+            
+            sync_button = tk.Button(save_frame, text="⟲ Sync to Editor", font=("Consolas", 10), 
+                                    command=lambda: sync_from_liveview_internal())
+            sync_button.pack(side="left", padx=5, pady=2)
+            
+            save_frame.pack(fill="x", side="top")
+
+            def save_from_liveview():
+                """Save the Live View content directly to a file."""
+                from tkinter import filedialog, messagebox
+                try:
+                    # Get content from liveview
+                    content = self.liveview_box.get("1.0", tk.END)
+                    
+                    # Use original file path if available
+                    if hasattr(self, 'original_file_path') and self.original_file_path:
+                        file_path = self.original_file_path
+                    else:
+                        # Ask for file path
+                        file_path = filedialog.asksaveasfilename(
+                            title="Save File",
+                            defaultextension=".txt",
+                            filetypes=[("Text files", "*.txt"), ("All files", "*.*")]
+                        )
+                        if not file_path:
+                            return
+                        
+                        # Update original file path for first-time save
+                        self.original_file_path = file_path
+                        update_file_path_display()
+                    
+                    # Write to file
+                    with open(file_path, 'w', encoding='utf-8') as f:
+                        f.write(content)
+                    
+                    messagebox.showinfo("Success", f"File saved successfully to:\n{file_path}")
+                except Exception as e:
+                    messagebox.showerror("Error", f"Failed to save file:\n{str(e)}")
+
+            def save_as_from_liveview():
+                """Save the Live View content to a new file."""
+                from tkinter import filedialog, messagebox
+                try:
+                    # Get content from liveview
+                    content = self.liveview_box.get("1.0", tk.END)
+                    
+                    # Ask for file path
+                    file_path = filedialog.asksaveasfilename(
+                        title="Save File As",
+                        defaultextension=".txt",
+                        filetypes=[("Text files", "*.txt"), ("All files", "*.*")]
+                    )
+                    if not file_path:
+                        return
+                    
+                    # Write to file
+                    with open(file_path, 'w', encoding='utf-8') as f:
+                        f.write(content)
+                    
+                    # Update original file path
+                    self.original_file_path = file_path
+                    
+                    # Update file path display
+                    update_file_path_display()
+                    
+                    messagebox.showinfo("Success", f"File saved successfully to:\n{file_path}")
+                except Exception as e:
+                    messagebox.showerror("Error", f"Failed to save file:\n{str(e)}")
+
+            def sync_from_liveview_internal():
+                """Synchronize Live View content back to current_lines."""
+                from tkinter import messagebox
+                try:
+                    # Read all content from the text box
+                    new_text = self.liveview_box.get("1.0", tk.END)
+
+                    # Save current state for revert
+                    self.previous_lines = self.current_lines.copy()
+
+                    # Replace current_lines with content from Live View
+                    self.current_lines = [line for line in new_text.splitlines(keepends=True)]
+
+                    # Refresh Live View to ensure consistency
+                    self.update_live_view()
+
+                    messagebox.showinfo("Success", f"Synchronized {len(self.current_lines)} lines from Live View.")
+                except Exception as e:
+                    messagebox.showerror("Error", f"Failed to sync:\n{str(e)}")
+
+            # Bind Ctrl+S to save
+            self.liveview_root.bind("<Control-s>", lambda e: save_from_liveview())
+
             # Hide by default, will appear on Ctrl+F
             search_frame.pack_forget()
 
@@ -397,11 +529,15 @@ class TextTool(cmd2.Cmd):
             # Handle window close
             def on_close():
                 try:
-                    self.liveview_root.destroy()
+                    self.liveview_root.quit()  # Stop the mainloop
+                    self.liveview_root.destroy()  # Destroy the window
                 except:
                     pass
+                # Clean up all references
                 self.liveview_root = None
                 self.liveview_box = None
+                self.file_path_label = None
+                self.update_file_path_display = None
 
             self.liveview_root.protocol("WM_DELETE_WINDOW", on_close)
 
@@ -412,19 +548,22 @@ class TextTool(cmd2.Cmd):
         threading.Thread(target=run_viewer, daemon=True).start()
 
 
-
-
-
     def update_live_view(self):
         """Refresh Live View immediately."""
         if hasattr(self, "liveview_box") and self.liveview_box:
             try:
-                self.liveview_box.delete("1.0", tk.END)
-                self.liveview_box.insert(tk.END, ''.join(self.current_lines))
-                self.liveview_root.title(f"Live Text Viewer — {len(self.current_lines)} lines")
+                # Check if the widget still exists
+                if self.liveview_box.winfo_exists():
+                    self.liveview_box.delete("1.0", tk.END)
+                    self.liveview_box.insert(tk.END, ''.join(self.current_lines))
+                    if hasattr(self, "liveview_root") and self.liveview_root:
+                        self.liveview_root.title(f"Live Text Viewer – {len(self.current_lines)} lines")
             except Exception as e:
-                print(f"LiveView update error: {e}")
-
+                # Window was destroyed, clean up references
+                self.liveview_root = None
+                self.liveview_box = None
+                self.file_path_label = None
+                self.update_file_path_display = None
 
 
         
@@ -681,6 +820,11 @@ class TextTool(cmd2.Cmd):
                 self.current_lines = self.text_lines.copy()
             self.original_file_path = file_path  # Store the original file path
             self.update_live_view()
+            
+            # Update file path display in liveview
+            if hasattr(self, 'update_file_path_display'):
+                self.update_file_path_display()
+            
             self.poutput(f"File '{file_path}' loaded successfully.")
         else:
             # Load content from the clipboard
@@ -690,6 +834,11 @@ class TextTool(cmd2.Cmd):
                 self.current_lines = self.text_lines.copy()
                 self.update_live_view()
                 self.original_file_path = None  # No file path for clipboard content
+                
+                # Update file path display in liveview
+                if hasattr(self, 'update_file_path_display'):
+                    self.update_file_path_display()
+                
                 self.poutput("Clipboard content loaded successfully.")
             else:
                 file_path = get_copied_file()
@@ -697,6 +846,7 @@ class TextTool(cmd2.Cmd):
                     self.do_load(file_path)
                 else:                
                     self.poutput("Error: Clipboard is empty or does not contain text.")
+
 
     def do_show(self, arg):
         """Show lines containing the given string(s) or regex pattern(s).
@@ -2215,4 +2365,3 @@ class TextTool(cmd2.Cmd):
 if __name__ == '__main__':
     app = TextTool()
     app.cmdloop()
-

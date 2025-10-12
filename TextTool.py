@@ -210,7 +210,7 @@ class TextTool(cmd2.Cmd):
 
         def run_viewer():
             self.liveview_root = tk.Tk()
-            self.liveview_root.title("Live Text Viewer — 0 lines")
+            self.liveview_root.title("Live Text Viewer – 0 lines")
             self.liveview_box = ScrolledText(
                 self.liveview_root, width=100, height=40, font=("Consolas", 10)
             )
@@ -220,7 +220,7 @@ class TextTool(cmd2.Cmd):
             status = tk.Label(self.liveview_root, text="Line: 1", anchor="w", font=("Consolas", 9))
             status.pack(fill="x", side="bottom")
 
-            # Function to update cursor line info
+            # Search frame with enhanced features
             search_frame = tk.Frame(self.liveview_root)
             search_label = tk.Label(search_frame, text="Find:", font=("Consolas", 9))
             search_label.pack(side="left", padx=2)
@@ -228,23 +228,141 @@ class TextTool(cmd2.Cmd):
             search_entry = tk.Entry(search_frame, width=30)
             search_entry.pack(side="left", fill="x", expand=True, padx=2)
 
+            # Case-sensitive checkbox
+            case_sensitive_var = tk.BooleanVar(value=False)
+            case_check = tk.Checkbutton(search_frame, text="Case", variable=case_sensitive_var, 
+                                         font=("Consolas", 9))
+            case_check.pack(side="left", padx=2)
+
+            # Regex checkbox
+            regex_var = tk.BooleanVar(value=False)
+            regex_check = tk.Checkbutton(search_frame, text="Regex", variable=regex_var, 
+                                          font=("Consolas", 9))
+            regex_check.pack(side="left", padx=2)
+
+            # Navigation buttons
+            prev_button = tk.Button(search_frame, text="◄ Prev", font=("Consolas", 9), width=8)
+            prev_button.pack(side="left", padx=2)
+
+            next_button = tk.Button(search_frame, text="Next ►", font=("Consolas", 9), width=8)
+            next_button.pack(side="left", padx=2)
+
+            # Match counter label
+            match_label = tk.Label(search_frame, text="", font=("Consolas", 9))
+            match_label.pack(side="left", padx=5)
+
+            # Close button
+            close_button = tk.Button(search_frame, text="✕", width=3, font=("Consolas", 8),
+                                   command=lambda: search_frame.pack_forget())
+            close_button.pack(side="right", padx=2)
+
+
+            # Store match positions
+            match_positions = []
+            current_match_index = [-1]  # Use list to allow modification in nested functions
+
             def perform_search(event=None):
                 """Highlight all matches of the search text."""
                 query = search_entry.get()
                 self.liveview_box.tag_remove("search_highlight", "1.0", tk.END)
+                self.liveview_box.tag_remove("current_match", "1.0", tk.END)
+                match_positions.clear()
+                current_match_index[0] = -1
+                match_label.config(text="")
+                
                 if not query:
                     return
+                
                 start_pos = "1.0"
-                while True:
-                    start_pos = self.liveview_box.search(query, start_pos, stopindex=tk.END, nocase=True)
-                    if not start_pos:
-                        break
-                    end_pos = f"{start_pos}+{len(query)}c"
-                    self.liveview_box.tag_add("search_highlight", start_pos, end_pos)
-                    start_pos = end_pos
-                self.liveview_box.tag_config("search_highlight", background="yellow", foreground="black")
+                case_sensitive = case_sensitive_var.get()
+                use_regex = regex_var.get()
+                
+                try:
+                    if use_regex:
+                        import re
+                        flags = 0 if case_sensitive else re.IGNORECASE
+                        pattern = re.compile(query, flags)
+                        
+                        # Search using regex
+                        text_content = self.liveview_box.get("1.0", tk.END)
+                        for match in pattern.finditer(text_content):
+                            start_idx = f"1.0+{match.start()}c"
+                            end_idx = f"1.0+{match.end()}c"
+                            match_positions.append((start_idx, end_idx))
+                            self.liveview_box.tag_add("search_highlight", start_idx, end_idx)
+                    else:
+                        # Simple text search
+                        while True:
+                            start_pos = self.liveview_box.search(
+                                query, start_pos, stopindex=tk.END, 
+                                nocase=not case_sensitive
+                            )
+                            if not start_pos:
+                                break
+                            end_pos = f"{start_pos}+{len(query)}c"
+                            match_positions.append((start_pos, end_pos))
+                            self.liveview_box.tag_add("search_highlight", start_pos, end_pos)
+                            start_pos = end_pos
+                    
+                    # Update match counter
+                    if match_positions:
+                        match_label.config(text=f"{len(match_positions)} matches")
+                        current_match_index[0] = 0
+                        highlight_current_match()
+                    else:
+                        match_label.config(text="No matches")
+                        
+                    self.liveview_box.tag_config("search_highlight", background="yellow", foreground="black")
+                    self.liveview_box.tag_config("current_match", background="orange", foreground="black")
+                    
+                except Exception as e:
+                    match_label.config(text=f"Error: {str(e)[:20]}")
 
+            def highlight_current_match():
+                """Highlight the current match and scroll to it."""
+                if not match_positions or current_match_index[0] < 0:
+                    return
+                
+                # Remove previous current match highlighting
+                self.liveview_box.tag_remove("current_match", "1.0", tk.END)
+                
+                # Highlight current match
+                start_pos, end_pos = match_positions[current_match_index[0]]
+                self.liveview_box.tag_add("current_match", start_pos, end_pos)
+                
+                # Scroll to current match
+                self.liveview_box.see(start_pos)
+                
+                # Update counter
+                match_label.config(
+                    text=f"Match {current_match_index[0] + 1} of {len(match_positions)}"
+                )
+
+            def next_match(event=None):
+                """Navigate to next match."""
+                if not match_positions:
+                    return
+                current_match_index[0] = (current_match_index[0] + 1) % len(match_positions)
+                highlight_current_match()
+
+            def prev_match(event=None):
+                """Navigate to previous match."""
+                if not match_positions:
+                    return
+                current_match_index[0] = (current_match_index[0] - 1) % len(match_positions)
+                highlight_current_match()
+
+            # Bind events
             search_entry.bind("<KeyRelease>", perform_search)
+            search_entry.bind("<Return>", lambda e: next_match())
+            case_check.config(command=perform_search)
+            regex_check.config(command=perform_search)
+            next_button.config(command=next_match)
+            prev_button.config(command=prev_match)
+
+            # Keyboard shortcuts
+            self.liveview_root.bind("<F3>", next_match)
+            self.liveview_root.bind("<Shift-F3>", prev_match)
 
             # Hide by default, will appear on Ctrl+F
             search_frame.pack_forget()
@@ -255,15 +373,17 @@ class TextTool(cmd2.Cmd):
                     search_frame.pack_forget()
                 else:
                     search_frame.pack(fill="x", side="top")
+                    search_entry.focus_set()
 
             # Bind Ctrl+F to open search bar
             self.liveview_root.bind("<Control-f>", toggle_search)
+
             def update_cursor_position(event=None):
                 try:
                     index = self.liveview_box.index(tk.INSERT)  # format "line.column"
                     line, col = index.split(".")
                     total = len(self.current_lines)
-                    self.liveview_root.title(f"Live Text Viewer — {len(self.current_lines)} lines (Line {line}, Col {col})")
+                    self.liveview_root.title(f"Live Text Viewer – {len(self.current_lines)} lines (Line {line}, Col {col})")
                     status.config(text=f"Line: {line} / {total}  |  Column: {col}")
                 except Exception:
                     pass
@@ -289,7 +409,6 @@ class TextTool(cmd2.Cmd):
             self.liveview_root.mainloop()
 
         threading.Thread(target=run_viewer, daemon=True).start()
-
 
 
 

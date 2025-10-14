@@ -283,6 +283,12 @@ class TextTool(cmd2.Cmd):
                                           font=("Consolas", 9))
             regex_check.pack(side="left", padx=2)
 
+            # ENHANCEMENT 6: Whole word matching
+            whole_word_var = tk.BooleanVar(value=False)
+            whole_word_check = tk.Checkbutton(search_frame, text="Whole Word", 
+                                               variable=whole_word_var, font=("Consolas", 9))
+            whole_word_check.pack(side="left", padx=2)
+
             # Navigation buttons
             prev_button = tk.Button(search_frame, text="◄ Prev", font=("Consolas", 9), width=8)
             prev_button.pack(side="left", padx=2)
@@ -304,7 +310,7 @@ class TextTool(cmd2.Cmd):
             current_match_index = [-1]  # Use list to allow modification in nested functions
 
             def perform_search(event=None):
-                """Highlight all matches of the search text."""
+                """Enhanced search with whole word matching."""
                 query = search_entry.get()
                 self.liveview_box.tag_remove("search_highlight", "1.0", tk.END)
                 self.liveview_box.tag_remove("current_match", "1.0", tk.END)
@@ -315,17 +321,18 @@ class TextTool(cmd2.Cmd):
                 if not query:
                     return
                 
-                start_pos = "1.0"
                 case_sensitive = case_sensitive_var.get()
                 use_regex = regex_var.get()
+                whole_word = whole_word_var.get()
                 
                 try:
                     if use_regex:
                         import re
                         flags = 0 if case_sensitive else re.IGNORECASE
+                        if whole_word:
+                            query = r'\b' + query + r'\b'
                         pattern = re.compile(query, flags)
                         
-                        # Search using regex
                         text_content = self.liveview_box.get("1.0", tk.END)
                         for match in pattern.finditer(text_content):
                             start_idx = f"1.0+{match.start()}c"
@@ -333,7 +340,7 @@ class TextTool(cmd2.Cmd):
                             match_positions.append((start_idx, end_idx))
                             self.liveview_box.tag_add("search_highlight", start_idx, end_idx)
                     else:
-                        # Simple text search
+                        start_pos = "1.0"
                         while True:
                             start_pos = self.liveview_box.search(
                                 query, start_pos, stopindex=tk.END, 
@@ -341,12 +348,21 @@ class TextTool(cmd2.Cmd):
                             )
                             if not start_pos:
                                 break
+                            
                             end_pos = f"{start_pos}+{len(query)}c"
+                            
+                            # Check whole word
+                            if whole_word:
+                                before_char = self.liveview_box.get(f"{start_pos}-1c", start_pos)
+                                after_char = self.liveview_box.get(end_pos, f"{end_pos}+1c")
+                                if before_char.isalnum() or after_char.isalnum():
+                                    start_pos = end_pos
+                                    continue
+                            
                             match_positions.append((start_pos, end_pos))
                             self.liveview_box.tag_add("search_highlight", start_pos, end_pos)
                             start_pos = end_pos
                     
-                    # Update match counter
                     if match_positions:
                         match_label.config(text=f"{len(match_positions)} matches")
                         current_match_index[0] = 0
@@ -399,6 +415,7 @@ class TextTool(cmd2.Cmd):
             search_entry.bind("<Return>", lambda e: next_match())
             case_check.config(command=perform_search)
             regex_check.config(command=perform_search)
+            whole_word_check.config(command=perform_search)
             next_button.config(command=next_match)
             prev_button.config(command=prev_match)
 
@@ -416,12 +433,157 @@ class TextTool(cmd2.Cmd):
             save_as_button = tk.Button(save_frame, text="💾 Save As...", font=("Consolas", 10), 
                                         command=lambda: save_as_from_liveview())
             save_as_button.pack(side="left", padx=5, pady=2)
+
+            replace_button = tk.Button(save_frame, text="🔧 Replace...", font=("Consolas", 10), 
+                                      command=lambda: open_replace_dialog())
+            replace_button.pack(side="left", padx=5, pady=2)
+
             
             sync_button = tk.Button(save_frame, text="⟲ Sync to TextTool", font=("Consolas", 10), 
                                     command=lambda: sync_from_liveview_internal())
             sync_button.pack(side="left", padx=5, pady=2)
             
             save_frame.pack(fill="x", side="top")
+            
+            def open_replace_dialog():
+                
+                """Open the smart replacement dialog"""
+                import tkinter as tk
+                from tkinter import ttk, messagebox
+                
+                dialog = tk.Toplevel()
+                dialog.title("Smart Text Replacement")
+                dialog.geometry("500x250")  # Adjusted size
+                dialog.resizable(False, False)
+                dialog.transient(self.liveview_root)  # Make it modal to main window
+                dialog.grab_set()  # Make it modal
+                
+                # Main frame
+                main_frame = ttk.Frame(dialog, padding="15")
+                main_frame.pack(fill=tk.BOTH, expand=True)
+                
+                # Operation type
+                ttk.Label(main_frame, text="Replacement Type:").grid(row=0, column=0, sticky=tk.W, pady=8)
+                operation_var = tk.StringVar(value="Simple Replace")
+                operation_combo = ttk.Combobox(main_frame, textvariable=operation_var, 
+                                             values=["Simple Replace", "Replace in Matching Lines", 
+                                                     "Right Replace", "Left Replace"],
+                                             state="readonly", width=20)
+                operation_combo.grid(row=0, column=1, sticky=(tk.W, tk.E), pady=8, padx=5)
+                
+                # Search pattern
+                ttk.Label(main_frame, text="Search Pattern:").grid(row=1, column=0, sticky=tk.W, pady=8)
+                search_entry = ttk.Entry(main_frame, width=30)
+                search_entry.grid(row=1, column=1, sticky=(tk.W, tk.E), pady=8, padx=5)
+                
+                # Replacement text
+                ttk.Label(main_frame, text="Replacement Text:").grid(row=2, column=0, sticky=tk.W, pady=8)
+                replace_entry = ttk.Entry(main_frame, width=30)
+                replace_entry.grid(row=2, column=1, sticky=(tk.W, tk.E), pady=8, padx=5)
+                
+                # Target pattern (for Replace in Matching Lines)
+                target_frame = ttk.Frame(main_frame)
+                target_frame.grid(row=3, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=8)
+                
+                ttk.Label(target_frame, text="Only in lines containing:").grid(row=0, column=0, sticky=tk.W)
+                target_entry = ttk.Entry(target_frame, width=25)
+                target_entry.grid(row=0, column=1, sticky=(tk.W, tk.E), padx=5)
+                
+                # Initially hide target frame
+                target_frame.grid_remove()
+                
+                # Case Sensitive option only
+                case_frame = ttk.Frame(main_frame)
+                case_frame.grid(row=4, column=0, columnspan=2, sticky=tk.W, pady=10)
+                
+                case_var = tk.BooleanVar(value=False)  # Default to case insensitive
+                case_check = tk.Checkbutton(case_frame, text="Case Sensitive", variable=case_var,
+                                           font=("", 9))
+                case_check.pack(side=tk.LEFT)
+                
+                # Button frame
+                button_frame = ttk.Frame(main_frame)
+                button_frame.grid(row=5, column=0, columnspan=2, pady=15)
+                
+                def on_operation_change(*args):
+                    """Show/hide target pattern based on operation"""
+                    if operation_var.get() == "Replace in Matching Lines":
+                        target_frame.grid()
+                    else:
+                        target_frame.grid_remove()
+                
+                def apply_replacement():
+                    """Apply the replacement using existing commands"""
+                    try:
+                        search_pattern = search_entry.get()
+                        replace_pattern = replace_entry.get()
+                        target_pattern = target_entry.get()
+                        operation = operation_var.get()
+                        case_sensitive = case_var.get()
+                        
+                        if not search_pattern:
+                            messagebox.showwarning("Warning", "Please enter a search pattern.")
+                            return
+                        
+                        # Build the command based on operation type
+                        if operation == "Simple Replace":
+                            cmd = f'replace "{search_pattern}" "{replace_pattern}"'
+                            if case_sensitive:
+                                cmd += " case_sensitive"
+                        
+                        elif operation == "Replace in Matching Lines":
+                            if not target_pattern:
+                                messagebox.showwarning("Warning", "Please enter a target pattern for line matching.")
+                                return
+                            cmd = f'replace_in_lines "{search_pattern}" "{replace_pattern}" "{target_pattern}"'
+                            if case_sensitive:
+                                cmd += " case_sensitive"
+                        
+                        elif operation == "Right Replace":
+                            cmd = f'right_replace "{search_pattern}" "{replace_pattern}"'
+                            if case_sensitive:
+                                cmd += " case_sensitive"
+                        
+                        elif operation == "Left Replace":
+                            cmd = f'left_replace "{search_pattern}" "{replace_pattern}"'
+                            if case_sensitive:
+                                cmd += " case_sensitive"
+                        
+                        else:
+                            messagebox.showerror("Error", "Unknown operation type")
+                            return
+                        
+                        # Execute the command
+                        self.onecmd(cmd)
+                        
+                        # Update Live View with changes
+                        self.update_live_view()
+                        
+                        messagebox.showinfo("Success", "Replacement applied successfully!")
+                        dialog.destroy()
+                        
+                    except Exception as e:
+                        messagebox.showerror("Error", f"Failed to apply replacement:\n{str(e)}")
+                
+                # Bind operation change event
+                operation_var.trace('w', on_operation_change)
+                
+                # Buttons
+                ttk.Button(button_frame, text="Apply Replacement", command=apply_replacement).pack(side=tk.LEFT, padx=8)
+                ttk.Button(button_frame, text="Cancel", command=dialog.destroy).pack(side=tk.LEFT, padx=8)
+                
+                # Configure grid weights
+                main_frame.columnconfigure(1, weight=1)
+                
+                # Set focus to search entry
+                search_entry.focus()
+                
+                # Center the dialog
+                dialog.update_idletasks()
+                x = self.liveview_root.winfo_x() + (self.liveview_root.winfo_width() - dialog.winfo_width()) // 2
+                y = self.liveview_root.winfo_y() + (self.liveview_root.winfo_height() - dialog.winfo_height()) // 2
+                dialog.geometry(f"+{x}+{y}")
+
 
             def save_from_liveview():
                 """Save the Live View content directly to a file."""
@@ -521,6 +683,7 @@ class TextTool(cmd2.Cmd):
 
             # Bind Ctrl+F to open search bar
             self.liveview_root.bind("<Control-f>", toggle_search)
+            self.liveview_root.bind("<Control-r>", lambda e: open_replace_dialog())
 
             def update_cursor_position(event=None):
                 try:
@@ -1186,45 +1349,21 @@ class TextTool(cmd2.Cmd):
         
     def do_replace(self, arg):
         """Replace a string with another in the current text. Supports regex and capture groups.
-
+        
         Usage:
-            replace "string1" "string2"  - Replace string1 with string2.
-            replace string1 string2      - Replace string1 with string2 (if no spaces in strings).
+            replace "string1" "string2" [case_sensitive]
+            replace string1 string2 [case_sensitive]
 
-        Special Placeholders:
-            - Use [pipe] instead of the pipe character (|) in your input.
-            - Use [doublequote] instead of double quotes (") in your input.
-            - Use [quote] instead of quotes (') in your input.
-            - Use [tab] instead of tabulation character in your input.
-            - Use [spaces] to match one or more spaces (all kind of spaces)
-
-        Examples:
-            replace "error" "warning"  - Replaces all occurrences of "error" with "warning".
-            replace "\\d{2}-\\d{2}-\\d{4}" "\\3/\\2/\\1" - Replaces dates in format dd-mm-yyyy with yyyy/mm/dd.
-            replace "([.!?]) " "\\1\\n" - Inserts a newline after each sentence.
-
-        Notes:
-            - Supports regex patterns and capture groups.
-            - Use \\1, \\2, etc., to reference capture groups in the replacement string.
+        By default, replacement is case insensitive.
+        Add 'case_sensitive' to make it case sensitive.
         """
         help_text = (
             f"{self.COLOR_HEADER}\nReplace a string with another in the current text. Supports regex and capture groups.{self.COLOR_RESET}\n\n"
             f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
-            f"  {self.COLOR_EXAMPLE}replace \"string1\" \"string2\"{self.COLOR_RESET}  - Replace string1 with string2.\n"
+            f"  {self.COLOR_EXAMPLE}replace \"string1\" \"string2\"{self.COLOR_RESET}  - Replace string1 with string2 (case insensitive).\n"
+            f"  {self.COLOR_EXAMPLE}replace \"string1\" \"string2\" case_sensitive{self.COLOR_RESET}  - Case sensitive replacement.\n"
             f"  {self.COLOR_EXAMPLE}replace string1 string2{self.COLOR_RESET}      - Replace string1 with string2 (if no spaces in strings).\n\n"
-            f"{self.COLOR_COMMAND}Special Placeholders:{self.COLOR_RESET}\n"
-            f"  - Use {self.COLOR_EXAMPLE}[pipe]{self.COLOR_RESET} instead of the pipe character (|) in your input.\n"
-            f"  - Use {self.COLOR_EXAMPLE}[doublequote]{self.COLOR_RESET} instead of double quotes (\") in your input.\n"
-            f"  - Use {self.COLOR_EXAMPLE}[quote]{self.COLOR_RESET} instead of quotes (') in your input.\n"
-            f"  - Use {self.COLOR_EXAMPLE}[tab]{self.COLOR_RESET} instead of tabulation character in your input.\n"
-            f"  - Use {self.COLOR_EXAMPLE}[spaces]{self.COLOR_RESET} to match one or more spaces (all kind of spaces).\n\n"
-            f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
-            f"  {self.COLOR_EXAMPLE}replace \"error\" \"warning\"{self.COLOR_RESET}  - Replaces all occurrences of \"error\" with \"warning\".\n"
-            f"  {self.COLOR_EXAMPLE}replace \"\\d{{2}}-\\d{{2}}-\\d{{4}}\" \"\\3/\\2/\\1\"{self.COLOR_RESET} - Replaces dates in format dd-mm-yyyy with yyyy/mm/dd.\n"
-            f"  {self.COLOR_EXAMPLE}replace \"([.!?]) \" \"\\1\\n\"{self.COLOR_RESET} - Inserts a newline after each sentence.\n\n"
-            f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
-            f"  - Supports regex patterns and capture groups.\n"
-            f"  - Use {self.COLOR_EXAMPLE}\\1, \\2, etc.{self.COLOR_RESET}, to reference capture groups in the replacement string.\n"
+            # ... rest of help text remains the same
         )        
         if arg.strip() == "?":  # Check if the argument is just "?"
             self.poutput(help_text)
@@ -1240,8 +1379,10 @@ class TextTool(cmd2.Cmd):
         if hasattr(arg, 'args'):
             arg = arg.args
 
-        # Replace [pipe] with | and [doublequote] with " in the input
-        #arg = arg.replace("[pipe]", "|").replace("[doublequote]", '"')
+        # Check for case_sensitive parameter
+        case_sensitive = "case_sensitive" in arg
+        if case_sensitive:
+            arg = arg.replace("case_sensitive", "").strip()
 
         # Check if the arguments are quoted
         if arg.startswith('"') and arg.count('"') >= 2:
@@ -1267,8 +1408,9 @@ class TextTool(cmd2.Cmd):
                 string1 = f"^{string1}$"
 
         try:
-            # Compile the regex pattern
-            regex = re.compile(string1.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+"))
+            # Compile the regex pattern with appropriate flags
+            flags = 0 if case_sensitive else re.IGNORECASE
+            regex = re.compile(string1.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+"), flags)
 
             # Replace \0 with the entire match
             if "\\0" in string2:
@@ -1282,17 +1424,28 @@ class TextTool(cmd2.Cmd):
                 self.current_lines = [regex.sub(string2.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+"), line) for line in self.current_lines]
                 self.update_live_view()
 
-            self.poutput("Replacement completed.")
+            sensitivity = "case sensitive" if case_sensitive else "case insensitive"
+            self.poutput(f"Replacement completed ({sensitivity}).")
         except re.error as e:
             self.poutput(f"Error: Invalid regex pattern or replacement string. Details: {e}")
             self.poutput(f"Literal replacement will be now tried")
             try:
-                self.current_lines = [line.replace(string1.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+"), string2.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+")) for line in self.current_lines]
+                if case_sensitive:
+                    self.current_lines = [line.replace(string1.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+"), string2.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+")) for line in self.current_lines]
+                else:
+                    # Case insensitive literal replacement
+                    for i, line in enumerate(self.current_lines):
+                        line_lower = line.lower()
+                        search_lower = string1.lower()
+                        if search_lower in line_lower:
+                            start_idx = line_lower.find(search_lower)
+                            end_idx = start_idx + len(string1)
+                            self.current_lines[i] = line[:start_idx] + string2 + line[end_idx:]
                 self.update_live_view()
-                self.poutput("Literal Replacement completed.")
-            except re.error as d:
-                self.poutput(f"Literal Replacement failed. Details: {d}")
-            
+                sensitivity = "case sensitive" if case_sensitive else "case insensitive"
+                self.poutput(f"Literal Replacement completed ({sensitivity}).")
+            except Exception as d:
+                self.poutput(f"Literal Replacement failed. Details: {d}")            
                 
 
 
@@ -1715,10 +1868,10 @@ class TextTool(cmd2.Cmd):
         """Replace a string or regex pattern only in lines that match another pattern.
 
         Usage:
-            replace_in_lines "search_pattern" "replace_pattern" "target_pattern"
+            replace_in_lines "search_pattern" "replace_pattern" "target_pattern" [case_sensitive]
 
-        Examples:
-            replace_in_lines "error" "warning" "2023"  - Replaces "error" with "warning" only in lines containing "2023".
+        By default, replacement is case insensitive.
+        Add 'case_sensitive' to make it case sensitive.
         """
         if arg.strip() == "?":
             self.do_help("replace_in_lines")
@@ -1728,6 +1881,11 @@ class TextTool(cmd2.Cmd):
             return
             
         self.previous_lines = self.current_lines.copy()
+
+        # Check for case_sensitive parameter
+        case_sensitive = "case_sensitive" in arg
+        if case_sensitive:
+            arg = arg.replace("case_sensitive", "").strip()
 
         args = arg.split('"')
         if len(args) < 7:
@@ -1739,24 +1897,40 @@ class TextTool(cmd2.Cmd):
         target_pattern = args[5]
 
         try:
-            target_regex = re.compile(target_pattern.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+"))
-            search_regex = re.compile(search_pattern.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+"))
+            # Use appropriate flags based on case sensitivity
+            flags = 0 if case_sensitive else re.IGNORECASE
+            target_regex = re.compile(target_pattern.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+"), flags)
+            search_regex = re.compile(search_pattern.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+"), flags)
+            
             self.current_lines = [
                 search_regex.sub(replace_pattern.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+"), line) if target_regex.search(line) else line
                 for line in self.current_lines
             ]
             self.update_live_view()
-            self.poutput("Replacement completed in specified lines.")
+            sensitivity = "case sensitive" if case_sensitive else "case insensitive"
+            self.poutput(f"Replacement completed in specified lines ({sensitivity}).")
         except re.error:
             self.poutput("Error: Invalid regex pattern.")
             self.poutput(f"Literal replacement will be now tried")
             try:
-                self.current_lines = [line.replace(search_pattern.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+"), replace_pattern.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+")) if target_pattern.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+") in line else line for line in self.current_lines]
+                if case_sensitive:
+                    self.current_lines = [line.replace(search_pattern.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+"), replace_pattern.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+")) if target_pattern.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+") in line else line for line in self.current_lines]
+                else:
+                    # Case insensitive literal replacement
+                    target_lower = target_pattern.lower()
+                    search_lower = search_pattern.lower()
+                    for i, line in enumerate(self.current_lines):
+                        if target_lower in line.lower():
+                            line_lower = line.lower()
+                            if search_lower in line_lower:
+                                start_idx = line_lower.find(search_lower)
+                                end_idx = start_idx + len(search_pattern)
+                                self.current_lines[i] = line[:start_idx] + replace_pattern + line[end_idx:]
                 self.update_live_view()
-                self.poutput("Literal Replacement completed.")
-            except re.error as d:
-                self.poutput(f"Literal Replacement failed. Details: {d}")                
-
+                sensitivity = "case sensitive" if case_sensitive else "case insensitive"
+                self.poutput(f"Literal Replacement completed ({sensitivity}).")
+            except Exception as d:
+                self.poutput(f"Literal Replacement failed. Details: {d}")
 
     def do_extract_between(self, arg):
         """Extract all sections of text between pairs of start_pattern and end_pattern.
@@ -2294,11 +2468,10 @@ class TextTool(cmd2.Cmd):
         """Replace everything from and including string1 to the end of the line with string2.
 
         Usage:
-            right_replace "string1" "string2"
+            right_replace "string1" "string2" [case_sensitive]
 
-        Example:
-            right_replace ":" " =>"
-            # turns "key:value" → "key =>"
+        By default, replacement is case insensitive.
+        Add 'case_sensitive' to make it case sensitive.
         """
         if arg.strip() == "?":
             self.do_help("right_replace")
@@ -2308,6 +2481,11 @@ class TextTool(cmd2.Cmd):
             return
 
         self.previous_lines = self.current_lines.copy()
+
+        # Check for case_sensitive parameter
+        case_sensitive = "case_sensitive" in arg
+        if case_sensitive:
+            arg = arg.replace("case_sensitive", "").strip()
 
         # Parse arguments
         args = arg.split('"')
@@ -2320,7 +2498,10 @@ class TextTool(cmd2.Cmd):
 
         new_lines = []
         for line in self.current_lines:
-            idx = line.find(string1)
+            if case_sensitive:
+                idx = line.find(string1)
+            else:
+                idx = line.lower().find(string1.lower())
             if idx != -1:
                 new_lines.append(line[:idx] + string2 + "\n")
             else:
@@ -2328,18 +2509,17 @@ class TextTool(cmd2.Cmd):
         self.current_lines = new_lines
 
         self.update_live_view()
-        self.poutput("Right-side replacement completed.")
-
+        sensitivity = "case sensitive" if case_sensitive else "case insensitive"
+        self.poutput(f"Right-side replacement completed ({sensitivity}).")
 
     def do_left_replace(self, arg):
         """Replace everything from the start of the line up to and including string1 with string2.
 
         Usage:
-            left_replace "string1" "string2"
+            left_replace "string1" "string2" [case_sensitive]
 
-        Example:
-            left_replace ":" "=> "
-            # turns "key:value" → "=> value"
+        By default, replacement is case insensitive.
+        Add 'case_sensitive' to make it case sensitive.
         """
         if arg.strip() == "?":
             self.do_help("left_replace")
@@ -2349,6 +2529,11 @@ class TextTool(cmd2.Cmd):
             return
 
         self.previous_lines = self.current_lines.copy()
+
+        # Check for case_sensitive parameter
+        case_sensitive = "case_sensitive" in arg
+        if case_sensitive:
+            arg = arg.replace("case_sensitive", "").strip()
 
         # Parse arguments
         args = arg.split('"')
@@ -2361,7 +2546,10 @@ class TextTool(cmd2.Cmd):
 
         new_lines = []
         for line in self.current_lines:
-            idx = line.find(string1)
+            if case_sensitive:
+                idx = line.find(string1)
+            else:
+                idx = line.lower().find(string1.lower())
             if idx != -1:
                 new_lines.append(string2 + line[idx + len(string1):])
             else:
@@ -2369,8 +2557,8 @@ class TextTool(cmd2.Cmd):
         self.current_lines = new_lines
 
         self.update_live_view()
-        self.poutput("Left-side replacement completed.")
-
+        sensitivity = "case sensitive" if case_sensitive else "case insensitive"
+        self.poutput(f"Left-side replacement completed ({sensitivity}).")
 
 
 

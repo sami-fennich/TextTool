@@ -5,6 +5,7 @@ import inspect
 import shlex
 import win32clipboard
 import importlib
+global input_file
 # List of required libraries
 required_libraries = ['cmd2', 'regex','pandas','regex','pathlib']
 
@@ -41,7 +42,12 @@ import tkinter as tk
 from tkinter.scrolledtext import ScrolledText
 
 
-
+if len(sys.argv)>1:
+    input_file = " ".join(sys.argv[1:]).replace('"','')
+    input_file='"'+input_file+'"'
+    # sys.argv=['']
+    input_file =input_file.replace('/','\\')
+    sys.argv=['']
 
 def read_mapping_file(map_file, separator):
     import sys
@@ -194,6 +200,8 @@ class TextTool(cmd2.Cmd):
         self.liveview_box = None  # keep reference to the text box
         self.liveview_root = None        
         self.start_live_view()
+        if input_file:
+            self.do_load(input_file)  
 
     def start_live_view(self):
         """Launch Tkinter window showing live updates of current_lines, with cursor line tracking."""
@@ -406,7 +414,7 @@ class TextTool(cmd2.Cmd):
                                         command=lambda: save_as_from_liveview())
             save_as_button.pack(side="left", padx=5, pady=2)
             
-            sync_button = tk.Button(save_frame, text="⟲ Sync to Editor", font=("Consolas", 10), 
+            sync_button = tk.Button(save_frame, text="⟲ Sync to TextTool", font=("Consolas", 10), 
                                     command=lambda: sync_from_liveview_internal())
             sync_button.pack(side="left", padx=5, pady=2)
             

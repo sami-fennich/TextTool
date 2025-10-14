@@ -113,6 +113,7 @@ class TextTool(cmd2.Cmd):
         self.COLOR_RESET = "\033[0m"  # Reset to default color        
         #self.original_file_path = "c:/clipboard.txt"  # Default file path for clipboard content
         self.prompt= "TextTool> "
+        self.current_mode = "standard"
         self.intro = (
             f"{self.COLOR_HEADER}Welcome to the Text Manipulation Tool!{self.COLOR_RESET}\n\n"
             f"{self.COLOR_COMMAND}New to the tool? Type 'tutorial' to start an interactive guide!{self.COLOR_RESET}\n\n"
@@ -438,12 +439,42 @@ class TextTool(cmd2.Cmd):
                                       command=lambda: open_replace_dialog())
             replace_button.pack(side="left", padx=5, pady=2)
 
+            # ADD THIS REVERT BUTTON
+            revert_button = tk.Button(save_frame, text="↶ Revert", font=("Consolas", 10), 
+                                     command=lambda: self.do_revert(""))
+            revert_button.pack(side="left", padx=5, pady=2)
+
             
             sync_button = tk.Button(save_frame, text="⟲ Sync to TextTool", font=("Consolas", 10), 
                                     command=lambda: sync_from_liveview_internal())
             sync_button.pack(side="left", padx=5, pady=2)
+
+            self.command_palette_button = tk.Button(save_frame, text="⌨️ Commands", font=("Consolas", 10), 
+                                                   command=lambda: open_command_palette())
+            self.command_palette_button.pack(side="left", padx=5, pady=2)
+
+            # Set initial button text based on current mode
+            if hasattr(self, 'current_mode') and self.current_mode == "advanced":
+                self.command_palette_button.config(text="⌨️ Advanced Commands")
+            else:
+                self.command_palette_button.config(text="⌨️ Commands")
             
             save_frame.pack(fill="x", side="top")
+
+            # Information text at the bottom
+            info_frame = tk.Frame(self.liveview_root, bg="#f0f0f0")
+            info_frame.pack(fill=tk.X, side=tk.BOTTOM)
+
+            info_label = tk.Label(info_frame, 
+                                 text="💡 This window shows a live preview. The tool is designed for command line usage. " +
+                                      "You can close this window anytime and reopen it with the 'liveview' command.",
+                                 font=("Consolas", 8), 
+                                 bg="#f0f0f0", 
+                                 fg="#666666",
+                                 wraplength=580,  # Adjust based on your window width
+                                 justify=tk.LEFT)
+            info_label.pack(padx=5, pady=2)
+
             
             def open_replace_dialog():
                 
@@ -584,6 +615,176 @@ class TextTool(cmd2.Cmd):
                 y = self.liveview_root.winfo_y() + (self.liveview_root.winfo_height() - dialog.winfo_height()) // 2
                 dialog.geometry(f"+{x}+{y}")
 
+            def open_command_palette():
+                """Open a command palette dialog showing all available commands."""
+                import tkinter as tk
+                from tkinter import ttk, messagebox
+                
+                palette = tk.Toplevel()
+                palette.title("Command Palette")
+                palette.geometry("600x500")
+                palette.resizable(True, True)
+                palette.transient(self.liveview_root)
+                palette.grab_set()
+                
+                # Main frame
+                main_frame = ttk.Frame(palette, padding="10")
+                main_frame.pack(fill=tk.BOTH, expand=True)
+                
+                # Search frame
+                search_frame = ttk.Frame(main_frame)
+                search_frame.pack(fill=tk.X, pady=(0, 10))
+                
+                ttk.Label(search_frame, text="Search:").pack(side=tk.LEFT, padx=(0, 5))
+                search_var = tk.StringVar()
+                search_entry = ttk.Entry(search_frame, textvariable=search_var, width=40)
+                search_entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
+                search_entry.focus()
+                
+                # Commands listbox with scrollbar
+                list_frame = ttk.Frame(main_frame)
+                list_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
+                
+                scrollbar = ttk.Scrollbar(list_frame)
+                scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+                
+                commands_listbox = tk.Listbox(list_frame, yscrollcommand=scrollbar.set, 
+                                             font=("Consolas", 10), selectmode=tk.SINGLE)
+                commands_listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+                scrollbar.config(command=commands_listbox.yview)
+                
+                # Parameters frame (initially hidden)
+                params_frame = ttk.Frame(main_frame)
+                
+                ttk.Label(params_frame, text="Parameters:").pack(anchor=tk.W)
+                params_entry = ttk.Entry(params_frame, width=50)
+                params_entry.pack(fill=tk.X, pady=(5, 10))
+                
+                # Button frame
+                button_frame = ttk.Frame(main_frame)
+                button_frame.pack(fill=tk.X)
+                
+                execute_button = ttk.Button(button_frame, text="Execute", state=tk.DISABLED)
+                execute_button.pack(side=tk.LEFT, padx=(0, 5))
+                
+                cancel_button = ttk.Button(button_frame, text="Close", command=palette.destroy)
+                cancel_button.pack(side=tk.LEFT)
+                
+                # Get all available commands
+                def get_all_commands():
+                    """Get all available commands with their help text."""
+                    commands = []
+                    excluded_commands = ['py', 'ipy','quit','help','replace','replace_in_lines','left_replace','right_replace','liveview','exit','history','alias',]  # Commands to exclude from the list
+                    
+                    for attr_name in dir(self):
+                        if attr_name.startswith('do_'):
+                            command_name = attr_name[3:]
+                            if (command_name not in self.hidden_commands and 
+                                not command_name.startswith('_') and
+                                command_name not in excluded_commands):  # Add this filter
+                                # Get help text
+                                method = getattr(self, attr_name)
+                                help_text = method.__doc__ or "No description available"
+                                # Extract first line of help for display
+                                first_line = help_text.strip().split('\n')[0]
+                                commands.append((command_name, first_line))
+                    return sorted(commands, key=lambda x: x[0])
+                
+                all_commands = get_all_commands()
+                command_dict = {name: (name, help_text) for name, help_text in all_commands}
+                
+                def update_commands_list(*args):
+                    """Update the commands list based on search filter."""
+                    filter_text = search_var.get().lower()
+                    commands_listbox.delete(0, tk.END)
+                    
+                    for name, help_text in all_commands:
+                        if filter_text in name.lower() or filter_text in help_text.lower():
+                            display_text = f"{name:<20} - {help_text}"
+                            commands_listbox.insert(tk.END, display_text)
+                
+                def on_command_select(event):
+                    """Handle command selection."""
+                    selection = commands_listbox.curselection()
+                    if selection:
+                        index = selection[0]
+                        display_text = commands_listbox.get(index)
+                        command_name = display_text.split(' - ')[0].strip()
+                        
+                        # Check if command needs parameters by looking at its help text
+                        command_method = getattr(self, f'do_{command_name}')
+                        help_text = command_method.__doc__ or ""
+                        
+                        # Simple heuristic: if help text mentions "Usage:" with arguments, it likely needs params
+                        needs_params = any(keyword in help_text for keyword in ['<', '[', 'Usage:', 'arguments'])
+                        
+                        if needs_params:
+                            # Show parameters frame
+                            params_frame.pack(fill=tk.X, pady=(10, 0))
+                            params_entry.delete(0, tk.END)
+                            params_entry.focus()
+                            execute_button.config(state=tk.NORMAL, 
+                                                command=lambda: execute_command(command_name, params_entry.get()))
+                        else:
+                            # Hide parameters frame and enable execute
+                            params_frame.pack_forget()
+                            execute_button.config(state=tk.NORMAL, 
+                                                command=lambda: execute_command(command_name, ""))
+                
+                def execute_command(command_name, parameters):
+                    """Execute the selected command with parameters."""
+                    try:
+                        full_command = f"{command_name} {parameters}".strip()
+                        self.onecmd(full_command)
+                        
+                        # Update Live View if command might have changed content
+                        if command_name in ['load', 'replace', 'select', 'revert', 'sort', 'unique', 
+                                          'remove_empty_lines', 'multiple_replace']:
+                            self.update_live_view()
+                        
+                        palette.destroy()
+                        #messagebox.showinfo("Success", f"Command '{command_name}' executed successfully!")
+                        
+                    except Exception as e:
+                        messagebox.showerror("Error", f"Failed to execute command:\n{str(e)}")
+                
+                def on_double_click(event):
+                    """Handle double-click on command list."""
+                    on_command_select(event)
+                    selection = commands_listbox.curselection()
+                    if selection:
+                        execute_button.invoke()
+                
+                def on_enter_key(event):
+                    """Handle Enter key in parameters field or when listbox has focus."""
+                    if params_entry.focus_get() == params_entry and params_entry.get().strip():
+                        execute_button.invoke()
+                    elif commands_listbox.focus_get() == commands_listbox and commands_listbox.curselection():
+                        on_command_select(None)
+                        execute_button.invoke()
+                
+                # Bind events
+                search_var.trace('w', update_commands_list)
+                commands_listbox.bind('<<ListboxSelect>>', on_command_select)
+                commands_listbox.bind('<Double-Button-1>', on_double_click)
+                params_entry.bind('<Return>', on_enter_key)
+                commands_listbox.bind('<Return>', on_enter_key)
+                search_entry.bind('<Return>', lambda e: commands_listbox.focus_set())
+                
+                # Populate initial list
+                update_commands_list()
+                
+                # Select first item if available
+                if commands_listbox.size() > 0:
+                    commands_listbox.selection_set(0)
+                    commands_listbox.see(0)
+                    on_command_select(None)
+                
+                # Center the palette
+                palette.update_idletasks()
+                x = self.liveview_root.winfo_x() + (self.liveview_root.winfo_width() - palette.winfo_width()) // 2
+                y = self.liveview_root.winfo_y() + (self.liveview_root.winfo_height() - palette.winfo_height()) // 2
+                palette.geometry(f"+{x}+{y}")
 
             def save_from_liveview():
                 """Save the Live View content directly to a file."""
@@ -721,6 +922,18 @@ class TextTool(cmd2.Cmd):
 
         threading.Thread(target=run_viewer, daemon=True).start()
 
+
+    def update_command_palette_button(self):
+        """Update the command palette button text based on current mode."""
+        if hasattr(self, 'command_palette_button') and self.command_palette_button:
+            try:
+                if self.current_mode == "advanced":
+                    self.command_palette_button.config(text="⌨️ Advanced Commands")
+                else:
+                    self.command_palette_button.config(text="⌨️ Commands")
+            except:
+                # Button might have been destroyed
+                pass
 
     def update_live_view(self):
         """Refresh Live View immediately."""
@@ -1611,10 +1824,14 @@ class TextTool(cmd2.Cmd):
             extract_emails
             extract_urls
             replace_confirm
-        """    
+        """  
         if arg.strip() == "?":
             self.do_help("advanced")
             return
+        
+        # Set mode to advanced
+        self.current_mode = "advanced"
+        
         try:
             self.hidden_commands.remove('extract_between')
         except:
@@ -1667,16 +1884,19 @@ class TextTool(cmd2.Cmd):
             self.hidden_commands.remove('multiple_replace')
         except:
             a = 0       			
-   			
-
+        
+        # Update button text if command palette button exists
+        self.update_command_palette_button()
 
     def do_standard(self, arg):
-        """disable the advanced text operation functions.
-
-        """    
+        """disable the advanced text operation functions."""
         if arg.strip() == "?":
             self.do_help("standard")
             return
+        
+        # Set mode to standard
+        self.current_mode = "standard"
+        
         try:
             self.hidden_commands.append('extract_between')
         except:
@@ -1729,6 +1949,11 @@ class TextTool(cmd2.Cmd):
             self.hidden_commands.append('multiple_replace')
         except:
             a = 0 			
+        
+        # Update button text if command palette button exists
+        self.update_command_palette_button()
+
+
 
     def do_replace_confirm(self, arg):
         """Interactive find and replace with user confirmation.
@@ -2560,14 +2785,6 @@ class TextTool(cmd2.Cmd):
         sensitivity = "case sensitive" if case_sensitive else "case insensitive"
         self.poutput(f"Left-side replacement completed ({sensitivity}).")
 
-
-
-    def do_diff(self, arg):
-        diff = difflib.unified_diff(
-            self.previous_lines, self.current_lines,
-            fromfile='previous', tofile='current', lineterm=''
-        )
-        self.poutput('\n'.join(diff))
 
 
 

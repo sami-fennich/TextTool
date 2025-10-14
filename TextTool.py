@@ -6,8 +6,10 @@ import shlex
 import win32clipboard
 import importlib
 global input_file
+import difflib
 # List of required libraries
 required_libraries = ['cmd2', 'regex','pandas','regex','pathlib']
+input_file= ""
 
 def install_library(library):
     """Install a library using pip."""
@@ -98,6 +100,7 @@ def retrieve_spaces(s):
 
 class TextTool(cmd2.Cmd):
     def __init__(self):
+        global input_file
         super().__init__(persistent_history_file=".text_tool_history.txt")
         self.text_lines = []
         self.current_lines = []
@@ -2367,6 +2370,16 @@ class TextTool(cmd2.Cmd):
 
         self.update_live_view()
         self.poutput("Left-side replacement completed.")
+
+
+
+
+    def do_diff(self, arg):
+        diff = difflib.unified_diff(
+            self.previous_lines, self.current_lines,
+            fromfile='previous', tofile='current', lineterm=''
+        )
+        self.poutput('\n'.join(diff))
 
 
 

@@ -113,7 +113,6 @@ class TextTool(cmd2.Cmd):
         self.COLOR_RESET = "\033[0m"  # Reset to default color        
         #self.original_file_path = "c:/clipboard.txt"  # Default file path for clipboard content
         self.prompt= "TextTool> "
-        self.current_mode = "standard"
         self.intro = (
             f"{self.COLOR_HEADER}Welcome to the Text Manipulation Tool!{self.COLOR_RESET}\n\n"
             f"{self.COLOR_COMMAND}New to the tool? Type 'tutorial' to start an interactive guide!{self.COLOR_RESET}\n\n"
@@ -197,10 +196,7 @@ class TextTool(cmd2.Cmd):
         self.hidden_commands.append('reverse_lines')
         self.hidden_commands.append('extract_emails')
         self.hidden_commands.append('extract_urls')
-        self.hidden_commands.append('replace_confirm')
-        self.hidden_commands.append('replace_in_lines')
         self.hidden_commands.append('select_from_file')	
-        self.hidden_commands.append('multiple_replace')	
         self.liveview_box = None  # keep reference to the text box
         self.liveview_root = None        
         self.start_live_view()
@@ -449,19 +445,10 @@ class TextTool(cmd2.Cmd):
                                     command=lambda: sync_from_liveview_internal())
             sync_button.pack(side="left", padx=5, pady=2)
 
-            self.command_palette_button = tk.Button(save_frame, text="⌨️ Commands", font=("Consolas", 10), 
-                                                   command=lambda: open_command_palette())
-            self.command_palette_button.pack(side="left", padx=5, pady=2)
-
-            # Set initial button text based on current mode
-            if hasattr(self, 'current_mode') and self.current_mode == "advanced":
-                self.command_palette_button.config(text="⌨️ Advanced Commands")
-            else:
-                self.command_palette_button.config(text="⌨️ Commands")
-            
-            save_frame.pack(fill="x", side="top")
-
-            # Information text at the bottom
+            # ADD COMMAND PALETTE BUTTON
+            command_palette_button = tk.Button(save_frame, text="⌨️ Commands", font=("Consolas", 10), 
+                                               command=lambda: open_command_palette())
+            command_palette_button.pack(side="left", padx=5, pady=2)
             info_frame = tk.Frame(self.liveview_root, bg="#f0f0f0")
             info_frame.pack(fill=tk.X, side=tk.BOTTOM)
 
@@ -473,8 +460,9 @@ class TextTool(cmd2.Cmd):
                                  fg="#666666",
                                  wraplength=580,  # Adjust based on your window width
                                  justify=tk.LEFT)
-            info_label.pack(padx=5, pady=2)
-
+            info_label.pack(padx=5, pady=2)            
+            
+            save_frame.pack(fill="x", side="top")
             
             def open_replace_dialog():
                 
@@ -674,7 +662,7 @@ class TextTool(cmd2.Cmd):
                 def get_all_commands():
                     """Get all available commands with their help text."""
                     commands = []
-                    excluded_commands = ['py', 'ipy','quit','help','replace','replace_in_lines','left_replace','right_replace','liveview','exit','history','alias',]  # Commands to exclude from the list
+                    excluded_commands = ['py', 'ipy','quit','help','liveview']  # Commands to exclude from the list
                     
                     for attr_name in dir(self):
                         if attr_name.startswith('do_'):
@@ -922,18 +910,6 @@ class TextTool(cmd2.Cmd):
 
         threading.Thread(target=run_viewer, daemon=True).start()
 
-
-    def update_command_palette_button(self):
-        """Update the command palette button text based on current mode."""
-        if hasattr(self, 'command_palette_button') and self.command_palette_button:
-            try:
-                if self.current_mode == "advanced":
-                    self.command_palette_button.config(text="⌨️ Advanced Commands")
-                else:
-                    self.command_palette_button.config(text="⌨️ Commands")
-            except:
-                # Button might have been destroyed
-                pass
 
     def update_live_view(self):
         """Refresh Live View immediately."""
@@ -1824,14 +1800,10 @@ class TextTool(cmd2.Cmd):
             extract_emails
             extract_urls
             replace_confirm
-        """  
+        """    
         if arg.strip() == "?":
             self.do_help("advanced")
             return
-        
-        # Set mode to advanced
-        self.current_mode = "advanced"
-        
         try:
             self.hidden_commands.remove('extract_between')
         except:
@@ -1867,36 +1839,22 @@ class TextTool(cmd2.Cmd):
         try:
             self.hidden_commands.remove('extract_urls')
         except:
-            a = 0           
-        try:
-            self.hidden_commands.remove('replace_confirm')
-        except:
-            a = 0   
-        try:
-            self.hidden_commands.remove('replace_in_lines')
-        except:
-            a = 0        
+            a = 0            
         try:
             self.hidden_commands.remove('select_from_file')
         except:
             a = 0    
-        try:
-            self.hidden_commands.remove('multiple_replace')
-        except:
-            a = 0       			
-        
-        # Update button text if command palette button exists
-        self.update_command_palette_button()
+     			
+   			
+
 
     def do_standard(self, arg):
-        """disable the advanced text operation functions."""
+        """disable the advanced text operation functions.
+
+        """    
         if arg.strip() == "?":
             self.do_help("standard")
             return
-        
-        # Set mode to standard
-        self.current_mode = "standard"
-        
         try:
             self.hidden_commands.append('extract_between')
         except:
@@ -1934,26 +1892,10 @@ class TextTool(cmd2.Cmd):
         except:
             a = 0                 
         try:
-            self.hidden_commands.append('replace_confirm')
-        except:
-            a = 0 
-        try:
-            self.hidden_commands.append('replace_in_lines')
-        except:
-            a = 0   
-        try:
             self.hidden_commands.append('select_from_file')
         except:
             a = 0 		
-        try:
-            self.hidden_commands.append('multiple_replace')
-        except:
-            a = 0 			
-        
-        # Update button text if command palette button exists
-        self.update_command_palette_button()
-
-
+		
 
     def do_replace_confirm(self, arg):
         """Interactive find and replace with user confirmation.
@@ -2785,6 +2727,14 @@ class TextTool(cmd2.Cmd):
         sensitivity = "case sensitive" if case_sensitive else "case insensitive"
         self.poutput(f"Left-side replacement completed ({sensitivity}).")
 
+
+
+    def do_diff(self, arg):
+        diff = difflib.unified_diff(
+            self.previous_lines, self.current_lines,
+            fromfile='previous', tofile='current', lineterm=''
+        )
+        self.poutput('\n'.join(diff))
 
 
 

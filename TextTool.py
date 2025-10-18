@@ -1423,6 +1423,156 @@ class TextTool(cmd2.Cmd):
         self.poutput("Reverted to the original full text with modified selected lines.")
     
 
+    def do_delete(self, arg):
+        """Delete lines containing (or not containing) the given string(s) or regex pattern(s).
+
+        Usage:
+            delete <string>         - Delete lines containing the specified string or regex.
+            delete "!string"        - Delete lines that do NOT contain the specified string or regex.
+            delete "string1 OR string2" - Delete lines containing either string1 or string2.
+
+        Special Placeholders:
+            - Use [pipe] instead of the pipe character (|) in your input.
+            - Use [doublequote] instead of double quotes (") in your input.
+            - Use [quote] instead of quotes (') in your input.
+            - Use [tab] instead of tabulation character in your input.
+            - Use [spaces] to match one or more spaces (all kind of spaces)
+
+        Examples:
+            delete "error"          - Deletes lines containing the word "error".
+            delete "!error"         - Deletes lines that do NOT contain the word "error".
+            delete "error OR warning" - Deletes lines containing either "error" or "warning".
+
+        Notes:
+            - The deleteion is case-sensitive.
+            - Supports regex patterns for more complex deleteions.
+        """
+        help_text = (
+            f"{self.COLOR_HEADER}\nDelete lines containing (or not containing) the given string(s) or regex pattern(s).{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}delete <string>{self.COLOR_RESET}         - Delete lines containing the specified string or regex.\n"
+            f"  {self.COLOR_EXAMPLE}delete \"!string\"{self.COLOR_RESET}        - Delete lines that do NOT contain the specified string or regex.\n"
+            f"  {self.COLOR_EXAMPLE}delete \"string1 OR string2\"{self.COLOR_RESET} - Delete lines containing either string1 or string2.\n\n"
+            f"{self.COLOR_COMMAND}Special Placeholders:{self.COLOR_RESET}\n"
+            f"  - Use {self.COLOR_EXAMPLE}[pipe]{self.COLOR_RESET} instead of the pipe character (|) in your input.\n"
+            f"  - Use {self.COLOR_EXAMPLE}[doublequote]{self.COLOR_RESET} instead of double quotes (\") in your input.\n"
+            f"  - Use {self.COLOR_EXAMPLE}[quote]{self.COLOR_RESET} instead of quotes (') in your input.\n"
+            f"  - Use {self.COLOR_EXAMPLE}[tab]{self.COLOR_RESET} instead of tabulation character in your input.\n"
+            f"  - Use {self.COLOR_EXAMPLE}[spaces]{self.COLOR_RESET} to match one or more spaces (all kind of spaces).\n\n"
+            f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}delete \"error\"{self.COLOR_RESET}          - Deletes lines containing the word \"error\".\n"
+            f"  {self.COLOR_EXAMPLE}delete \"!error\"{self.COLOR_RESET}         - Deletes lines that do NOT contain the word \"error\".\n"
+            f"  {self.COLOR_EXAMPLE}delete \"error OR warning\"{self.COLOR_RESET} - Deletes lines containing either \"error\" or \"warning\".\n\n"
+            f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
+            f"  - The deleteion is case-sensitive.\n"
+            f"  - Supports regex patterns for more complex deleteions.\n"
+        )        
+        if arg.strip() == "?":  # Check if the argument is just "?"
+            self.poutput(help_text)
+            return  # Exit the function
+        if not self.current_lines:
+            self.poutput("Error: No file is loaded.")
+            return
+
+        self.previous_lines = self.current_lines.copy()
+        # Save the current state for undelete functionality
+        self.original_full_text = self.current_lines.copy()
+        self.deleteed_indices = []
+
+        # Extract the raw input string from the cmd2.parsing.Statement object
+        if hasattr(arg, 'args'):
+            arg = arg.args
+
+        if not arg:
+            #self.poutput("Error: Please provide a string or regex.")
+            #return
+            arg=""
+
+        # Remove surrounding quotes if present
+        arg = arg.strip('"').strip("'")
+
+        # Check if the deleteion is negated (e.g., "!string1")
+        negate = False
+        if arg.startswith("!"):
+            negate = True
+            arg = arg[1:]  # Remove the "!" prefix
+
+        # Split the input string on the keyword "OR"
+        search_terms = [term.strip() for term in arg.split("OR")]
+
+        try:
+            # Compile regex patterns for each search term
+            regexes = [re.compile(term.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+")) for term in search_terms]
+            if not negate:
+                # Delete lines that do NOT match any of the regex patterns
+                self.current_lines = [
+                    line for line in self.current_lines
+                    if not any(regex.search(line) for regex in regexes)
+                ]
+                self.deleteed_indices = [
+                    i for i, line in enumerate(self.original_full_text)
+                    if not any(regex.search(line) for regex in regexes)
+                ]
+            else:
+                # Delete lines that match any of the regex patterns
+                self.current_lines = [
+                    line for line in self.current_lines
+                    if any(regex.search(line) for regex in regexes)
+                ]
+                self.deleteed_indices = [
+                    i for i, line in enumerate(self.original_full_text)
+                    if any(regex.search(line) for regex in regexes)
+                ]
+            self.update_live_view()
+            self.poutput(f"Remaining {len(self.current_lines)} lines.")
+        except re.error:
+            self.poutput("Error: Invalid regex pattern.")
+
+
+
+
+
+    def do_undelete(self, arg):
+        """Revert the last delete action while keeping other modifications.
+
+        Usage:
+            undelete  - Reverts the last delete action.
+
+        Notes:
+            - This command restores the original full text but overwrites the deleted lines with their modified versions.
+        """
+        help_text = (
+            f"{self.COLOR_HEADER}\nRevert the last delete action while keeping other modifications.{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}undelete{self.COLOR_RESET}  - Reverts the last delete action.\n\n"
+            f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
+            f"  - This command restores the original full text but overwrites the deleteed lines with their modified versions.\n"
+        )        
+        if arg.strip() == "?":  # Check if the argument is just "?"
+            self.poutput(help_text)
+            return  # Exit the function
+        if not hasattr(self, 'original_full_text') or not self.original_full_text:
+            self.poutput("Error: No original full text to revert to.")
+            return
+        if not hasattr(self, 'deleteed_indices') or not self.deleteed_indices:
+            self.poutput("Error: No deleteed lines to revert.")
+            return
+
+        # Restore the original full text
+        self.previous_lines = self.current_lines.copy()
+        restored_text = self.original_full_text.copy()
+
+        # Overwrite the deleteed lines with their modified versions
+        for i, modified_line in zip(self.deleteed_indices, self.current_lines):
+            if i < len(restored_text):
+                restored_text[i] = modified_line
+
+        # Update the current lines
+        self.current_lines = restored_text
+        self.update_live_view()
+        self.poutput("Reverted to the original full text with modified deleted lines.")
+
+
     def do_multiple_replace(self, arg):
         """Replace multiple strings in the current text using a mapping file or clipboard content.
 
@@ -2054,14 +2204,28 @@ class TextTool(cmd2.Cmd):
         if case_sensitive:
             arg = arg.replace("case_sensitive", "").strip()
 
-        args = arg.split('"')
-        if len(args) < 7:
-            self.poutput("Error: Invalid arguments. Usage: replace_in_lines \"search_pattern\" \"replace_pattern\" \"target_pattern\"")
-            return
-
-        search_pattern = args[1]
-        replace_pattern = args[3]
-        target_pattern = args[5]
+        # Check if the arguments are quoted
+        if arg.startswith('"') and arg.count('"') >= 2:
+            # Split the arguments by double quotes
+            args = arg.split('"')
+            search_pattern, replace_pattern, target_pattern= args[1], args[3], args[5]
+            if (search_pattern.startswith("(") or search_pattern.startswith("\\") or "." in search_pattern) and not (search_pattern.startswith("^") and search_pattern.endswith("$")):
+                search_pattern = f"^{search_pattern}$"
+        elif arg.startswith("'") and arg.count("'") >= 2:
+            # Split the arguments by double quotes
+            args = arg.split("'")
+            search_pattern, replace_pattern, target_pattern= args[1], args[3], args[5]
+            if (search_pattern.startswith("(") or search_pattern.startswith("\\") or "." in search_pattern) and not (search_pattern.startswith("^") and search_pattern.endswith("$")):
+                search_pattern = f"^{search_pattern}$"            
+        else:
+            # Split the arguments by spaces (for unquoted arguments)
+            args = arg.split()
+            if len(args) < 2:
+                self.poutput("Error: Invalid arguments. Usage: replace_in_lines \"search_pattern\" \"replace_pattern\" \"target_pattern\" ")
+                return
+            search_pattern, replace_pattern, target_pattern= args[0], args[1], args[2]
+            if (search_pattern.startswith("(") or search_pattern.startswith("\\") or "." in search_pattern) and not (search_pattern.startswith("^") and search_pattern.endswith("$")):
+                search_pattern = f"^{search_pattern}$"
 
         try:
             # Use appropriate flags based on case sensitivity
@@ -2123,13 +2287,27 @@ class TextTool(cmd2.Cmd):
 
         self.previous_lines = self.current_lines.copy()
 
-        args = arg.split('"')
-        if len(args) < 5:
-            self.poutput("Error: Invalid arguments. Usage: extract_between \"start_pattern\" \"end_pattern\"")
-            return
-
-        start_pattern = args[1]
-        end_pattern = args[3]
+        if arg.startswith('"') and arg.count('"') >= 2:
+            # Split the arguments by double quotes
+            args = arg.split('"')
+            start_pattern, end_pattern = args[1], args[3]
+            if (start_pattern.startswith("(") or start_pattern.startswith("\\") or "." in start_pattern) and not (start_pattern.startswith("^") and start_pattern.endswith("$")):
+                start_pattern = f"^{start_pattern}$"
+        elif arg.startswith("'") and arg.count("'") >= 2:
+            # Split the arguments by double quotes
+            args = arg.split("'")
+            start_pattern, end_pattern = args[1], args[3]
+            if (start_pattern.startswith("(") or start_pattern.startswith("\\") or "." in start_pattern) and not (start_pattern.startswith("^") and start_pattern.endswith("$")):
+                start_pattern = f"^{start_pattern}$"            
+        else:
+            # Split the arguments by spaces (for unquoted arguments)
+            args = arg.split()
+            if len(args) < 2:
+                self.poutput("Error: Invalid arguments. Usage: extract_between \"start_pattern\" \"end_pattern\"")
+                return
+            start_pattern, end_pattern = args[0], args[1]
+            if (start_pattern.startswith("(") or start_pattern.startswith("\\") or "." in start_pattern) and not (start_pattern.startswith("^") and start_pattern.endswith("$")):
+                start_pattern = f"^{start_pattern}$"
 
         try:
             start_regex = re.compile(start_pattern)
@@ -2655,13 +2833,27 @@ class TextTool(cmd2.Cmd):
             arg = arg.replace("case_sensitive", "").strip()
 
         # Parse arguments
-        args = arg.split('"')
-        if len(args) < 5:
-            self.poutput('Error: Invalid syntax. Usage: right_replace "string1" "string2"')
-            return
-
-        string1 = args[1]
-        string2 = args[3]
+        if arg.startswith('"') and arg.count('"') >= 2:
+            # Split the arguments by double quotes
+            args = arg.split('"')
+            string1, string2 = args[1], args[3]
+            if (string1.startswith("(") or string1.startswith("\\") or "." in string1) and not (string1.startswith("^") and string1.endswith("$")):
+                string1 = f"^{string1}$"
+        elif arg.startswith("'") and arg.count("'") >= 2:
+            # Split the arguments by double quotes
+            args = arg.split("'")
+            string1, string2 = args[1], args[3]
+            if (string1.startswith("(") or string1.startswith("\\") or "." in string1) and not (string1.startswith("^") and string1.endswith("$")):
+                string1 = f"^{string1}$"            
+        else:
+            # Split the arguments by spaces (for unquoted arguments)
+            args = arg.split()
+            if len(args) < 2:
+                self.poutput('Error: Invalid syntax. Usage: right_replace "string1" "string2"')
+                return
+            string1, string2 = args[0], args[1]
+            if (string1.startswith("(") or string1.startswith("\\") or "." in string1) and not (string1.startswith("^") and string1.endswith("$")):
+                string1 = f"^{string1}$"
 
         new_lines = []
         for line in self.current_lines:
@@ -2703,13 +2895,27 @@ class TextTool(cmd2.Cmd):
             arg = arg.replace("case_sensitive", "").strip()
 
         # Parse arguments
-        args = arg.split('"')
-        if len(args) < 5:
-            self.poutput('Error: Invalid syntax. Usage: left_replace "string1" "string2"')
-            return
-
-        string1 = args[1]
-        string2 = args[3]
+        if arg.startswith('"') and arg.count('"') >= 2:
+            # Split the arguments by double quotes
+            args = arg.split('"')
+            string1, string2 = args[1], args[3]
+            if (string1.startswith("(") or string1.startswith("\\") or "." in string1) and not (string1.startswith("^") and string1.endswith("$")):
+                string1 = f"^{string1}$"
+        elif arg.startswith("'") and arg.count("'") >= 2:
+            # Split the arguments by double quotes
+            args = arg.split("'")
+            string1, string2 = args[1], args[3]
+            if (string1.startswith("(") or string1.startswith("\\") or "." in string1) and not (string1.startswith("^") and string1.endswith("$")):
+                string1 = f"^{string1}$"            
+        else:
+            # Split the arguments by spaces (for unquoted arguments)
+            args = arg.split()
+            if len(args) < 2:
+                self.poutput('Error: Invalid syntax. Usage: left_replace "string1" "string2"')
+                return
+            string1, string2 = args[0], args[1]
+            if (string1.startswith("(") or string1.startswith("\\") or "." in string1) and not (string1.startswith("^") and string1.endswith("$")):
+                string1 = f"^{string1}$"
 
         new_lines = []
         for line in self.current_lines:

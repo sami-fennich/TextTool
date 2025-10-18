@@ -1178,15 +1178,23 @@ class TextTool(cmd2.Cmd):
                 self.poutput(f"Error: File '{file_path}' does not exist.")
                 return
 
-            with open(file_path, 'r') as file:
-                self.text_lines = file.readlines()
-                self.current_lines = self.text_lines.copy()
+# Try UTF-8 first, fallback to system default
+            try:
+                with open(file_path, 'r', encoding='utf-8') as file:
+                    self.text_lines = file.readlines()
+            except UnicodeDecodeError:
+                with open(file_path, 'r', encoding='latin-1') as file:
+                    self.text_lines = file.readlines()
+
+            self.current_lines = self.text_lines.copy()
             self.original_file_path = file_path  # Store the original file path
             self.update_live_view()
             
             # Update file path display in liveview
-            if hasattr(self, 'update_file_path_display'):
+            # Update file path display in liveview (safe call)
+            if callable(getattr(self, 'update_file_path_display', None)):
                 self.update_file_path_display()
+
             
             self.poutput(f"File '{file_path}' loaded successfully.")
         else:
@@ -1198,9 +1206,10 @@ class TextTool(cmd2.Cmd):
                 self.update_live_view()
                 self.original_file_path = None  # No file path for clipboard content
                 
-                # Update file path display in liveview
-                if hasattr(self, 'update_file_path_display'):
+                # Update file path display in liveview (safe call)
+                if callable(getattr(self, 'update_file_path_display', None)):
                     self.update_file_path_display()
+
                 
                 self.poutput("Clipboard content loaded successfully.")
             else:

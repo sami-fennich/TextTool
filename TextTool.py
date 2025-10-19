@@ -11,6 +11,54 @@ import difflib
 required_libraries = ['cmd2', 'regex','pandas','regex','pathlib']
 input_file= ""
 
+class ToolTip:
+    """Create a tooltip for a given widget."""
+    def __init__(self, widget, text, delay=500):
+        self.widget = widget
+        self.text = text
+        self.delay = delay
+        self.tooltip_window = None
+        self.after_id = None
+        widget.bind("<Enter>", self.on_enter)
+        widget.bind("<Leave>", self.on_leave)
+
+    def on_enter(self, event=None):
+        self.after_id = self.widget.after(self.delay, self.show_tooltip)
+
+    def on_leave(self, event=None):
+        if self.after_id:
+            self.widget.after_cancel(self.after_id)
+            self.after_id = None
+        self.hide_tooltip()
+
+    def show_tooltip(self):
+        if self.tooltip_window or not self.text:
+            return
+        x, y, _, _ = self.widget.bbox("insert") or (0, 0, 0, 0)
+        x += self.widget.winfo_rootx() + 30
+        y += self.widget.winfo_rooty() + 20
+
+        self.tooltip_window = tw = tk.Toplevel(self.widget)
+        tw.wm_overrideredirect(True)
+        tw.wm_geometry(f"+{x}+{y}")
+        label = tk.Label(
+            tw,
+            text=self.text,
+            justify="left",
+            background="#ffffe0",
+            relief="solid",
+            borderwidth=1,
+            font=("Consolas", 9)
+        )
+        label.pack(ipadx=5, ipady=2)
+
+    def hide_tooltip(self):
+        if self.tooltip_window:
+            self.tooltip_window.destroy()
+            self.tooltip_window = None
+
+
+
 def install_library(library):
     """Install a library using pip."""
     try:
@@ -107,6 +155,7 @@ class TextTool(cmd2.Cmd):
         self.previous_lines = []
         self.original_full_text = []
         self.text_changed = False
+        self.highlight_enabled = True
         self.selected_indices = []
         self.COLOR_HEADER = "\033[1;36m"  # Cyan
         self.COLOR_COMMAND = "\033[1;32m"  # Green
@@ -187,6 +236,7 @@ class TextTool(cmd2.Cmd):
         self.hidden_commands.append('run_pyscript')
         self.hidden_commands.append('set')
         self.hidden_commands.append('macro')
+        self.hidden_commands.append('highlight_toggle')
         self.hidden_commands.append('edit')
         self.hidden_commands.append('extract_between')
         self.hidden_commands.append('insert_line')
@@ -203,6 +253,8 @@ class TextTool(cmd2.Cmd):
         self.start_live_view()
         if input_file:
             self.do_load(input_file)  
+
+
 
     def start_live_view(self):
         """Launch Tkinter window showing live updates of current_lines, with cursor line tracking."""
@@ -433,7 +485,7 @@ class TextTool(cmd2.Cmd):
             save_button = tk.Button(save_frame, text="💾 Save", font=("Consolas", 10), 
                                     command=lambda: save_from_liveview())
             save_button.pack(side="left", padx=5, pady=2)
-            
+            ToolTip(save_button, "Save the current text to the same file")
             # --- NEW BUTTONS FOR LOADING ---
 
             def load_file_from_dialog():
@@ -464,14 +516,16 @@ class TextTool(cmd2.Cmd):
                 command=load_file_from_dialog
             )
             load_button.pack(side="left", padx=5, pady=2)
-
+            ToolTip(load_button, "Open a file chooser to load a text file")
             load_clipboard_button = tk.Button(
                 save_frame,
                 text="📋 Load from Clipboard",
                 font=("Consolas", 10),
                 command=load_from_clipboard
             )
+            
             load_clipboard_button.pack(side="left", padx=5, pady=2)
+            ToolTip(load_clipboard_button, "Load text directly from clipboard. Works with text selection and also with file selection")
 
             # --- END NEW BUTTONS ---
             
@@ -479,10 +533,26 @@ class TextTool(cmd2.Cmd):
             save_as_button = tk.Button(save_frame, text="💾 Save As...", font=("Consolas", 10), 
                                         command=lambda: save_as_from_liveview())
             save_as_button.pack(side="left", padx=5, pady=2)
+            ToolTip(save_as_button, "Save the text to a new file")
+            highlight_var = tk.BooleanVar(value=self.highlight_enabled)
+
+            def toggle_highlight_gui():
+                self.highlight_enabled = highlight_var.get()
+
+            highlight_check = tk.Checkbutton(
+                save_frame,
+                text="Highlight",
+                font=("Consolas", 10),
+                variable=highlight_var,
+                command=toggle_highlight_gui
+            )
+            highlight_check.pack(side="left", padx=5, pady=2)
+            ToolTip(highlight_check, "disable line highlighting with show command, recommanded when the file is huge")
 
             replace_button = tk.Button(save_frame, text="🔧 Replace...", font=("Consolas", 10), 
                                       command=lambda: open_replace_dialog())
             replace_button.pack(side="left", padx=5, pady=2)
+            ToolTip(replace_button, "replace, right replace, left replace and replace in specific lines")
 
             # ADD THIS REVERT BUTTON
             revert_button = tk.Button(save_frame, text="↶ Revert", font=("Consolas", 10), 
@@ -495,6 +565,7 @@ class TextTool(cmd2.Cmd):
             command_palette_button = tk.Button(save_frame, text="⌨️ Commands", font=("Consolas", 10), 
                                                command=lambda: open_command_palette())
             command_palette_button.pack(side="left", padx=5, pady=2)
+            ToolTip(command_palette_button, "All commands available in the tool. But best is to use them in command line interface")
             info_frame = tk.Frame(self.liveview_root, bg="#f0f0f0")
             info_frame.pack(fill=tk.X, side=tk.BOTTOM)
 
@@ -708,7 +779,7 @@ class TextTool(cmd2.Cmd):
                 def get_all_commands():
                     """Get all available commands with their help text."""
                     commands = []
-                    excluded_commands = ['py', 'ipy','quit','help','liveview']  # Commands to exclude from the list
+                    excluded_commands = ['py', 'ipy','quit','help','liveview','highlight_toggle']  # Commands to exclude from the list
                     
                     for attr_name in dir(self):
                         if attr_name.startswith('do_'):
@@ -976,31 +1047,68 @@ class TextTool(cmd2.Cmd):
                 self.update_file_path_display = None
 
 
+
+    def highlight_lines_in_liveview(self, matching_lines):
+        """Highlight the given lines in the Live View."""
+        if not getattr(self, "highlight_enabled", True):
+            return  # Skip if highlighting is disabled        
+        if not hasattr(self, "liveview_box") or not self.liveview_box:
+            return
+        try:
+            text_box = self.liveview_box
+            text_box.tag_remove("highlight", "1.0", "end")  # clear old highlights
+            if not matching_lines:
+                return
+
+            # Create a set for fast membership check
+            matching_set = set(matching_lines)
+
+            start_index = "1.0"
+            while True:
+                line_start = text_box.index(start_index)
+                if text_box.compare(line_start, ">=", "end"):
+                    break
+                line_text = text_box.get(line_start, f"{line_start} lineend")
+                if line_text + "\n" in matching_set or line_text in matching_set:
+                    text_box.tag_add("highlight", line_start, f"{line_start} lineend")
+                start_index = text_box.index(f"{line_start}+1line")
+
+            text_box.tag_config("highlight", background="yellow", foreground="black")
+            # Scroll to the first highlighted line
+            if matching_lines:
+                text_box.see("1.0")  # reset view
+                first_match = text_box.search(matching_lines[0].strip(), "1.0", stopindex="end")
+                if first_match:
+                    text_box.see(first_match)
+            
+        except Exception as e:
+            print(f"[Warning] Failed to highlight lines: {e}")
+
+
     def onecmd(self, line, **kwargs):
-        """Intercept all CLI commands to auto-sync if LiveView was manually edited."""
-        # 1️⃣ Before running any command, check if user edited text manually
+        """Intercept all CLI commands to auto-sync and clear highlights when needed."""
+        # 1️⃣ Before running any command, sync if user manually edited text
         if getattr(self, 'text_changed', False):
             try:
                 if hasattr(self, 'liveview_box') and self.liveview_box:
-                    # Read text content from the LiveView
                     new_text = self.liveview_box.get("1.0", "end-1c")
-
-                    # Save previous state for 'revert'
                     self.previous_lines = self.current_lines.copy()
-
-                    # Replace current_lines with new content
-                    self.current_lines = [line + "\n" for line in new_text.splitlines()]
-
-                # Reset the flag after syncing
+                    self.current_lines = [ln + "\n" for ln in new_text.splitlines()]
                 self.text_changed = False
-
             except Exception as e:
                 print(f"[Warning] Auto-sync from LiveView failed: {e}")
 
-        # 2️⃣ Execute the actual CLI command using cmd2
+        # 2️⃣ Clear any existing highlights before executing the command
+        try:
+            if hasattr(self, "liveview_box") and self.liveview_box:
+                self.liveview_box.tag_remove("highlight", "1.0", "end")
+        except Exception:
+            pass
+
+        # 3️⃣ Execute the command
         result = super().onecmd(line, **kwargs)
 
-        # 3️⃣ Reset change flag after command execution
+        # 4️⃣ Reset flag afterward
         self.text_changed = False
         return result
 
@@ -1012,6 +1120,24 @@ class TextTool(cmd2.Cmd):
         self.poutput("Live viewer started")
 
         
+    def do_highlight_toggle(self, arg):
+        """Toggle live highlighting on or off.
+
+        Usage:
+            highlight_toggle          - Toggle the highlighting state
+            highlight_toggle on/off    - Set explicitly
+        """
+        arg = arg.strip().lower()
+        if arg in ["on", "true", "1"]:
+            self.highlight_enabled = True
+        elif arg in ["off", "false", "0"]:
+            self.highlight_enabled = False
+        else:
+            # toggle state if no arg given
+            self.highlight_enabled = not self.highlight_enabled
+
+        state = "enabled" if self.highlight_enabled else "disabled"
+        self.poutput(f"LiveView highlighting is now {state}.")
 
 
 
@@ -1354,8 +1480,13 @@ class TextTool(cmd2.Cmd):
             ]
             if matching_lines:
                 self.poutput(''.join(matching_lines))
+                # Highlight matching lines in live view
+                self.highlight_lines_in_liveview(matching_lines)
             else:
                 self.poutput("No lines matched the pattern.")
+                # Clear previous highlights
+                self.highlight_lines_in_liveview([])
+
         except re.error:
             self.poutput("Error: Invalid regex pattern.")
 

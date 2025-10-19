@@ -434,6 +434,48 @@ class TextTool(cmd2.Cmd):
                                     command=lambda: save_from_liveview())
             save_button.pack(side="left", padx=5, pady=2)
             
+            # --- NEW BUTTONS FOR LOADING ---
+
+            def load_file_from_dialog():
+                """Open file dialog and load selected file."""
+                from tkinter import filedialog, messagebox
+                file_path = filedialog.askopenfilename(
+                    title="Open Text File",
+                    filetypes=[("Text files", "*.txt"), ("All files", "*.*")]
+                )
+                if file_path:
+                    try:
+                        self.do_load(f'"{file_path}"')
+                    except Exception as e:
+                        messagebox.showerror("Error", f"Failed to load file:\n{str(e)}")
+
+            def load_from_clipboard():
+                """Load content from the clipboard using existing command."""
+                try:
+                    self.do_load("")  # same as typing 'load' with no parameters
+                except Exception as e:
+                    from tkinter import messagebox
+                    messagebox.showerror("Error", f"Failed to load from clipboard:\n{str(e)}")
+
+            load_button = tk.Button(
+                save_frame,
+                text="📂 Load...",
+                font=("Consolas", 10),
+                command=load_file_from_dialog
+            )
+            load_button.pack(side="left", padx=5, pady=2)
+
+            load_clipboard_button = tk.Button(
+                save_frame,
+                text="📋 Load from Clipboard",
+                font=("Consolas", 10),
+                command=load_from_clipboard
+            )
+            load_clipboard_button.pack(side="left", padx=5, pady=2)
+
+            # --- END NEW BUTTONS ---
+            
+            
             save_as_button = tk.Button(save_frame, text="💾 Save As...", font=("Consolas", 10), 
                                         command=lambda: save_as_from_liveview())
             save_as_button.pack(side="left", padx=5, pady=2)

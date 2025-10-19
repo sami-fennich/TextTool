@@ -106,6 +106,7 @@ class TextTool(cmd2.Cmd):
         self.current_lines = []
         self.previous_lines = []
         self.original_full_text = []
+        self.text_changed = False
         self.selected_indices = []
         self.COLOR_HEADER = "\033[1;36m"  # Cyan
         self.COLOR_COMMAND = "\033[1;32m"  # Green
@@ -255,6 +256,12 @@ class TextTool(cmd2.Cmd):
                 self.liveview_root, width=100, height=40, font=("Consolas", 10)
             )
             self.liveview_box.pack(fill="both", expand=True)
+
+            def on_text_modified(event=None):
+                self.text_changed = True
+
+            self.liveview_box.bind("<<Modified>>", on_text_modified)
+            
 
             # Create a small status bar
             status = tk.Label(self.liveview_root, text="Line: 1", anchor="w", font=("Consolas", 9))
@@ -441,9 +448,6 @@ class TextTool(cmd2.Cmd):
             revert_button.pack(side="left", padx=5, pady=2)
 
             
-            sync_button = tk.Button(save_frame, text="⟲ Sync to TextTool", font=("Consolas", 10), 
-                                    command=lambda: sync_from_liveview_internal())
-            sync_button.pack(side="left", padx=5, pady=2)
 
             # ADD COMMAND PALETTE BUTTON
             command_palette_button = tk.Button(save_frame, text="⌨️ Commands", font=("Consolas", 10), 
@@ -908,25 +912,55 @@ class TextTool(cmd2.Cmd):
             self.update_live_view()
             self.liveview_root.mainloop()
 
+
         threading.Thread(target=run_viewer, daemon=True).start()
 
 
     def update_live_view(self):
-        """Refresh Live View immediately."""
         if hasattr(self, "liveview_box") and self.liveview_box:
             try:
-                # Check if the widget still exists
-                if self.liveview_box.winfo_exists():
-                    self.liveview_box.delete("1.0", tk.END)
-                    self.liveview_box.insert(tk.END, ''.join(self.current_lines))
-                    if hasattr(self, "liveview_root") and self.liveview_root:
-                        self.liveview_root.title(f"Live Text Viewer – {len(self.current_lines)} lines")
+                self.liveview_box.unbind("<<Modified>>")
+                self.liveview_box.delete("1.0", tk.END)
+                self.liveview_box.insert(tk.END, ''.join(self.current_lines))
+                self.liveview_box.edit_modified(False)
+                self.liveview_box.bind("<<Modified>>", lambda e: setattr(self, 'text_changed', True))
+                if hasattr(self, "liveview_root") and self.liveview_root:
+                    self.liveview_root.title(f"Live Text Viewer – {len(self.current_lines)} lines")
             except Exception as e:
                 # Window was destroyed, clean up references
                 self.liveview_root = None
                 self.liveview_box = None
                 self.file_path_label = None
                 self.update_file_path_display = None
+
+
+    def onecmd(self, line, **kwargs):
+        """Intercept all CLI commands to auto-sync if LiveView was manually edited."""
+        # 1️⃣ Before running any command, check if user edited text manually
+        if getattr(self, 'text_changed', False):
+            try:
+                if hasattr(self, 'liveview_box') and self.liveview_box:
+                    # Read text content from the LiveView
+                    new_text = self.liveview_box.get("1.0", "end-1c")
+
+                    # Save previous state for 'revert'
+                    self.previous_lines = self.current_lines.copy()
+
+                    # Replace current_lines with new content
+                    self.current_lines = [line + "\n" for line in new_text.splitlines()]
+
+                # Reset the flag after syncing
+                self.text_changed = False
+
+            except Exception as e:
+                print(f"[Warning] Auto-sync from LiveView failed: {e}")
+
+        # 2️⃣ Execute the actual CLI command using cmd2
+        result = super().onecmd(line, **kwargs)
+
+        # 3️⃣ Reset change flag after command execution
+        self.text_changed = False
+        return result
 
 
         

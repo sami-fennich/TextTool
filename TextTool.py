@@ -1497,7 +1497,6 @@ class TextTool(cmd2.Cmd):
             self.poutput("Error: Invalid regex pattern.")
 
 
-
     def do_select(self, arg):
         """Select lines containing (or not containing) the given string(s) or regex pattern(s).
 
@@ -1505,6 +1504,7 @@ class TextTool(cmd2.Cmd):
             select <string>         - Select lines containing the specified string or regex.
             select "!string"        - Select lines that do NOT contain the specified string or regex.
             select "string1 OR string2" - Select lines containing either string1 or string2.
+            select <string> case_sensitive - Make the search case sensitive.
 
         Special Placeholders:
             - Use [pipe] instead of the pipe character (|) in your input.
@@ -1517,9 +1517,11 @@ class TextTool(cmd2.Cmd):
             select "error"          - Selects lines containing the word "error".
             select "!error"         - Selects lines that do NOT contain the word "error".
             select "error OR warning" - Selects lines containing either "error" or "warning".
+            select "error" case_sensitive - Case sensitive selection.
 
         Notes:
-            - The selection is case-sensitive.
+            - By default, the selection is case-insensitive.
+            - Add 'case_sensitive' to make it case sensitive.
             - Supports regex patterns for more complex selections.
         """
         help_text = (
@@ -1527,7 +1529,8 @@ class TextTool(cmd2.Cmd):
             f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
             f"  {self.COLOR_EXAMPLE}select <string>{self.COLOR_RESET}         - Select lines containing the specified string or regex.\n"
             f"  {self.COLOR_EXAMPLE}select \"!string\"{self.COLOR_RESET}        - Select lines that do NOT contain the specified string or regex.\n"
-            f"  {self.COLOR_EXAMPLE}select \"string1 OR string2\"{self.COLOR_RESET} - Select lines containing either string1 or string2.\n\n"
+            f"  {self.COLOR_EXAMPLE}select \"string1 OR string2\"{self.COLOR_RESET} - Select lines containing either string1 or string2.\n"
+            f"  {self.COLOR_EXAMPLE}select <string> case_sensitive{self.COLOR_RESET} - Make the search case sensitive.\n\n"
             f"{self.COLOR_COMMAND}Special Placeholders:{self.COLOR_RESET}\n"
             f"  - Use {self.COLOR_EXAMPLE}[pipe]{self.COLOR_RESET} instead of the pipe character (|) in your input.\n"
             f"  - Use {self.COLOR_EXAMPLE}[doublequote]{self.COLOR_RESET} instead of double quotes (\") in your input.\n"
@@ -1537,9 +1540,11 @@ class TextTool(cmd2.Cmd):
             f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
             f"  {self.COLOR_EXAMPLE}select \"error\"{self.COLOR_RESET}          - Selects lines containing the word \"error\".\n"
             f"  {self.COLOR_EXAMPLE}select \"!error\"{self.COLOR_RESET}         - Selects lines that do NOT contain the word \"error\".\n"
-            f"  {self.COLOR_EXAMPLE}select \"error OR warning\"{self.COLOR_RESET} - Selects lines containing either \"error\" or \"warning\".\n\n"
+            f"  {self.COLOR_EXAMPLE}select \"error OR warning\"{self.COLOR_RESET} - Selects lines containing either \"error\" or \"warning\".\n"
+            f"  {self.COLOR_EXAMPLE}select \"error\" case_sensitive{self.COLOR_RESET} - Case sensitive selection.\n\n"
             f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
-            f"  - The selection is case-sensitive.\n"
+            f"  - By default, the selection is case-insensitive.\n"
+            f"  - Add 'case_sensitive' to make it case sensitive.\n"
             f"  - Supports regex patterns for more complex selections.\n"
         )        
         if arg.strip() == "?":  # Check if the argument is just "?"
@@ -1559,9 +1564,12 @@ class TextTool(cmd2.Cmd):
             arg = arg.args
 
         if not arg:
-            #self.poutput("Error: Please provide a string or regex.")
-            #return
             arg=""
+
+        # Check for case_sensitive parameter
+        case_sensitive = "case_sensitive" in arg
+        if case_sensitive:
+            arg = arg.replace("case_sensitive", "").strip()
 
         # Remove surrounding quotes if present
         arg = arg.strip('"').strip("'")
@@ -1576,8 +1584,10 @@ class TextTool(cmd2.Cmd):
         search_terms = [term.strip() for term in arg.split("OR")]
 
         try:
-            # Compile regex patterns for each search term
-            regexes = [re.compile(term.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+")) for term in search_terms]
+            # Compile regex patterns for each search term with appropriate flags
+            flags = 0 if case_sensitive else re.IGNORECASE
+            regexes = [re.compile(term.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+"), flags) for term in search_terms]
+            
             if negate:
                 # Select lines that do NOT match any of the regex patterns
                 self.current_lines = [
@@ -1599,10 +1609,10 @@ class TextTool(cmd2.Cmd):
                     if any(regex.search(line) for regex in regexes)
                 ]
             self.update_live_view()
-            self.poutput(f"Selected {len(self.current_lines)} lines.")
+            sensitivity = "case sensitive" if case_sensitive else "case insensitive"
+            self.poutput(f"Selected {len(self.current_lines)} lines ({sensitivity}).")
         except re.error:
             self.poutput("Error: Invalid regex pattern.")
-
 
     def do_unselect(self, arg):
         """Revert the last select action while keeping other modifications.
@@ -1652,6 +1662,7 @@ class TextTool(cmd2.Cmd):
             delete <string>         - Delete lines containing the specified string or regex.
             delete "!string"        - Delete lines that do NOT contain the specified string or regex.
             delete "string1 OR string2" - Delete lines containing either string1 or string2.
+            delete <string> case_sensitive - Make the search case sensitive.
 
         Special Placeholders:
             - Use [pipe] instead of the pipe character (|) in your input.
@@ -1664,17 +1675,20 @@ class TextTool(cmd2.Cmd):
             delete "error"          - Deletes lines containing the word "error".
             delete "!error"         - Deletes lines that do NOT contain the word "error".
             delete "error OR warning" - Deletes lines containing either "error" or "warning".
+            delete "error" case_sensitive - Case sensitive deletion.
 
         Notes:
-            - The deleteion is case-sensitive.
-            - Supports regex patterns for more complex deleteions.
+            - By default, the deletion is case-insensitive.
+            - Add 'case_sensitive' to make it case sensitive.
+            - Supports regex patterns for more complex deletions.
         """
         help_text = (
             f"{self.COLOR_HEADER}\nDelete lines containing (or not containing) the given string(s) or regex pattern(s).{self.COLOR_RESET}\n\n"
             f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
             f"  {self.COLOR_EXAMPLE}delete <string>{self.COLOR_RESET}         - Delete lines containing the specified string or regex.\n"
             f"  {self.COLOR_EXAMPLE}delete \"!string\"{self.COLOR_RESET}        - Delete lines that do NOT contain the specified string or regex.\n"
-            f"  {self.COLOR_EXAMPLE}delete \"string1 OR string2\"{self.COLOR_RESET} - Delete lines containing either string1 or string2.\n\n"
+            f"  {self.COLOR_EXAMPLE}delete \"string1 OR string2\"{self.COLOR_RESET} - Delete lines containing either string1 or string2.\n"
+            f"  {self.COLOR_EXAMPLE}delete <string> case_sensitive{self.COLOR_RESET} - Make the search case sensitive.\n\n"
             f"{self.COLOR_COMMAND}Special Placeholders:{self.COLOR_RESET}\n"
             f"  - Use {self.COLOR_EXAMPLE}[pipe]{self.COLOR_RESET} instead of the pipe character (|) in your input.\n"
             f"  - Use {self.COLOR_EXAMPLE}[doublequote]{self.COLOR_RESET} instead of double quotes (\") in your input.\n"
@@ -1684,10 +1698,12 @@ class TextTool(cmd2.Cmd):
             f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
             f"  {self.COLOR_EXAMPLE}delete \"error\"{self.COLOR_RESET}          - Deletes lines containing the word \"error\".\n"
             f"  {self.COLOR_EXAMPLE}delete \"!error\"{self.COLOR_RESET}         - Deletes lines that do NOT contain the word \"error\".\n"
-            f"  {self.COLOR_EXAMPLE}delete \"error OR warning\"{self.COLOR_RESET} - Deletes lines containing either \"error\" or \"warning\".\n\n"
+            f"  {self.COLOR_EXAMPLE}delete \"error OR warning\"{self.COLOR_RESET} - Deletes lines containing either \"error\" or \"warning\".\n"
+            f"  {self.COLOR_EXAMPLE}delete \"error\" case_sensitive{self.COLOR_RESET} - Case sensitive deletion.\n\n"
             f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
-            f"  - The deleteion is case-sensitive.\n"
-            f"  - Supports regex patterns for more complex deleteions.\n"
+            f"  - By default, the deletion is case-insensitive.\n"
+            f"  - Add 'case_sensitive' to make it case sensitive.\n"
+            f"  - Supports regex patterns for more complex deletions.\n"
         )        
         if arg.strip() == "?":  # Check if the argument is just "?"
             self.poutput(help_text)
@@ -1706,14 +1722,17 @@ class TextTool(cmd2.Cmd):
             arg = arg.args
 
         if not arg:
-            #self.poutput("Error: Please provide a string or regex.")
-            #return
             arg=""
+
+        # Check for case_sensitive parameter
+        case_sensitive = "case_sensitive" in arg
+        if case_sensitive:
+            arg = arg.replace("case_sensitive", "").strip()
 
         # Remove surrounding quotes if present
         arg = arg.strip('"').strip("'")
 
-        # Check if the deleteion is negated (e.g., "!string1")
+        # Check if the deletion is negated (e.g., "!string1")
         negate = False
         if arg.startswith("!"):
             negate = True
@@ -1723,8 +1742,10 @@ class TextTool(cmd2.Cmd):
         search_terms = [term.strip() for term in arg.split("OR")]
 
         try:
-            # Compile regex patterns for each search term
-            regexes = [re.compile(term.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+")) for term in search_terms]
+            # Compile regex patterns for each search term with appropriate flags
+            flags = 0 if case_sensitive else re.IGNORECASE
+            regexes = [re.compile(term.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+"), flags) for term in search_terms]
+            
             if not negate:
                 # Delete lines that do NOT match any of the regex patterns
                 self.current_lines = [
@@ -1746,10 +1767,10 @@ class TextTool(cmd2.Cmd):
                     if any(regex.search(line) for regex in regexes)
                 ]
             self.update_live_view()
-            self.poutput(f"Remaining {len(self.current_lines)} lines.")
+            sensitivity = "case sensitive" if case_sensitive else "case insensitive"
+            self.poutput(f"Remaining {len(self.current_lines)} lines ({sensitivity}).")
         except re.error:
             self.poutput("Error: Invalid regex pattern.")
-
 
 
 
@@ -1799,13 +1820,14 @@ class TextTool(cmd2.Cmd):
         """Replace multiple strings in the current text using a mapping file or clipboard content.
 
         Usage:
-            multiple_replace <map_file> [separator] [ > output_file ]
+            multiple_replace <map_file> [separator] [case_sensitive] [ > output_file ]
             multiple_replace             - Use clipboard content as the mapping file with space as the separator.
 
         Arguments:
             <map_file>     - Path to the mapping file (can be a text file or Excel file with two columns).
             <separator>    - Separator for text mapping files. Use "tab" for tab characters, "space" for spaces,
                              or a specific character. If the map file is an Excel file, this is ignored. Default value is "space".
+            case_sensitive - Optional flag to make replacements case sensitive.
 
         Description:
             This function replaces all occurrences of text found in the first column of the mapping file
@@ -1818,6 +1840,11 @@ class TextTool(cmd2.Cmd):
             multiple_replace map.xlsx > output.txt - Saves the output to 'output.txt'.
             multiple_replace map.xlsx >   - Outputs the result to the clipboard.
             multiple_replace              - Uses clipboard content as the mapping file with space as the separator.
+            multiple_replace map.txt tab case_sensitive - Case sensitive replacement.
+
+        Notes:
+            - By default, replacements are case-insensitive.
+            - Add 'case_sensitive' to make replacements case sensitive.
         """
         import sys
         import os
@@ -1825,12 +1852,13 @@ class TextTool(cmd2.Cmd):
         help_text = (
             f"{self.COLOR_HEADER}\nReplace multiple strings in the current text using a mapping file or clipboard content.{self.COLOR_RESET}\n\n"
             f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
-            f"  {self.COLOR_EXAMPLE}multiple_replace <map_file> [separator] [ > output_file ]{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}multiple_replace <map_file> [separator] [case_sensitive] [ > output_file ]{self.COLOR_RESET}\n"
             f"  {self.COLOR_EXAMPLE}multiple_replace{self.COLOR_RESET}             - Use clipboard content as the mapping file with space as the separator.\n\n"
             f"{self.COLOR_COMMAND}Arguments:{self.COLOR_RESET}\n"
             f"  {self.COLOR_EXAMPLE}<map_file>{self.COLOR_RESET}     - Path to the mapping file (can be a text file or Excel file with two columns).\n"
             f"  {self.COLOR_EXAMPLE}<separator>{self.COLOR_RESET}    - Separator for text mapping files. Use \"tab\" for tab characters, \"space\" for spaces,\n"
-            f"                     or a specific character. If the map file is an Excel file, this is ignored. Default value is \"space\".\n\n"
+            f"                     or a specific character. If the map file is an Excel file, this is ignored. Default value is \"space\".\n"
+            f"  {self.COLOR_EXAMPLE}case_sensitive{self.COLOR_RESET} - Optional flag to make replacements case sensitive.\n\n"
             f"{self.COLOR_COMMAND}Description:{self.COLOR_RESET}\n"
             f"  This function replaces all occurrences of text found in the first column of the mapping file\n"
             f"  with the corresponding text in the second column. The separator determines how the columns in the\n"
@@ -1840,8 +1868,11 @@ class TextTool(cmd2.Cmd):
             f"  {self.COLOR_EXAMPLE}multiple_replace map.xlsx{self.COLOR_RESET}     - Replaces text using an Excel mapping file.\n"
             f"  {self.COLOR_EXAMPLE}multiple_replace map.xlsx > output.txt{self.COLOR_RESET} - Saves the output to 'output.txt'.\n"
             f"  {self.COLOR_EXAMPLE}multiple_replace map.xlsx >{self.COLOR_RESET}   - Outputs the result to the clipboard.\n"
-            f"  {self.COLOR_EXAMPLE}multiple_replace{self.COLOR_RESET}              - Uses clipboard content as the mapping file with space as the separator.\n\n"
+            f"  {self.COLOR_EXAMPLE}multiple_replace{self.COLOR_RESET}              - Uses clipboard content as the mapping file with space as the separator.\n"
+            f"  {self.COLOR_EXAMPLE}multiple_replace map.txt tab case_sensitive{self.COLOR_RESET} - Case sensitive replacement.\n\n"
             f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
+            f"  - By default, replacements are case-insensitive.\n"
+            f"  - Add 'case_sensitive' to make replacements case sensitive.\n"
             f"  - The mapping file should have two columns: the first column contains the text to be replaced,\n"
             f"    and the second column contains the replacement text.\n"
             f"  - For Excel files, only the first two columns are used.\n"
@@ -1859,6 +1890,11 @@ class TextTool(cmd2.Cmd):
         except:
             a=0 
         arg=remove_spaces(arg)  
+        
+        # Check for case_sensitive parameter
+        case_sensitive = "case_sensitive" in arg
+        if case_sensitive:
+            arg = arg.replace("case_sensitive", "").strip()
         
         if not arg:  # If no arguments are provided, use clipboard content
             clipboard_content = cmd2.clipboard.get_paste_buffer()
@@ -1880,33 +1916,58 @@ class TextTool(cmd2.Cmd):
                 self.poutput("Error: No valid key-value pairs found in clipboard.")
                 return
             
-            # Perform the replacements
+            # Perform the replacements with case sensitivity
             for old_text, new_text in replacements.items():
-                self.current_lines = [line.replace(old_text, new_text) for line in self.current_lines]
+                if case_sensitive:
+                    self.current_lines = [line.replace(old_text, new_text) for line in self.current_lines]
+                else:
+                    # Case insensitive replacement
+                    for i, line in enumerate(self.current_lines):
+                        line_lower = line.lower()
+                        search_lower = old_text.lower()
+                        if search_lower in line_lower:
+                            start_idx = line_lower.find(search_lower)
+                            end_idx = start_idx + len(old_text)
+                            self.current_lines[i] = line[:start_idx] + new_text + line[end_idx:]
             
             self.update_live_view()
-            self.poutput("Replacement completed using clipboard content.")
+            sensitivity = "case sensitive" if case_sensitive else "case insensitive"
+            self.poutput(f"Replacement completed using clipboard content ({sensitivity}).")
             return
         
         # If arguments are provided, proceed with the original logic
-        if len(arg.split())==2:
-            separator = _unquote(arg.split()[1])
-        elif len(arg.split())==1:
-            separator="space"
+        args = arg.split()
+        if len(args) >= 2:
+            separator = _unquote(args[1])
+        elif len(args) == 1:
+            separator = "space"
         else:
             self.poutput(help_text)
             return
         
-        map_file=_unquote(retrieve_spaces(arg.split()[0]))
+        map_file = _unquote(retrieve_spaces(args[0]))
         if not os.path.exists(map_file):
             print(f"Error: Mapping file '{map_file}' does not exist.")
             sys.exit(1)  
         replacements = read_mapping_file(map_file, separator)      
+        
+        # Perform replacements with case sensitivity
         for old_text, new_text in replacements.items():
-            self.current_lines = [line.replace(old_text, new_text) for line in self.current_lines]
-            
+            if case_sensitive:
+                self.current_lines = [line.replace(old_text, new_text) for line in self.current_lines]
+            else:
+                # Case insensitive replacement
+                for i, line in enumerate(self.current_lines):
+                    line_lower = line.lower()
+                    search_lower = old_text.lower()
+                    if search_lower in line_lower:
+                        start_idx = line_lower.find(search_lower)
+                        end_idx = start_idx + len(old_text)
+                        self.current_lines[i] = line[:start_idx] + new_text + line[end_idx:]
+                
         self.update_live_view()
-        self.poutput("Replacement completed.")
+        sensitivity = "case sensitive" if case_sensitive else "case insensitive"
+        self.poutput(f"Replacement completed ({sensitivity}).")
         
     def do_replace(self, arg):
         """Replace a string with another in the current text. Supports regex and capture groups.
@@ -2008,7 +2069,27 @@ class TextTool(cmd2.Cmd):
             except Exception as d:
                 self.poutput(f"Literal Replacement failed. Details: {d}")            
                 
+    def complete_replace(self, text, line, begidx, endidx):      
+        FRIENDS_T = ['case_sensitive','?']
+        if not text:
+          completions = FRIENDS_T[:]
+        else: 
+          completions = [ f 
+                          for f in (FRIENDS_T)
+              if f.lower().startswith(text.lower()) 
+              ]
+        return completions
 
+    def complete_show(self, text, line, begidx, endidx):      
+        FRIENDS_T = ['?']
+        if not text:
+          completions = FRIENDS_T[:]
+        else: 
+          completions = [ f 
+                          for f in (FRIENDS_T)
+              if f.lower().startswith(text.lower()) 
+              ]
+        return completions
 
     def do_revert(self, arg):
         """Revert the last replace or select action.
@@ -2273,13 +2354,17 @@ class TextTool(cmd2.Cmd):
         """Interactive find and replace with user confirmation.
         
         Usage:
-            replace_confirm "old_text" "new_text"
+            replace_confirm "old_text" "new_text" [case_sensitive]
         
         The user is prompted for each match:
           - (y)es → Replace this occurrence
           - (n)o → Skip this occurrence
           - (a)ll → Replace all occurrences
           - (q)uit → Stop replacing
+          
+        Notes:
+            - By default, the search is case-insensitive.
+            - Add 'case_sensitive' to make it case sensitive.
         """
 
         if arg.strip() == "?":
@@ -2290,15 +2375,15 @@ class TextTool(cmd2.Cmd):
             self.poutput("Error: No file is loaded.")
             return
 
-
-
         self.previous_lines = self.current_lines.copy()
         
         if hasattr(arg, 'args'):
             arg = arg.args
 
-        # Replace [pipe] with | and [doublequote] with " in the input
-        #arg = arg.replace("[pipe]", "|").replace("[doublequote]", '"')
+        # Check for case_sensitive parameter
+        case_sensitive = "case_sensitive" in arg
+        if case_sensitive:
+            arg = arg.replace("case_sensitive", "").strip()
 
         # Check if the arguments are quoted
         if arg.startswith('"') and arg.count('"') >= 2:
@@ -2317,7 +2402,9 @@ class TextTool(cmd2.Cmd):
                 return
             old_text,new_text = args[0], args[1]
         
-        regex = re.compile(re.escape(old_text))  # Escape special chars for literal match
+        # Use appropriate flags based on case sensitivity
+        flags = 0 if case_sensitive else re.IGNORECASE
+        regex = re.compile(re.escape(old_text), flags)  # Escape special chars for literal match
         updated_lines = []
         
         replace_all = False
@@ -2362,8 +2449,8 @@ class TextTool(cmd2.Cmd):
         
         self.current_lines = updated_lines
         self.update_live_view()
-        self.poutput("Replacement completed.")
-
+        sensitivity = "case sensitive" if case_sensitive else "case insensitive"
+        self.poutput(f"Replacement completed ({sensitivity}).")
 
     def do_exit(self, arg):
         """Exit the tool.
@@ -2485,11 +2572,22 @@ class TextTool(cmd2.Cmd):
             except Exception as d:
                 self.poutput(f"Literal Replacement failed. Details: {d}")
 
+    def complete_replace_in_lines(self, text, line, begidx, endidx):      
+        FRIENDS_T = ['case_sensitive','?']
+        if not text:
+          completions = FRIENDS_T[:]
+        else: 
+          completions = [ f 
+                          for f in (FRIENDS_T)
+              if f.lower().startswith(text.lower()) 
+              ]
+        return completions
+
     def do_extract_between(self, arg):
         """Extract all sections of text between pairs of start_pattern and end_pattern.
 
         Usage:
-            extract_between "start_pattern" "end_pattern"
+            extract_between "start_pattern" "end_pattern" [case_sensitive]
 
         Description:
             Finds every occurrence of start_pattern and extracts all text from that point
@@ -2499,6 +2597,10 @@ class TextTool(cmd2.Cmd):
         Example:
             extract_between "BEGIN" "END"
             → extracts all segments between each 'BEGIN' and the next 'END'.
+            
+        Notes:
+            - By default, the search is case-insensitive.
+            - Add 'case_sensitive' to make it case sensitive.
         """
         if arg.strip() == "?":
             self.do_help("extract_between")
@@ -2508,6 +2610,11 @@ class TextTool(cmd2.Cmd):
             return
 
         self.previous_lines = self.current_lines.copy()
+
+        # Check for case_sensitive parameter
+        case_sensitive = "case_sensitive" in arg
+        if case_sensitive:
+            arg = arg.replace("case_sensitive", "").strip()
 
         if arg.startswith('"') and arg.count('"') >= 2:
             # Split the arguments by double quotes
@@ -2532,8 +2639,10 @@ class TextTool(cmd2.Cmd):
                 start_pattern = f"^{start_pattern}$"
 
         try:
-            start_regex = re.compile(start_pattern)
-            end_regex = re.compile(end_pattern)
+            # Use appropriate flags based on case sensitivity
+            flags = 0 if case_sensitive else re.IGNORECASE
+            start_regex = re.compile(start_pattern, flags)
+            end_regex = re.compile(end_pattern, flags)
 
             extracting = False
             extracted_lines = []
@@ -2560,12 +2669,12 @@ class TextTool(cmd2.Cmd):
             if extracted_lines:
                 self.current_lines = extracted_lines
                 self.update_live_view()
-                self.poutput(f"Extracted {len(extracted_lines)} lines between matching patterns.")
+                sensitivity = "case sensitive" if case_sensitive else "case insensitive"
+                self.poutput(f"Extracted {len(extracted_lines)} lines between matching patterns ({sensitivity}).")
             else:
                 self.poutput("No matching start/end patterns found.")
         except re.error:
             self.poutput("Error: Invalid regex pattern.")
-
 
 
 
@@ -2664,25 +2773,40 @@ class TextTool(cmd2.Cmd):
         """Select or exclude lines from the loaded text based on a list from a file or an Excel sheet.
 
         Usage:
-            select_from_file "<file_path>" [negate]
+            select_from_file "<file_path>" [negate] [case_sensitive]
 
         Arguments:
             "<file_path>"  - Path to the text or Excel file containing the selection strings.
             [negate]       - Optional flag to exclude matching lines instead of selecting them.
+            [case_sensitive] - Optional flag to make the search case sensitive.
 
         Examples:
             select_from_file "C:/strings.txt"        - Selects lines containing strings from 'strings.txt'.
             select_from_file "C:/strings.xlsx"       - Selects lines containing values from the first column of 'strings.xlsx'.
             select_from_file "C:/strings.txt" negate - Excludes lines containing strings from 'strings.txt'.
+            select_from_file "C:/strings.txt" case_sensitive - Case sensitive selection.
+
+        Notes:
+            - By default, the search is case-insensitive.
+            - Add 'case_sensitive' to make it case sensitive.
         """
         import pandas as pd
         help_text = (
             f"{self.COLOR_HEADER}\nSelect or exclude lines from the loaded text based on a list from a file or an Excel sheet.{self.COLOR_RESET}\n\n"
             f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
-            f"  {self.COLOR_EXAMPLE}select_from_file \"<file_path>\" [negate]{self.COLOR_RESET}\n\n"
+            f"  {self.COLOR_EXAMPLE}select_from_file \"<file_path>\" [negate] [case_sensitive]{self.COLOR_RESET}\n\n"
             f"{self.COLOR_COMMAND}Arguments:{self.COLOR_RESET}\n"
-			f"  {self.COLOR_EXAMPLE}\"<file_path>\"  - Path to the text or Excel file containing the selection strings.{self.COLOR_RESET}\n"
-			f"  {self.COLOR_EXAMPLE}[negate]       - Optional flag to exclude matching lines instead of selecting them.\n\n"
+            f"  {self.COLOR_EXAMPLE}\"<file_path>\"  - Path to the text or Excel file containing the selection strings.{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}[negate]       - Optional flag to exclude matching lines instead of selecting them.\n"
+            f"  {self.COLOR_EXAMPLE}[case_sensitive] - Optional flag to make the search case sensitive.\n\n"
+            f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}select_from_file \"C:/strings.txt\"{self.COLOR_RESET}        - Selects lines containing strings from 'strings.txt'.\n"
+            f"  {self.COLOR_EXAMPLE}select_from_file \"C:/strings.xlsx\"{self.COLOR_RESET}       - Selects lines containing values from the first column of 'strings.xlsx'.\n"
+            f"  {self.COLOR_EXAMPLE}select_from_file \"C:/strings.txt\" negate{self.COLOR_RESET} - Excludes lines containing strings from 'strings.txt'.\n"
+            f"  {self.COLOR_EXAMPLE}select_from_file \"C:/strings.txt\" case_sensitive{self.COLOR_RESET} - Case sensitive selection.\n\n"
+            f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
+            f"  - By default, the search is case-insensitive.\n"
+            f"  - Add 'case_sensitive' to make it case sensitive.\n"
         )
         if arg.strip() == "?":  # Check if the argument is just "?"
             self.poutput(help_text)
@@ -2695,6 +2819,7 @@ class TextTool(cmd2.Cmd):
         
         file_path = args[0].strip('"').strip("'")
         negate = "negate" in args
+        case_sensitive = "case_sensitive" in args
         
         if not os.path.exists(file_path):
             self.poutput(f"Error: File '{file_path}' does not exist.")
@@ -2720,17 +2845,35 @@ class TextTool(cmd2.Cmd):
         # Save previous state
         self.previous_lines = self.current_lines.copy()
         
-        if negate:
-            self.current_lines = [line for line in self.current_lines if not any(s in line for s in strings)]
-            self.update_live_view()
+        if case_sensitive:
+            # Case sensitive matching
+            if negate:
+                self.current_lines = [line for line in self.current_lines if not any(s in line for s in strings)]
+            else:
+                self.current_lines = [line for line in self.current_lines if any(s in line for s in strings)]
         else:
-            self.current_lines = [line for line in self.current_lines if any(s in line for s in strings)]
-            self.update_live_view()
+            # Case insensitive matching
+            strings_lower = [s.lower() for s in strings]
+            if negate:
+                self.current_lines = [line for line in self.current_lines if not any(s_lower in line.lower() for s_lower in strings_lower)]
+            else:
+                self.current_lines = [line for line in self.current_lines if any(s_lower in line.lower() for s_lower in strings_lower)]
         
-        action = "Excluded" if negate else "Selected"
-        self.poutput(f"{action} {len(self.current_lines)} lines based on '{file_path}'.")
+        self.update_live_view()
+        sensitivity = "case sensitive" if case_sensitive else "case insensitive"
+        action = "excluded" if negate else "selected"
+        self.poutput(f"{action.capitalize()} {len(self.current_lines)} lines ({sensitivity}).")
 
-
+    def complete_select_from_file(self, text, line, begidx, endidx):      
+        FRIENDS_T = ['negate','case-sensitive','?']
+        if not text:
+          completions = FRIENDS_T[:]
+        else: 
+          completions = [ f 
+                          for f in (FRIENDS_T)
+              if f.lower().startswith(text.lower()) 
+              ]
+        return completions
 
 
     def do_convert_case(self, arg):
@@ -3097,6 +3240,16 @@ class TextTool(cmd2.Cmd):
         self.current_lines = new_lines
         self.update_live_view()
 
+    def complete_right_replace(self, text, line, begidx, endidx):      
+        FRIENDS_T = ['case_sensitive','?']
+        if not text:
+          completions = FRIENDS_T[:]
+        else: 
+          completions = [ f 
+                          for f in (FRIENDS_T)
+              if f.lower().startswith(text.lower()) 
+              ]
+        return completions
 
     def do_left_replace(self, arg):
         """Replace everything from the start of the line up to and including string1 with string2.
@@ -3162,7 +3315,16 @@ class TextTool(cmd2.Cmd):
         self.current_lines = new_lines
         self.update_live_view()
 
-
+    def complete_left_replace(self, text, line, begidx, endidx):      
+        FRIENDS_T = ['case_sensitive','?']
+        if not text:
+          completions = FRIENDS_T[:]
+        else: 
+          completions = [ f 
+                          for f in (FRIENDS_T)
+              if f.lower().startswith(text.lower()) 
+              ]
+        return completions
 
     def do_diff(self, arg):
         diff = difflib.unified_diff(
@@ -3297,6 +3459,16 @@ class TextTool(cmd2.Cmd):
         )
         self.update_live_view()
 
+    def complete_replace_placeholder(self, text, line, begidx, endidx):      
+        FRIENDS_T = ['case_sensitive','?']
+        if not text:
+          completions = FRIENDS_T[:]
+        else: 
+          completions = [ f 
+                          for f in (FRIENDS_T)
+              if f.lower().startswith(text.lower()) 
+              ]
+        return completions
 
     def do_clone(self, arg):
         """Repeat lines or the whole text a specified number of times.
@@ -3384,7 +3556,60 @@ class TextTool(cmd2.Cmd):
         except ValueError:
             self.poutput("Error: Parameters must be integers.")
 
+    def complete_select(self, text, line, begidx, endidx):      
+        FRIENDS_T = ['case-sensitive','[pipe]', '[doublequote]', '[quote]', '[tab]', 'OR','?']
+        if not text:
+          completions = FRIENDS_T[:]
+        else: 
+          completions = [ f 
+                          for f in (FRIENDS_T)
+              if f.lower().startswith(text.lower()) 
+              ]
+        return completions
 
+    def complete_delete(self, text, line, begidx, endidx):      
+        FRIENDS_T = ['case-sensitive','[pipe]', '[doublequote]', '[quote]', '[tab]', 'OR','?']
+        if not text:
+          completions = FRIENDS_T[:]
+        else: 
+          completions = [ f 
+                          for f in (FRIENDS_T)
+              if f.lower().startswith(text.lower()) 
+              ]
+        return completions
+
+    def complete_replace_confirm(self, text, line, begidx, endidx):      
+        FRIENDS_T = ['case_sensitive','?']
+        if not text:
+          completions = FRIENDS_T[:]
+        else: 
+          completions = [ f 
+                          for f in (FRIENDS_T)
+              if f.lower().startswith(text.lower()) 
+              ]
+        return completions
+
+    def complete_extract_between(self, text, line, begidx, endidx):      
+        FRIENDS_T = ['case_sensitive','?']
+        if not text:
+          completions = FRIENDS_T[:]
+        else: 
+          completions = [ f 
+                          for f in (FRIENDS_T)
+              if f.lower().startswith(text.lower()) 
+              ]
+        return completions
+
+    def complete_multiple_replace(self, text, line, begidx, endidx):      
+        FRIENDS_T = ['case_sensitive','?']
+        if not text:
+          completions = FRIENDS_T[:]
+        else: 
+          completions = [ f 
+                          for f in (FRIENDS_T)
+              if f.lower().startswith(text.lower()) 
+              ]
+        return completions
 
 if __name__ == '__main__':
     app = TextTool()

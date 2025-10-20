@@ -310,9 +310,36 @@ class TextTool(cmd2.Cmd):
             self.liveview_box.pack(fill="both", expand=True)
 
             def on_text_modified(event=None):
-                self.text_changed = True
+                """Mark text as changed and scroll to the last inserted text."""
+                if self.liveview_box.edit_modified():
+                    self.text_changed = True
+
+                    # Move cursor to end of text
+                    self.liveview_box.mark_set(tk.INSERT, tk.END)
+
+                    # Force scrolling *after* Tk updates the display
+                    self.liveview_box.after_idle(lambda: self.liveview_box.see(tk.INSERT))
+
+                    # Reset modified flag
+                    self.liveview_box.edit_modified(False)
+
 
             self.liveview_box.bind("<<Modified>>", on_text_modified)
+            
+            # --- Ensure paste actions scroll correctly ---
+            def on_paste(event=None):
+                """Handle Ctrl+V paste and scroll to the end after insertion."""
+                self.liveview_box.after_idle(lambda: (
+                    self.liveview_box.mark_set(tk.INSERT, tk.END),
+                    self.liveview_box.see(tk.END)
+                ))
+
+            # Bind both keyboard and right-click paste actions
+            self.liveview_box.bind("<Control-v>", lambda e: on_paste())
+            self.liveview_box.bind("<Control-V>", lambda e: on_paste())
+            self.liveview_box.bind("<<Paste>>", lambda e: on_paste())
+
+
             
 
             # Create a small status bar
@@ -1011,6 +1038,8 @@ class TextTool(cmd2.Cmd):
             self.liveview_box.bind("<ButtonRelease>", update_cursor_position)
             self.liveview_box.bind("<KeyRelease>", update_cursor_position)
             self.liveview_box.bind("<Motion>", update_cursor_position)
+            self.liveview_box.bind("<<Modified>>", lambda e: (on_text_modified(), update_cursor_position()))
+
 
             # Handle window close
             def on_close():

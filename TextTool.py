@@ -651,56 +651,62 @@ class TextTool(cmd2.Cmd):
                 def apply_replacement():
                     """Apply the replacement using existing commands"""
                     try:
-                        search_pattern = search_entry.get()
-                        replace_pattern = replace_entry.get()
-                        target_pattern = target_entry.get()
+                        search_pattern = search_entry.get().strip()
+                        replace_pattern = replace_entry.get().strip()
+                        target_pattern = target_entry.get().strip()
                         operation = operation_var.get()
                         case_sensitive = case_var.get()
-                        
-                        if not search_pattern:
-                            messagebox.showwarning("Warning", "Please enter a search pattern.")
+
+                        # --- Validate replacement text ---
+                        if not replace_pattern:
+                            messagebox.showwarning("Warning", "Please enter a replacement text.")
                             return
-                        
-                        # Build the command based on operation type
+
+                        # --- Determine command ---
                         if operation == "Simple Replace":
+                            if not search_pattern:
+                                messagebox.showwarning("Warning", "Search Pattern is required for Simple Replace.")
+                                return
                             cmd = f'replace "{search_pattern}" "{replace_pattern}"'
-                            if case_sensitive:
-                                cmd += " case_sensitive"
-                        
+
                         elif operation == "Replace in Matching Lines":
-                            if not target_pattern:
-                                messagebox.showwarning("Warning", "Please enter a target pattern for line matching.")
+                            if not search_pattern or not target_pattern:
+                                messagebox.showwarning("Warning", "Both Search and Target patterns are required for Replace in Matching Lines.")
                                 return
                             cmd = f'replace_in_lines "{search_pattern}" "{replace_pattern}" "{target_pattern}"'
-                            if case_sensitive:
-                                cmd += " case_sensitive"
-                        
+
                         elif operation == "Right Replace":
-                            cmd = f'right_replace "{search_pattern}" "{replace_pattern}"'
-                            if case_sensitive:
-                                cmd += " case_sensitive"
-                        
+                            # Allow empty search pattern → append mode
+                            if search_pattern:
+                                cmd = f'right_replace "{search_pattern}" "{replace_pattern}"'
+                            else:
+                                cmd = f'right_replace "" "{replace_pattern}"'
+
                         elif operation == "Left Replace":
-                            cmd = f'left_replace "{search_pattern}" "{replace_pattern}"'
-                            if case_sensitive:
-                                cmd += " case_sensitive"
-                        
+                            # Allow empty search pattern → prepend mode
+                            if search_pattern:
+                                cmd = f'left_replace "{search_pattern}" "{replace_pattern}"'
+                            else:
+                                cmd = f'left_replace "" "{replace_pattern}"'
+
                         else:
                             messagebox.showerror("Error", "Unknown operation type")
                             return
-                        
-                        # Execute the command
+
+                        if case_sensitive:
+                            cmd += " case_sensitive"
+
+                        # --- Execute and update ---
                         self.onecmd(cmd)
-                        
-                        # Update Live View with changes
                         self.update_live_view()
-                        
+
                         messagebox.showinfo("Success", "Replacement applied successfully!")
                         dialog.destroy()
-                        
+
                     except Exception as e:
                         messagebox.showerror("Error", f"Failed to apply replacement:\n{str(e)}")
-                
+                 
+ 
                 # Bind operation change event
                 operation_var.trace('w', on_operation_change)
                 
@@ -3031,8 +3037,9 @@ class TextTool(cmd2.Cmd):
         Usage:
             right_replace "string1" "string2" [case_sensitive]
 
-        By default, replacement is case insensitive.
-        Add 'case_sensitive' to make it case sensitive.
+        Notes:
+            - If string1 is empty or only string2 is provided, string2 is appended at the end of all lines.
+            - By default, replacement is case insensitive.
         """
         if arg.strip() == "?":
             self.do_help("right_replace")
@@ -3043,49 +3050,49 @@ class TextTool(cmd2.Cmd):
 
         self.previous_lines = self.current_lines.copy()
 
-        # Check for case_sensitive parameter
         case_sensitive = "case_sensitive" in arg
         if case_sensitive:
             arg = arg.replace("case_sensitive", "").strip()
 
-        # Parse arguments
+        # --- Parse arguments ---
+        args = []
         if arg.startswith('"') and arg.count('"') >= 2:
-            # Split the arguments by double quotes
-            args = arg.split('"')
-            string1, string2 = args[1], args[3]
-            if (string1.startswith("(") or string1.startswith("\\") or "." in string1) and not (string1.startswith("^") and string1.endswith("$")):
-                string1 = f"^{string1}$"
+            args = [a for a in arg.split('"') if a.strip()]
         elif arg.startswith("'") and arg.count("'") >= 2:
-            # Split the arguments by double quotes
-            args = arg.split("'")
-            string1, string2 = args[1], args[3]
-            if (string1.startswith("(") or string1.startswith("\\") or "." in string1) and not (string1.startswith("^") and string1.endswith("$")):
-                string1 = f"^{string1}$"            
+            args = [a for a in arg.split("'") if a.strip()]
         else:
-            # Split the arguments by spaces (for unquoted arguments)
             args = arg.split()
-            if len(args) < 2:
-                self.poutput('Error: Invalid syntax. Usage: right_replace "string1" "string2"')
-                return
+
+        # Determine string1, string2
+        string1, string2 = "", ""
+        if len(args) >= 2:
             string1, string2 = args[0], args[1]
-            if (string1.startswith("(") or string1.startswith("\\") or "." in string1) and not (string1.startswith("^") and string1.endswith("$")):
-                string1 = f"^{string1}$"
+        elif len(args) == 1:
+            string2 = args[0]
+        else:
+            self.poutput('Error: Missing parameters. Usage: right_replace "string1" "string2"')
+            return
 
+        # --- Perform replacement ---
         new_lines = []
-        for line in self.current_lines:
-            if case_sensitive:
-                idx = line.find(string1)
-            else:
-                idx = line.lower().find(string1.lower())
-            if idx != -1:
-                new_lines.append(line[:idx] + string2 + "\n")
-            else:
-                new_lines.append(line)
-        self.current_lines = new_lines
+        if not string1:  # append mode
+            for line in self.current_lines:
+                if not line.endswith("\n"):
+                    line += "\n"
+                new_lines.append(line.rstrip("\n") + string2 + "\n")
+            self.poutput(f"Appended '{string2}' at the end of all lines.")
+        else:
+            for line in self.current_lines:
+                idx = line.find(string1) if case_sensitive else line.lower().find(string1.lower())
+                if idx != -1:
+                    new_lines.append(line[:idx] + string2 + "\n")
+                else:
+                    new_lines.append(line)
+            self.poutput(f"Right-side replacement completed ({'case sensitive' if case_sensitive else 'case insensitive'}).")
 
+        self.current_lines = new_lines
         self.update_live_view()
-        sensitivity = "case sensitive" if case_sensitive else "case insensitive"
-        self.poutput(f"Right-side replacement completed ({sensitivity}).")
+
 
     def do_left_replace(self, arg):
         """Replace everything from the start of the line up to and including string1 with string2.
@@ -3093,8 +3100,9 @@ class TextTool(cmd2.Cmd):
         Usage:
             left_replace "string1" "string2" [case_sensitive]
 
-        By default, replacement is case insensitive.
-        Add 'case_sensitive' to make it case sensitive.
+        Notes:
+            - If string1 is empty or only string2 is provided, string2 is added at the beginning of all lines.
+            - By default, replacement is case insensitive.
         """
         if arg.strip() == "?":
             self.do_help("left_replace")
@@ -3105,49 +3113,45 @@ class TextTool(cmd2.Cmd):
 
         self.previous_lines = self.current_lines.copy()
 
-        # Check for case_sensitive parameter
         case_sensitive = "case_sensitive" in arg
         if case_sensitive:
             arg = arg.replace("case_sensitive", "").strip()
 
-        # Parse arguments
+        # --- Parse arguments ---
+        args = []
         if arg.startswith('"') and arg.count('"') >= 2:
-            # Split the arguments by double quotes
-            args = arg.split('"')
-            string1, string2 = args[1], args[3]
-            if (string1.startswith("(") or string1.startswith("\\") or "." in string1) and not (string1.startswith("^") and string1.endswith("$")):
-                string1 = f"^{string1}$"
+            args = [a for a in arg.split('"') if a.strip()]
         elif arg.startswith("'") and arg.count("'") >= 2:
-            # Split the arguments by double quotes
-            args = arg.split("'")
-            string1, string2 = args[1], args[3]
-            if (string1.startswith("(") or string1.startswith("\\") or "." in string1) and not (string1.startswith("^") and string1.endswith("$")):
-                string1 = f"^{string1}$"            
+            args = [a for a in arg.split("'") if a.strip()]
         else:
-            # Split the arguments by spaces (for unquoted arguments)
             args = arg.split()
-            if len(args) < 2:
-                self.poutput('Error: Invalid syntax. Usage: left_replace "string1" "string2"')
-                return
+
+        string1, string2 = "", ""
+        if len(args) >= 2:
             string1, string2 = args[0], args[1]
-            if (string1.startswith("(") or string1.startswith("\\") or "." in string1) and not (string1.startswith("^") and string1.endswith("$")):
-                string1 = f"^{string1}$"
+        elif len(args) == 1:
+            string2 = args[0]
+        else:
+            self.poutput('Error: Missing parameters. Usage: left_replace "string1" "string2"')
+            return
 
+        # --- Perform replacement ---
         new_lines = []
-        for line in self.current_lines:
-            if case_sensitive:
-                idx = line.find(string1)
-            else:
-                idx = line.lower().find(string1.lower())
-            if idx != -1:
-                new_lines.append(string2 + line[idx + len(string1):])
-            else:
-                new_lines.append(line)
-        self.current_lines = new_lines
+        if not string1:  # prepend mode
+            for line in self.current_lines:
+                new_lines.append(string2 + line)
+            self.poutput(f"Prepended '{string2}' at the beginning of all lines.")
+        else:
+            for line in self.current_lines:
+                idx = line.find(string1) if case_sensitive else line.lower().find(string1.lower())
+                if idx != -1:
+                    new_lines.append(string2 + line[idx + len(string1):])
+                else:
+                    new_lines.append(line)
+            self.poutput(f"Left-side replacement completed ({'case sensitive' if case_sensitive else 'case insensitive'}).")
 
+        self.current_lines = new_lines
         self.update_live_view()
-        sensitivity = "case sensitive" if case_sensitive else "case insensitive"
-        self.poutput(f"Left-side replacement completed ({sensitivity}).")
 
 
 

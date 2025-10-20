@@ -3172,6 +3172,132 @@ class TextTool(cmd2.Cmd):
         self.poutput('\n'.join(diff))
 
 
+    def do_replace_placeholder(self, arg):
+        """Replace a placeholder with multiple values from a file or clipboard.
+
+        Usage:
+            replace_placeholder "string1" [filename] [case_sensitive]
+
+        Behavior:
+            - If filename is provided → use its non-empty lines as replacement values.
+            - If filename is omitted → use clipboard text lines instead.
+            - The new text replaces the old one (original lines are not kept).
+            - Add 'case_sensitive' to make matching case-sensitive.
+
+        Example:
+            Clipboard or file contains:
+                abc
+                def
+                geh
+
+            Current text:
+                hello my dear
+                yes my baby
+                my phone is closed
+
+            Command:
+                replace_placeholder "my" myfile.txt
+
+            Result:
+                hello abc dear
+                yes abc baby
+                abc phone is closed
+                hello def dear
+                yes def baby
+                def phone is closed
+                hello geh dear
+                yes geh baby
+                geh phone is closed
+        """
+        if arg.strip() == "?":
+            self.do_help("replace_placeholder")
+            return
+
+        import shlex, os, tkinter as tk
+
+        # --- Parse arguments safely ---
+        try:
+            args = shlex.split(arg)
+        except ValueError:
+            self.poutput("Error: Invalid quotes or arguments.")
+            return
+
+        # Detect case sensitivity flag
+        if "case_sensitive" in args:
+            case_sensitive = True
+            args.remove("case_sensitive")
+        else:
+            case_sensitive = False
+
+        # Validate args
+        if len(args) == 0:
+            self.poutput('Error: Missing parameters. Usage: replace_placeholder "string1" [filename] [case_sensitive]')
+            return
+
+        string1 = args[0]
+        filename = args[1] if len(args) > 1 else None
+
+        if not self.current_lines:
+            self.poutput("Error: No text is loaded.")
+            return
+
+        # --- Load substitution values ---
+        file_lines = []
+        if filename:
+            if not os.path.exists(filename):
+                self.poutput(f"Error: File '{filename}' not found.")
+                return
+            try:
+                with open(filename, "r", encoding="utf-8") as f:
+                    file_lines = [line.strip() for line in f if line.strip()]
+            except Exception as e:
+                self.poutput(f"Error reading file: {e}")
+                return
+        else:
+            try:
+                root = tk.Tk()
+                root.withdraw()
+                clipboard_text = root.clipboard_get()
+                root.destroy()
+                file_lines = [line.strip() for line in clipboard_text.splitlines() if line.strip()]
+                if not file_lines:
+                    self.poutput("Error: Clipboard is empty or contains only blank lines.")
+                    return
+                self.poutput(f"Using clipboard content as substitution source ({len(file_lines)} lines).")
+            except tk.TclError:
+                self.poutput("Error: Could not access clipboard or it is empty.")
+                return
+
+        if not file_lines:
+            self.poutput("Error: No valid lines found in input source.")
+            return
+
+        # --- Perform replacement ---
+        self.previous_lines = self.current_lines.copy()
+        new_lines = []
+
+        for value in file_lines:
+            for line in self.previous_lines:
+                if case_sensitive:
+                    new_line = line.replace(string1, value)
+                else:
+                    import re
+                    # Case-insensitive replacement
+                    pattern = re.compile(re.escape(string1), re.IGNORECASE)
+                    new_line = pattern.sub(value, line)
+                new_lines.append(new_line if new_line.endswith("\n") else new_line + "\n")
+
+        # Replace the content (not append)
+        self.current_lines = new_lines
+
+        src_desc = f"file '{filename}'" if filename else "clipboard"
+        self.poutput(
+            f"Replaced placeholder '{string1}' with {len(file_lines)} values from {src_desc} "
+            f"({'case sensitive' if case_sensitive else 'case insensitive'})."
+        )
+        self.update_live_view()
+
+
     def do_clone(self, arg):
         """Repeat lines or the whole text a specified number of times.
 

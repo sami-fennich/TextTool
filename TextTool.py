@@ -3038,8 +3038,8 @@ class TextTool(cmd2.Cmd):
             right_replace "string1" "string2" [case_sensitive]
 
         Notes:
-            - If string1 is empty or only string2 is provided, string2 is appended at the end of all lines.
-            - By default, replacement is case insensitive.
+            - If string1 is empty or only string2 is provided, string2 is appended to all lines.
+            - Supports case-sensitive or case-insensitive replacement.
         """
         if arg.strip() == "?":
             self.do_help("right_replace")
@@ -3048,42 +3048,46 @@ class TextTool(cmd2.Cmd):
             self.poutput("Error: No file is loaded.")
             return
 
+        # Save previous state
         self.previous_lines = self.current_lines.copy()
 
-        case_sensitive = "case_sensitive" in arg
-        if case_sensitive:
-            arg = arg.replace("case_sensitive", "").strip()
+        import shlex
+        try:
+            args = shlex.split(arg)
+        except ValueError:
+            self.poutput("Error: Invalid quotes or arguments.")
+            return
 
-        # --- Parse arguments ---
-        args = []
-        if arg.startswith('"') and arg.count('"') >= 2:
-            args = [a for a in arg.split('"') if a.strip()]
-        elif arg.startswith("'") and arg.count("'") >= 2:
-            args = [a for a in arg.split("'") if a.strip()]
+        # Detect and remove case_sensitive flag
+        if "case_sensitive" in args:
+            case_sensitive = True
+            args.remove("case_sensitive")
         else:
-            args = arg.split()
+            case_sensitive = False
 
-        # Determine string1, string2
-        string1, string2 = "", ""
-        if len(args) >= 2:
-            string1, string2 = args[0], args[1]
+        # Parse arguments
+        if len(args) == 2:
+            string1, string2 = args
         elif len(args) == 1:
+            string1 = ""
             string2 = args[0]
         else:
             self.poutput('Error: Missing parameters. Usage: right_replace "string1" "string2"')
             return
 
-        # --- Perform replacement ---
         new_lines = []
         if not string1:  # append mode
             for line in self.current_lines:
                 if not line.endswith("\n"):
                     line += "\n"
                 new_lines.append(line.rstrip("\n") + string2 + "\n")
-            self.poutput(f"Appended '{string2}' at the end of all lines.")
+            self.poutput(f"Appended '{string2}' to the end of all lines.")
         else:
             for line in self.current_lines:
-                idx = line.find(string1) if case_sensitive else line.lower().find(string1.lower())
+                if case_sensitive:
+                    idx = line.find(string1)
+                else:
+                    idx = line.lower().find(string1.lower())
                 if idx != -1:
                     new_lines.append(line[:idx] + string2 + "\n")
                 else:
@@ -3101,8 +3105,8 @@ class TextTool(cmd2.Cmd):
             left_replace "string1" "string2" [case_sensitive]
 
         Notes:
-            - If string1 is empty or only string2 is provided, string2 is added at the beginning of all lines.
-            - By default, replacement is case insensitive.
+            - If string1 is empty or only string2 is provided, string2 is prepended to all lines.
+            - Supports case-sensitive or case-insensitive replacement.
         """
         if arg.strip() == "?":
             self.do_help("left_replace")
@@ -3111,39 +3115,44 @@ class TextTool(cmd2.Cmd):
             self.poutput("Error: No file is loaded.")
             return
 
+        # Save previous state
         self.previous_lines = self.current_lines.copy()
 
-        case_sensitive = "case_sensitive" in arg
-        if case_sensitive:
-            arg = arg.replace("case_sensitive", "").strip()
+        import shlex
+        try:
+            args = shlex.split(arg)
+        except ValueError:
+            self.poutput("Error: Invalid quotes or arguments.")
+            return
 
-        # --- Parse arguments ---
-        args = []
-        if arg.startswith('"') and arg.count('"') >= 2:
-            args = [a for a in arg.split('"') if a.strip()]
-        elif arg.startswith("'") and arg.count("'") >= 2:
-            args = [a for a in arg.split("'") if a.strip()]
+        # Detect and remove case_sensitive flag
+        if "case_sensitive" in args:
+            case_sensitive = True
+            args.remove("case_sensitive")
         else:
-            args = arg.split()
+            case_sensitive = False
 
-        string1, string2 = "", ""
-        if len(args) >= 2:
-            string1, string2 = args[0], args[1]
+        # Parse arguments
+        if len(args) == 2:
+            string1, string2 = args
         elif len(args) == 1:
+            string1 = ""
             string2 = args[0]
         else:
             self.poutput('Error: Missing parameters. Usage: left_replace "string1" "string2"')
             return
 
-        # --- Perform replacement ---
         new_lines = []
         if not string1:  # prepend mode
             for line in self.current_lines:
                 new_lines.append(string2 + line)
-            self.poutput(f"Prepended '{string2}' at the beginning of all lines.")
+            self.poutput(f"Prepended '{string2}' to the beginning of all lines.")
         else:
             for line in self.current_lines:
-                idx = line.find(string1) if case_sensitive else line.lower().find(string1.lower())
+                if case_sensitive:
+                    idx = line.find(string1)
+                else:
+                    idx = line.lower().find(string1.lower())
                 if idx != -1:
                     new_lines.append(string2 + line[idx + len(string1):])
                 else:
@@ -3161,6 +3170,93 @@ class TextTool(cmd2.Cmd):
             fromfile='previous', tofile='current', lineterm=''
         )
         self.poutput('\n'.join(diff))
+
+
+    def do_clone(self, arg):
+        """Repeat lines or the whole text a specified number of times.
+
+        Usage:
+            clone repeat_number
+            clone line_start line_end repeat_number
+
+        Examples:
+            clone 3
+                → repeats the entire text 3 times (appends 3 copies)
+
+            clone 2 5 4
+                → repeats lines 2 to 5 four times at the end of the text
+
+        Notes:
+            - Line numbers start at 1.
+            - The repeated text is appended at the end of the current content.
+        """
+        help_text = (
+            f"{self.COLOR_HEADER}\nRepeat lines or the whole text a specified number of times.{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}clone repeat_number{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}clone line_start line_end repeat_number{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}clone 3{self.COLOR_RESET} → repeats the entire text 3 times (appends 3 copies)\n"
+            f"  {self.COLOR_EXAMPLE}clone 2 5 4{self.COLOR_RESET} → repeats lines 2–5 four times at the end of the text\n\n"
+            f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
+            f"  - Line numbers start at 1.\n"
+            f"  - The repeated text is appended at the end of the current content.\n"
+        )
+        if arg.strip() == "?":
+            self.poutput(help_text)
+            return
+
+        if not self.current_lines:
+            self.poutput("Error: No file or text is loaded.")
+            return
+
+        # Parse arguments
+        args = arg.strip().split()
+        if not args:
+            self.poutput("Error: Missing parameters. Type 'clone ?' for usage.")
+            return
+
+        try:
+            if len(args) == 1:
+                # Case 1: repeat_number only
+                repeat_number = int(args[0])
+                if repeat_number <= 0:
+                    self.poutput("Error: repeat_number must be positive.")
+                    return
+                lines_to_repeat = self.current_lines.copy()
+                part_desc = "entire text"
+            elif len(args) == 3:
+                # Case 2: start, end, repeat_number
+                start_line = int(args[0])
+                end_line = int(args[1])
+                repeat_number = int(args[2])
+
+                if repeat_number <= 0:
+                    self.poutput("Error: repeat_number must be positive.")
+                    return
+                if start_line < 1 or end_line < start_line or end_line > len(self.current_lines):
+                    self.poutput("Error: Invalid line range.")
+                    return
+
+                # Slice (adjusting for 0-based index)
+                lines_to_repeat = self.current_lines[start_line - 1:end_line]
+                part_desc = f"lines {start_line}–{end_line}"
+            else:
+                self.poutput("Error: Invalid parameters. Type 'clone ?' for usage.")
+                return
+
+            # Save current state for revert
+            self.previous_lines = self.current_lines.copy()
+
+            # Perform repetition
+            repeated_part = lines_to_repeat * repeat_number
+            self.current_lines.extend(repeated_part)
+
+            self.poutput(f"Repeated {part_desc} {repeat_number} time(s).")
+            self.update_live_view()
+
+        except ValueError:
+            self.poutput("Error: Parameters must be integers.")
 
 
 

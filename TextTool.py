@@ -727,8 +727,6 @@ class TextTool(cmd2.Cmd):
                         self.onecmd(cmd)
                         self.update_live_view()
 
-                        messagebox.showinfo("Success", "Replacement applied successfully!")
-                        dialog.destroy()
 
                     except Exception as e:
                         messagebox.showerror("Error", f"Failed to apply replacement:\n{str(e)}")
@@ -739,7 +737,7 @@ class TextTool(cmd2.Cmd):
                 
                 # Buttons
                 ttk.Button(button_frame, text="Apply Replacement", command=apply_replacement).pack(side=tk.LEFT, padx=8)
-                ttk.Button(button_frame, text="Cancel", command=dialog.destroy).pack(side=tk.LEFT, padx=8)
+                ttk.Button(button_frame, text="Close", command=dialog.destroy).pack(side=tk.LEFT, padx=8)
                 
                 # Configure grid weights
                 main_frame.columnconfigure(1, weight=1)
@@ -3374,6 +3372,10 @@ class TextTool(cmd2.Cmd):
             - If filename is omitted → use clipboard text lines instead.
             - The new text replaces the old one (original lines are not kept).
             - Add 'case_sensitive' to make matching case-sensitive.
+            - Remark : The function works also if you have many placeholders (i.e "string1" "string2" etc.), given that filename (or clipboard) include the same number of columns)
+            - For each mapping line, we produce a full copy of the ORIGINAL current text
+              with ALL replacements from that mapping applied, and append that copy to the output.
+            - The ORIGINAL text is never changed while building other mapping outputs.
 
         Example:
             Clipboard or file contains:
@@ -3403,90 +3405,115 @@ class TextTool(cmd2.Cmd):
         if arg.strip() == "?":
             self.do_help("replace_placeholder")
             return
+        import shlex, os, re
 
-        import shlex, os, tkinter as tk
-
-        # --- Parse arguments safely ---
-        try:
-            args = shlex.split(arg)
-        except ValueError:
-            self.poutput("Error: Invalid quotes or arguments.")
-            return
-
-        # Detect case sensitivity flag
-        if "case_sensitive" in args:
-            case_sensitive = True
-            args.remove("case_sensitive")
-        else:
-            case_sensitive = False
-
-        # Validate args
-        if len(args) == 0:
-            self.poutput('Error: Missing parameters. Usage: replace_placeholder "string1" [filename] [case_sensitive]')
-            return
-
-        string1 = args[0]
-        filename = args[1] if len(args) > 1 else None
+        if hasattr(arg, 'args'):
+            arg = arg.args
 
         if not self.current_lines:
-            self.poutput("Error: No text is loaded.")
+            self.poutput("Error: No text loaded.")
             return
 
-        # --- Load substitution values ---
-        file_lines = []
+        if not arg or not arg.strip():
+            self.poutput("Error: Missing parameters.")
+            return
+
+        parts = shlex.split(arg)
+        if not parts:
+            self.poutput("Error: Invalid arguments.")
+            return
+
+        # detect case_sensitive flag
+        case_sensitive = False
+        if parts and parts[-1].lower() == "case_sensitive":
+            case_sensitive = True
+            parts = parts[:-1]
+
+        # if last part is an existing file path, treat it as mapping file
+        filename = None
+        if parts and os.path.isfile(parts[-1]):
+            filename = parts[-1]
+            placeholders = parts[:-1]
+        else:
+            # no explicit file; treat all parts as placeholders (mapping from clipboard)
+            placeholders = parts
+
+        if not placeholders:
+            self.poutput("Error: At least one placeholder must be provided.")
+            return
+
+        # read mapping lines
+        map_lines = []
         if filename:
-            if not os.path.exists(filename):
-                self.poutput(f"Error: File '{filename}' not found.")
-                return
             try:
                 with open(filename, "r", encoding="utf-8") as f:
-                    file_lines = [line.strip() for line in f if line.strip()]
+                    map_lines = [ln.strip() for ln in f if ln.strip()]
+            except UnicodeDecodeError:
+                with open(filename, "r", encoding="latin-1") as f:
+                    map_lines = [ln.strip() for ln in f if ln.strip()]
             except Exception as e:
-                self.poutput(f"Error reading file: {e}")
+                self.poutput(f"Error reading mapping file: {e}")
                 return
         else:
-            try:
-                root = tk.Tk()
-                root.withdraw()
-                clipboard_text = root.clipboard_get()
-                root.destroy()
-                file_lines = [line.strip() for line in clipboard_text.splitlines() if line.strip()]
-                if not file_lines:
-                    self.poutput("Error: Clipboard is empty or contains only blank lines.")
-                    return
-                self.poutput(f"Using clipboard content as substitution source ({len(file_lines)} lines).")
-            except tk.TclError:
-                self.poutput("Error: Could not access clipboard or it is empty.")
-                return
+            clipboard_content = cmd2.clipboard.get_paste_buffer() or ""
+            map_lines = [ln.strip() for ln in clipboard_content.splitlines() if ln.strip()]
 
-        if not file_lines:
-            self.poutput("Error: No valid lines found in input source.")
+        if not map_lines:
+            self.poutput("Error: Mapping file / clipboard contains no lines.")
             return
 
-        # --- Perform replacement ---
+        # parse mapping lines into lists of tokens
+        mappings = []
+        skipped = 0
+        for ln in map_lines:
+            # split on any whitespace (space(s) or tabs) — as you requested "separated by at least one space"
+            tokens = ln.split()
+            if len(tokens) != len(placeholders):
+                skipped += 1
+                continue
+            mappings.append(tokens)
+
+        if not mappings:
+            self.poutput("Error: No valid mapping lines (matching placeholder count).")
+            if skipped:
+                self.poutput(f"Note: {skipped} mapping lines were skipped due to token count mismatch.")
+            return
+
+        # compile patterns for placeholders (escape to treat placeholders as plain text)
+        flags = 0 if case_sensitive else re.IGNORECASE
+        placeholder_patterns = [re.compile(re.escape(p), flags) for p in placeholders]
+
+        # Keep original text unchanged while producing outputs
+        original_lines = self.current_lines.copy()
+
+        result_lines = []
+        for mapping in mappings:
+            # For this mapping row, apply all replacements to every line of original_lines
+            for orig in original_lines:
+                modified = orig
+                # apply each placeholder -> mapping value
+                for idx, pat in enumerate(placeholder_patterns):
+                    replacement = mapping[idx]
+                    # use re.sub with pattern object and flags via compiled pattern
+                    modified = pat.sub(replacement, modified)
+                # ensure newline ending
+                if not modified.endswith("\n"):
+                    modified = modified + ("\n" if orig.endswith("\n") else "")
+                result_lines.append(modified)
+
+        # Save previous state for revert
         self.previous_lines = self.current_lines.copy()
-        new_lines = []
+        # Replace current_lines with the concatenated results
+        self.current_lines = result_lines
+        # update live view
+        try:
+            self.update_live_view()
+        except Exception:
+            pass
 
-        for value in file_lines:
-            for line in self.previous_lines:
-                if case_sensitive:
-                    new_line = line.replace(string1, value)
-                else:
-                    import re
-                    # Case-insensitive replacement
-                    pattern = re.compile(re.escape(string1), re.IGNORECASE)
-                    new_line = pattern.sub(value, line)
-                new_lines.append(new_line if new_line.endswith("\n") else new_line + "\n")
+        self.poutput(f"Applied {len(mappings)} mapping lines; produced {len(result_lines)} output lines. ({skipped} mapping lines skipped)")
 
-        # Replace the content (not append)
-        self.current_lines = new_lines
 
-        src_desc = f"file '{filename}'" if filename else "clipboard"
-        self.poutput(
-            f"Replaced placeholder '{string1}' with {len(file_lines)} values from {src_desc} "
-            f"({'case sensitive' if case_sensitive else 'case insensitive'})."
-        )
-        self.update_live_view()
 
     def complete_replace_placeholder(self, text, line, begidx, endidx):      
         FRIENDS_T = ['case_sensitive','?']

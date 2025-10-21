@@ -4382,6 +4382,499 @@ class TextTool(cmd2.Cmd):
         return completions
 
 
+    def do_filter_length(self, arg):
+        """Filter lines by minimum and/or maximum length.
+
+        Usage:
+            filter_length min_length [max_length] [keep|remove]
+        
+        Arguments:
+            min_length - Minimum line length (inclusive)
+            max_length - Maximum line length (inclusive, optional)
+            keep|remove - Action to perform (default: keep matching lines)
+        
+        Examples:
+            filter_length 10        - Keep lines with at least 10 characters
+            filter_length 5 50      - Keep lines between 5 and 50 characters
+            filter_length 20 100 remove - Remove lines between 20 and 100 characters
+            filter_length 0 10      - Keep lines with 10 characters or less
+        
+        Notes:
+            - Line length includes whitespace and newline characters
+            - Use 0 for min_length to specify only maximum length
+        """
+        help_text = (
+            f"{self.COLOR_HEADER}\nFilter lines by minimum and/or maximum length.{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}filter_length min_length [max_length] [keep|remove]{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Arguments:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}min_length{self.COLOR_RESET} - Minimum line length (inclusive)\n"
+            f"  {self.COLOR_EXAMPLE}max_length{self.COLOR_RESET} - Maximum line length (inclusive, optional)\n"
+            f"  {self.COLOR_EXAMPLE}keep|remove{self.COLOR_RESET} - Action to perform (default: keep matching lines)\n\n"
+            f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}filter_length 10{self.COLOR_RESET}        - Keep lines with at least 10 characters\n"
+            f"  {self.COLOR_EXAMPLE}filter_length 5 50{self.COLOR_RESET}      - Keep lines between 5 and 50 characters\n"
+            f"  {self.COLOR_EXAMPLE}filter_length 20 100 remove{self.COLOR_RESET} - Remove lines between 20 and 100 characters\n"
+            f"  {self.COLOR_EXAMPLE}filter_length 0 10{self.COLOR_RESET}      - Keep lines with 10 characters or less\n\n"
+            f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
+            f"  - Line length includes whitespace and newline characters\n"
+            f"  - Use 0 for min_length to specify only maximum length\n"
+        )
+        
+        if arg.strip() == "?":
+            self.poutput(help_text)
+            return
+
+        if not self.current_lines:
+            self.poutput("Error: No file is loaded.")
+            return
+
+        self.previous_lines = self.current_lines.copy()
+
+        args = arg.strip().split()
+        if not args:
+            self.poutput("Error: Please specify minimum length.")
+            return
+
+        try:
+            # Parse arguments
+            min_len = int(args[0])
+            max_len = None
+            action = "keep"  # default action
+            
+            if len(args) >= 2:
+                # Check if second argument is a number or action
+                if args[1].isdigit():
+                    max_len = int(args[1])
+                    if len(args) >= 3:
+                        action = args[2].lower()
+                else:
+                    action = args[1].lower()
+            
+            if len(args) == 3 and args[2].isdigit():
+                max_len = int(args[2])
+            
+            # Validate arguments
+            if min_len < 0:
+                self.poutput("Error: Minimum length cannot be negative.")
+                return
+                
+            if max_len is not None and max_len < min_len:
+                self.poutput("Error: Maximum length cannot be less than minimum length.")
+                return
+
+            # Filter lines based on length criteria
+            filtered_lines = []
+            removed_count = 0
+            
+            for line in self.current_lines:
+                line_length = len(line.rstrip('\n\r'))  # Length without newline characters
+                
+                # Check if line meets length criteria
+                meets_criteria = True
+                if min_len > 0 and line_length < min_len:
+                    meets_criteria = False
+                if max_len is not None and line_length > max_len:
+                    meets_criteria = False
+                
+                # Apply action
+                if (action == "keep" and meets_criteria) or (action == "remove" and not meets_criteria):
+                    filtered_lines.append(line)
+                else:
+                    removed_count += 1
+
+            self.current_lines = filtered_lines
+            self.update_live_view()
+            
+            # Build criteria description
+            if max_len is not None:
+                if min_len == 0:
+                    criteria_desc = f"up to {max_len} characters"
+                else:
+                    criteria_desc = f"between {min_len} and {max_len} characters"
+            else:
+                criteria_desc = f"at least {min_len} characters"
+            
+            self.poutput(f"{action.capitalize()}ed {len(filtered_lines)} lines with {criteria_desc}. Removed {removed_count} lines.")
+
+        except ValueError:
+            self.poutput("Error: Length values must be integers.")
+
+
+    def complete_filter_length(self, text, line, begidx, endidx):      
+        FRIENDS_T = ['keep','remove', '?']
+        if not text:
+            completions = FRIENDS_T[:]
+        else: 
+            completions = [f for f in FRIENDS_T if f.lower().startswith(text.lower())]
+        return completions
+
+
+    def do_find_mismatches(self, arg):
+        """Find lines that don't match expected patterns or formats.
+
+        Usage:
+            find_mismatches <pattern> [invert] [case_sensitive]
+            find_mismatches length <min> [max] [invert]
+            find_mismatches regex <pattern> [invert] [case_sensitive]
+        
+        Arguments:
+            pattern        - String pattern to match against
+            length min max - Find lines outside length range
+            regex pattern  - Use regex pattern for matching
+            invert         - Invert the match (find lines that DO match)
+            case_sensitive - Case sensitive matching
+        
+        Examples:
+            find_mismatches "error"          - Find lines without "error"
+            find_mismatches "error" invert   - Find lines with "error"
+            find_mismatches length 10 100    - Find lines outside 10-100 char range
+            find_mismatches regex "^\\d"     - Find lines not starting with digit
+            find_mismatches regex "^[A-Z]" case_sensitive - Case sensitive regex
+        
+        Notes:
+            - Default behavior finds lines that DON'T match the pattern
+            - Use 'invert' to find lines that DO match
+        """
+        help_text = (
+            f"{self.COLOR_HEADER}\nFind lines that don't match expected patterns or formats.{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}find_mismatches <pattern> [invert] [case_sensitive]{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}find_mismatches length <min> [max] [invert]{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}find_mismatches regex <pattern> [invert] [case_sensitive]{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Arguments:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}pattern{self.COLOR_RESET}        - String pattern to match against\n"
+            f"  {self.COLOR_EXAMPLE}length min max{self.COLOR_RESET} - Find lines outside length range\n"
+            f"  {self.COLOR_EXAMPLE}regex pattern{self.COLOR_RESET}  - Use regex pattern for matching\n"
+            f"  {self.COLOR_EXAMPLE}invert{self.COLOR_RESET}         - Invert the match (find lines that DO match)\n"
+            f"  {self.COLOR_EXAMPLE}case_sensitive{self.COLOR_RESET} - Case sensitive matching\n\n"
+            f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}find_mismatches \"error\"{self.COLOR_RESET}          - Find lines without \"error\"\n"
+            f"  {self.COLOR_EXAMPLE}find_mismatches \"error\" invert{self.COLOR_RESET}   - Find lines with \"error\"\n"
+            f"  {self.COLOR_EXAMPLE}find_mismatches length 10 100{self.COLOR_RESET}    - Find lines outside 10-100 char range\n"
+            f"  {self.COLOR_EXAMPLE}find_mismatches regex \"^\\\\d\"{self.COLOR_RESET}     - Find lines not starting with digit\n"
+            f"  {self.COLOR_EXAMPLE}find_mismatches regex \"^[A-Z]\" case_sensitive{self.COLOR_RESET} - Case sensitive regex\n\n"
+            f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
+            f"  - Default behavior finds lines that DON'T match the pattern\n"
+            f"  - Use 'invert' to find lines that DO match\n"
+        )
+        
+        if arg.strip() == "?":
+            self.poutput(help_text)
+            return
+
+        if not self.current_lines:
+            self.poutput("Error: No file is loaded.")
+            return
+
+        self.previous_lines = self.current_lines.copy()
+
+        args = shlex.split(arg) if '"' in arg or "'" in arg else arg.split()
+        if not args:
+            self.poutput("Error: Please specify a pattern or criteria.")
+            return
+
+        try:
+            mode = "text"  # default mode
+            pattern = None
+            min_len = None
+            max_len = None
+            invert = False
+            case_sensitive = False
+            
+            # Parse arguments
+            i = 0
+            while i < len(args):
+                arg_val = args[i]
+                
+                if arg_val == "length":
+                    mode = "length"
+                    if i + 1 < len(args):
+                        min_len = int(args[i + 1])
+                        i += 1
+                        if i + 1 < len(args) and args[i + 1].isdigit():
+                            max_len = int(args[i + 1])
+                            i += 1
+                elif arg_val == "regex":
+                    mode = "regex"
+                    if i + 1 < len(args):
+                        pattern = args[i + 1]
+                        i += 1
+                elif arg_val == "invert":
+                    invert = True
+                elif arg_val == "case_sensitive":
+                    case_sensitive = True
+                elif pattern is None and mode == "text":
+                    pattern = arg_val
+                    
+                i += 1
+            
+            # Validate
+            if mode == "text" and not pattern:
+                self.poutput("Error: Please specify a text pattern.")
+                return
+            if mode == "regex" and not pattern:
+                self.poutput("Error: Please specify a regex pattern.")
+                return
+            if mode == "length" and min_len is None:
+                self.poutput("Error: Please specify minimum length.")
+                return
+            
+            # Find mismatches
+            mismatches = []
+            match_count = 0
+            
+            for line in self.current_lines:
+                line_content = line.rstrip('\n\r')
+                matches_criteria = False
+                
+                if mode == "text":
+                    # Text pattern matching
+                    if case_sensitive:
+                        matches_criteria = pattern in line_content
+                    else:
+                        matches_criteria = pattern.lower() in line_content.lower()
+                        
+                elif mode == "regex":
+                    # Regex pattern matching
+                    flags = 0 if case_sensitive else re.IGNORECASE
+                    try:
+                        regex = re.compile(pattern, flags)
+                        matches_criteria = bool(regex.search(line_content))
+                    except re.error:
+                        self.poutput(f"Error: Invalid regex pattern: {pattern}")
+                        return
+                        
+                elif mode == "length":
+                    # Length-based matching
+                    line_len = len(line_content)
+                    if max_len is not None:
+                        matches_criteria = min_len <= line_len <= max_len
+                    else:
+                        matches_criteria = line_len >= min_len
+                
+                # Apply inversion logic
+                if invert:
+                    # Find lines that DO match
+                    if matches_criteria:
+                        mismatches.append(line)
+                        match_count += 1
+                else:
+                    # Find lines that DON'T match (default)
+                    if not matches_criteria:
+                        mismatches.append(line)
+                        match_count += 1
+            
+            self.current_lines = mismatches
+            self.update_live_view()
+            
+            # Build description
+            if mode == "text":
+                desc = f"pattern '{pattern}'"
+            elif mode == "regex":
+                desc = f"regex '{pattern}'"
+            else:
+                if max_len:
+                    desc = f"length range {min_len}-{max_len}"
+                else:
+                    desc = f"minimum length {min_len}"
+            
+            action = "matching" if invert else "non-matching"
+            sensitivity = "case sensitive" if case_sensitive else "case insensitive"
+            
+            self.poutput(f"Found {len(mismatches)} {action} lines for {desc} ({sensitivity}).")
+
+        except ValueError as e:
+            self.poutput(f"Error: Invalid number format: {str(e)}")
+        except Exception as e:
+            self.poutput(f"Error processing mismatches: {str(e)}")
+
+    def complete_find_mismatches(self, text, line, begidx, endidx):      
+        FRIENDS_T = ['regex','length','invert','case_sensitive','?']
+        if not text:
+            completions = FRIENDS_T[:]
+        else: 
+            completions = [f for f in FRIENDS_T if f.lower().startswith(text.lower())]
+        return completions
+
+
+    def do_csv_to_table(self, arg):
+        """Convert CSV/delimited text to a formatted table display.
+
+        Usage:
+            csv_to_table [delimiter] [header] [max_cols] [max_width]
+        
+        Arguments:
+            delimiter - Field delimiter (default: ",")
+                       Use "tab", "space", "pipe", "semicolon", or specific character
+            header    - Treat first line as header (add "noheader" to disable)
+            max_cols  - Maximum number of columns to display (default: 10)
+            max_width - Maximum column width (default: 30)
+        
+        Examples:
+            csv_to_table                    - Convert with comma delimiter
+            csv_to_table tab header         - Convert tab-delimited with header
+            csv_to_table ";" 15 50          - Semicolon-delimited, max 15 cols, width 50
+            csv_to_table pipe noheader      - Pipe-delimited, no header treatment
+            csv_to_table space 5 20         - Space-delimited, limited display
+        
+        Notes:
+            - The conversion is for display only - doesn't modify the actual data
+            - Very wide tables will be truncated for readability
+        """
+        help_text = (
+            f"{self.COLOR_HEADER}\nConvert CSV/delimited text to a formatted table display.{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}csv_to_table [delimiter] [header] [max_cols] [max_width]{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Arguments:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}delimiter{self.COLOR_RESET} - Field delimiter (default: \",\")\n"
+            f"  {self.COLOR_EXAMPLE}header{self.COLOR_RESET}    - Treat first line as header (add \"noheader\" to disable)\n"
+            f"  {self.COLOR_EXAMPLE}max_cols{self.COLOR_RESET}  - Maximum number of columns to display (default: 10)\n"
+            f"  {self.COLOR_EXAMPLE}max_width{self.COLOR_RESET} - Maximum column width (default: 30)\n\n"
+            f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}csv_to_table{self.COLOR_RESET}                    - Convert with comma delimiter\n"
+            f"  {self.COLOR_EXAMPLE}csv_to_table tab header{self.COLOR_RESET}         - Convert tab-delimited with header\n"
+            f"  {self.COLOR_EXAMPLE}csv_to_table \";\" 15 50{self.COLOR_RESET}          - Semicolon-delimited, max 15 cols, width 50\n"
+            f"  {self.COLOR_EXAMPLE}csv_to_table pipe noheader{self.COLOR_RESET}      - Pipe-delimited, no header treatment\n"
+            f"  {self.COLOR_EXAMPLE}csv_to_table space 5 20{self.COLOR_RESET}         - Space-delimited, limited display\n\n"
+            f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
+            f"  - The conversion is for display only - doesn't modify the actual data\n"
+            f"  - Very wide tables will be truncated for readability\n"
+        )
+        
+        if arg.strip() == "?":
+            self.poutput(help_text)
+            return
+
+        if not self.current_lines:
+            self.poutput("Error: No file is loaded.")
+            return
+
+        try:
+            # Parse arguments
+            args = arg.strip().split()
+            delimiter = ","
+            use_header = True
+            max_cols = 10
+            max_width = 30
+            
+            for arg_val in args:
+                if arg_val in ["tab", "\\t", "\t"]:
+                    delimiter = "\t"
+                elif arg_val == "space":
+                    delimiter = " "
+                elif arg_val == "pipe":
+                    delimiter = "|"
+                elif arg_val == "semicolon":
+                    delimiter = ";"
+                elif arg_val == "noheader":
+                    use_header = False
+                elif arg_val == "header":
+                    use_header = True
+                elif arg_val.isdigit():
+                    if max_cols == 10:  # First number is max_cols
+                        max_cols = int(arg_val)
+                    else:  # Second number is max_width
+                        max_width = int(arg_val)
+                else:
+                    # Assume it's a custom delimiter
+                    delimiter = arg_val
+            
+            # Parse CSV data
+            rows = []
+            max_columns = 0
+            
+            for line in self.current_lines:
+                line = line.rstrip('\n\r')
+                if delimiter == " ":
+                    # For space delimiter, use split() to handle multiple spaces
+                    parts = line.split()
+                else:
+                    parts = line.split(delimiter)
+                
+                if parts:  # Only add non-empty lines
+                    rows.append(parts)
+                    max_columns = max(max_columns, len(parts))
+            
+            if not rows:
+                self.poutput("Error: No data found to display as table.")
+                return
+            
+            # Limit columns
+            display_cols = min(max_columns, max_cols)
+            
+            # Calculate column widths
+            col_widths = [0] * display_cols
+            for row in rows:
+                for i in range(min(len(row), display_cols)):
+                    col_widths[i] = max(col_widths[i], min(len(str(row[i])), max_width))
+            
+            # Ensure minimum width for readability
+            col_widths = [max(width, 3) for width in col_widths]
+            
+            # Build table
+            table_lines = []
+            
+            # Header separator
+            header_sep = "+" + "+".join("-" * (width + 2) for width in col_widths) + "+"
+            
+            table_lines.append(header_sep)
+            
+            # Add header if requested and data exists
+            if use_header and rows:
+                header_row = rows[0]
+                header_cells = []
+                for i in range(display_cols):
+                    if i < len(header_row):
+                        cell_content = str(header_row[i])[:max_width]
+                        header_cells.append(f" {cell_content:<{col_widths[i]}} ")
+                    else:
+                        header_cells.append(" " * (col_widths[i] + 2))
+                
+                table_lines.append("|" + "|".join(header_cells) + "|")
+                table_lines.append(header_sep)
+                data_rows = rows[1:]
+            else:
+                data_rows = rows
+            
+            # Add data rows
+            for row in data_rows:
+                cells = []
+                for i in range(display_cols):
+                    if i < len(row):
+                        cell_content = str(row[i])[:max_width]
+                        cells.append(f" {cell_content:<{col_widths[i]}} ")
+                    else:
+                        cells.append(" " * (col_widths[i] + 2))
+                
+                table_lines.append("|" + "|".join(cells) + "|")
+            
+            table_lines.append(header_sep)
+            
+            # Display table
+            self.poutput(f"\nTable display ({len(data_rows)} rows, {display_cols} columns):")
+            self.poutput(f"Delimiter: {repr(delimiter)} | Max columns: {max_cols} | Max width: {max_width}")
+            self.poutput("")
+            
+            for line in table_lines:
+                self.poutput(line)
+            
+            # Show summary
+            if max_columns > display_cols:
+                self.poutput(f"\nNote: Table truncated from {max_columns} to {display_cols} columns.")
+            if any(len(str(cell)) > max_width for row in rows for cell in row):
+                self.poutput(f"Note: Some cell contents truncated to {max_width} characters.")
+                
+        except Exception as e:
+            self.poutput(f"Error displaying table: {str(e)}")
+
+    def complete_csv_to_table(self, text, line, begidx, endidx):      
+        FRIENDS_T = ['tab', 'space', 'pipe', 'semicolon','case_sensitive','header','noheader','?']
+        if not text:
+            completions = FRIENDS_T[:]
+        else: 
+            completions = [f for f in FRIENDS_T if f.lower().startswith(text.lower())]
+        return completions
 
 
 if __name__ == '__main__':

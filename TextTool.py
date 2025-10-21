@@ -325,6 +325,41 @@ class TextTool(cmd2.Cmd):
             )
             self.liveview_box.pack(fill="both", expand=True)
 
+            # Add context menu to the text widget
+            def create_context_menu(event):
+                context_menu = tk.Menu(self.liveview_root, tearoff=0)
+                
+                # Get selected text
+                try:
+                    selected_text = self.liveview_box.get(tk.SEL_FIRST, tk.SEL_LAST)
+                    if selected_text:
+                        # Options when text is selected
+                        context_menu.add_command(label="Clone Selection...", 
+                                               command=lambda: self.clone_selection_dialog())
+                        context_menu.add_command(label="Replace in Selection...", 
+                                               command=lambda: self.replace_in_selection_dialog())
+                        context_menu.add_command(label="Remove Empty Lines in Selection", 
+                                               command=lambda: self.remove_empty_lines_in_selection())
+                        context_menu.add_command(label="Trim Whitespace in Selection", 
+                                               command=lambda: self.trim_whitespace_in_selection())
+                        context_menu.add_separator()
+                except tk.TclError:
+                    # No selection - show Find option
+                    context_menu.add_command(label="Find...", 
+                                           command=lambda: self.open_find_safely())
+                    context_menu.add_separator()
+                
+                # Always show these options
+                context_menu.add_command(label="Select All", 
+                                       command=lambda: self.liveview_box.tag_add(tk.SEL, "1.0", tk.END))
+                
+                # Display the menu at cursor position
+                context_menu.tk_popup(event.x_root, event.y_root)
+
+
+            # Bind right-click to context menu
+            self.liveview_box.bind("<Button-3>", create_context_menu)  # Button-3 is right-click
+
             def on_text_modified(event=None):
                 """Mark text as changed and scroll to the last inserted text."""
                 if self.liveview_box.edit_modified():
@@ -1034,6 +1069,7 @@ class TextTool(cmd2.Cmd):
                     search_frame.pack(fill="x", side="top")
                     search_entry.focus_set()
 
+            #self.toggle_search = toggle_search
             # Bind Ctrl+F to open search bar
             self.liveview_root.bind("<Control-f>", toggle_search)
             self.liveview_root.bind("<Control-r>", lambda e: open_replace_dialog())
@@ -1168,6 +1204,20 @@ class TextTool(cmd2.Cmd):
         self.start_live_view()
         self.poutput("Live viewer started")
 
+
+    def open_find_safely(self):
+        """Safely open the find/search bar."""
+        try:
+            # Check if Live View components exist and are valid
+            if (hasattr(self, "liveview_root") and self.liveview_root and 
+                self.liveview_root.winfo_exists()):
+                # Trigger the existing toggle_search functionality
+                self.liveview_root.event_generate("<Control-f>")
+            else:
+                self.poutput("Error: Live View is not available.")
+        except Exception as e:
+            self.poutput(f"Error opening find: {e}")
+
         
     def do_highlight_toggle(self, arg):
         """Toggle live highlighting on or off.
@@ -1199,6 +1249,459 @@ class TextTool(cmd2.Cmd):
                   newinput = params.statement.raw.replace('grep ', script_dir+ '\\grep.exe ')
                   params.statement = self.statement_parser.parse(newinput)
             return params
+
+
+    def get_selection_range(self):
+        """Get the start and end indices of the current selection in the Live View."""
+        try:
+            if hasattr(self, "liveview_box") and self.liveview_box:
+                start_index = self.liveview_box.index(tk.SEL_FIRST)
+                end_index = self.liveview_box.index(tk.SEL_LAST)
+                return start_index, end_index
+        except tk.TclError:
+            pass
+        return None, None
+
+    def get_selection_line_range(self):
+        """Convert selection indices to line numbers in current_lines."""
+        start_index, end_index = self.get_selection_range()
+        if not start_index or not end_index:
+            return None, None
+        
+        # Convert text indices to line numbers (1-based)
+        start_line = int(start_index.split('.')[0])
+        end_line = int(end_index.split('.')[0])
+        
+        # Adjust for 0-based indexing in current_lines
+        return start_line - 1, end_line - 1
+
+    def clone_selection_dialog(self):
+        """Open dialog to clone selected text multiple times."""
+        from tkinter import simpledialog
+        
+        start_line, end_line = self.get_selection_line_range()
+        if start_line is None or end_line is None:
+            self.poutput("Error: No text selected.")
+            return
+        
+        # Ask for number of repetitions
+        try:
+            repetitions = simpledialog.askinteger(
+                "Clone Selection", 
+                "How many times to clone the selection?",
+                initialvalue=1,
+                minvalue=1,
+                maxvalue=100
+            )
+            
+            if repetitions is not None:
+                self.do_clone_selection(f"{start_line + 1} {end_line + 1} {repetitions}")
+        except Exception as e:
+            self.poutput(f"Error: {e}")
+
+    def do_clone_selection(self, arg):
+        """Clone the selected text multiple times.
+        
+        Usage: clone_selection start_line end_line repetitions
+        """
+        if not self.current_lines:
+            self.poutput("Error: No file is loaded.")
+            return
+        
+        try:
+            args = arg.split()
+            if len(args) != 3:
+                self.poutput("Error: Usage: clone_selection start_line end_line repetitions")
+                return
+            
+            start_line = int(args[0]) - 1
+            end_line = int(args[1]) - 1
+            repetitions = int(args[2])
+            
+            if start_line < 0 or end_line >= len(self.current_lines) or start_line > end_line:
+                self.poutput("Error: Invalid line range.")
+                return
+            
+            if repetitions < 1:
+                self.poutput("Error: Repetitions must be at least 1.")
+                return
+            
+            # Save previous state
+            self.previous_lines = self.current_lines.copy()
+            
+            # Extract selected lines
+            selected_lines = self.current_lines[start_line:end_line + 1]
+            
+            # Create repeated content
+            repeated_content = selected_lines * repetitions
+            
+            # Insert after the selection
+            insertion_point = end_line + 1
+            self.current_lines[insertion_point:insertion_point] = repeated_content
+            
+            self.update_live_view()
+            self.poutput(f"Cloned selection ({len(selected_lines)} lines) {repetitions} time(s).")
+            
+        except ValueError:
+            self.poutput("Error: Invalid line numbers or repetition count.")
+
+    def replace_in_selection_dialog(self):
+        """Open dialog for replace operations within selection."""
+        from tkinter import simpledialog, messagebox
+        import tkinter as tk
+        from tkinter import ttk
+        
+        start_line, end_line = self.get_selection_line_range()
+        if start_line is None or end_line is None:
+            self.poutput("Error: No text selected.")
+            return
+        
+        dialog = tk.Toplevel()
+        dialog.title("Replace in Selection")
+        dialog.geometry("500x250")  # Same size as Smart Text Replacement
+        dialog.resizable(False, False)
+        dialog.transient(self.liveview_root)  # Make it modal to main window
+        dialog.grab_set()  # Make it modal
+        
+        # Center the dialog exactly like Smart Text Replacement
+        dialog.update_idletasks()
+        x = self.liveview_root.winfo_x() + (self.liveview_root.winfo_width() - dialog.winfo_width()) // 2
+        y = self.liveview_root.winfo_y() + (self.liveview_root.winfo_height() - dialog.winfo_height()) // 2
+        dialog.geometry(f"+{x}+{y}")
+        
+        # Main frame
+        main_frame = ttk.Frame(dialog, padding="15")
+        main_frame.pack(fill=tk.BOTH, expand=True)
+        
+        # Operation type
+        ttk.Label(main_frame, text="Replacement Type:").grid(row=0, column=0, sticky=tk.W, pady=8)
+        operation_var = tk.StringVar(value="Simple Replace")
+        operation_combo = ttk.Combobox(main_frame, textvariable=operation_var, 
+                                     values=["Simple Replace", "Right Replace", "Left Replace"],
+                                     state="readonly", width=20)
+        operation_combo.grid(row=0, column=1, sticky=(tk.W, tk.E), pady=8, padx=5)
+        
+        # Search pattern
+        ttk.Label(main_frame, text="Search Pattern:").grid(row=1, column=0, sticky=tk.W, pady=8)
+        search_entry = ttk.Entry(main_frame, width=30)
+        search_entry.grid(row=1, column=1, sticky=(tk.W, tk.E), pady=8, padx=5)
+        
+        # Replacement text
+        ttk.Label(main_frame, text="Replacement Text:").grid(row=2, column=0, sticky=tk.W, pady=8)
+        replace_entry = ttk.Entry(main_frame, width=30)
+        replace_entry.grid(row=2, column=1, sticky=(tk.W, tk.E), pady=8, padx=5)
+        
+        # Case sensitive option
+        case_var = tk.BooleanVar(value=False)
+        case_check = ttk.Checkbutton(main_frame, text="Case Sensitive", variable=case_var)
+        case_check.grid(row=3, column=0, columnspan=2, sticky=tk.W, pady=8)
+        
+        # Selection info
+        selection_info = ttk.Label(main_frame, 
+                                  text=f"Selection: Lines {start_line + 1} to {end_line + 1} ({end_line - start_line + 1} lines)",
+                                  font=("", 9))
+        selection_info.grid(row=4, column=0, columnspan=2, sticky=tk.W, pady=5)
+        
+        # Button frame
+        button_frame = ttk.Frame(main_frame)
+        button_frame.grid(row=5, column=0, columnspan=2, pady=15)
+        
+        def apply_replacement():
+            try:
+                search_pattern = search_entry.get().strip()
+                replace_pattern = replace_entry.get().strip()
+                operation = operation_var.get()
+                case_sensitive = case_var.get()
+                
+                if not search_pattern and operation != "Right Replace" and operation != "Left Replace":
+                    messagebox.showwarning("Warning", "Search pattern is required for this operation.")
+                    return
+                
+                if not replace_pattern:
+                    messagebox.showwarning("Warning", "Please enter a replacement text.")
+                    return
+                
+                # Build command based on operation
+                if operation == "Simple Replace":
+                    if not search_pattern:
+                        messagebox.showwarning("Warning", "Search Pattern is required for Simple Replace.")
+                        return
+                    cmd = f'replace_in_selection "{search_pattern}" "{replace_pattern}"'
+                elif operation == "Right Replace":
+                    # Allow empty search pattern → append mode
+                    if search_pattern:
+                        cmd = f'right_replace_in_selection "{search_pattern}" "{replace_pattern}"'
+                    else:
+                        cmd = f'right_replace_in_selection "" "{replace_pattern}"'
+                elif operation == "Left Replace":
+                    # Allow empty search pattern → prepend mode
+                    if search_pattern:
+                        cmd = f'left_replace_in_selection "{search_pattern}" "{replace_pattern}"'
+                    else:
+                        cmd = f'left_replace_in_selection "" "{replace_pattern}"'
+                
+                if case_sensitive:
+                    cmd += " case_sensitive"
+                
+                # Add line range
+                cmd += f" {start_line + 1} {end_line + 1}"
+                
+                self.onecmd(cmd)
+                dialog.destroy()
+                
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to apply replacement:\n{str(e)}")
+        
+        ttk.Button(button_frame, text="Apply Replacement", command=apply_replacement).pack(side=tk.LEFT, padx=8)
+        ttk.Button(button_frame, text="Close", command=dialog.destroy).pack(side=tk.LEFT, padx=8)
+        
+        # Configure grid weights for proper resizing
+        main_frame.columnconfigure(1, weight=1)
+        
+        # Set focus to search entry
+        search_entry.focus()
+
+    def do_replace_in_selection(self, arg):
+        """Replace text within a selected range."""
+        self._apply_to_selection(arg, "replace")
+
+    def do_right_replace_in_selection(self, arg):
+        """Right replace within a selected range."""
+        self._apply_to_selection(arg, "right_replace")
+
+    def do_left_replace_in_selection(self, arg):
+        """Left replace within a selected range."""
+        self._apply_to_selection(arg, "left_replace")
+
+    def _apply_to_selection(self, arg, operation):
+        """Helper method to apply operations to selected range."""
+        if not self.current_lines:
+            self.poutput("Error: No file is loaded.")
+            return
+        
+        # Parse arguments: operation_args + start_line + end_line
+        args = shlex.split(arg) if '"' in arg or "'" in arg else arg.split()
+        if len(args) < 4:
+            self.poutput("Error: Missing line range parameters.")
+            return
+        
+        # Extract line range (last two arguments)
+        start_line = int(args[-2]) - 1
+        end_line = int(args[-1]) - 1
+        operation_args = " ".join(args[:-2])
+        
+        if start_line < 0 or end_line >= len(self.current_lines) or start_line > end_line:
+            self.poutput("Error: Invalid line range.")
+            return
+        
+        # Save previous state
+        self.previous_lines = self.current_lines.copy()
+        
+        # Apply operation to selected lines only
+        for i in range(start_line, end_line + 1):
+            original_line = self.current_lines[i]
+            
+            if operation == "replace":
+                # Apply replace logic directly
+                if "case_sensitive" in operation_args:
+                    case_sensitive = True
+                    op_args_clean = operation_args.replace("case_sensitive", "").strip()
+                else:
+                    case_sensitive = False
+                    op_args_clean = operation_args
+                
+                # Parse search and replace patterns
+                if op_args_clean.startswith('"') and op_args_clean.count('"') >= 2:
+                    parts = op_args_clean.split('"')
+                    string1, string2 = parts[1], parts[3]
+                elif op_args_clean.startswith("'") and op_args_clean.count("'") >= 2:
+                    parts = op_args_clean.split("'")
+                    string1, string2 = parts[1], parts[3]
+                else:
+                    parts = op_args_clean.split()
+                    if len(parts) < 2:
+                        self.poutput("Error: Invalid replace arguments.")
+                        return
+                    string1, string2 = parts[0], parts[1]
+                
+                # Perform the replacement
+                try:
+                    flags = 0 if case_sensitive else re.IGNORECASE
+                    regex = re.compile(string1.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+"), flags)
+                    
+                    if "\\0" in string2:
+                        def replacement(match):
+                            return string2.replace("\\0", match.group(0)).replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+")
+                        self.current_lines[i] = regex.sub(replacement, original_line)
+                    else:
+                        self.current_lines[i] = regex.sub(string2.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+"), original_line)
+                        
+                except re.error:
+                    # Fallback to literal replacement
+                    if case_sensitive:
+                        self.current_lines[i] = original_line.replace(string1.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+"), string2.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+"))
+                    else:
+                        line_lower = original_line.lower()
+                        search_lower = string1.lower()
+                        if search_lower in line_lower:
+                            start_idx = line_lower.find(search_lower)
+                            end_idx = start_idx + len(string1)
+                            self.current_lines[i] = original_line[:start_idx] + string2 + original_line[end_idx:]
+                        else:
+                            self.current_lines[i] = original_line
+            
+            elif operation == "right_replace":
+                # Apply right_replace logic directly
+                if "case_sensitive" in operation_args:
+                    case_sensitive = True
+                    op_args_clean = operation_args.replace("case_sensitive", "").strip()
+                else:
+                    case_sensitive = False
+                    op_args_clean = operation_args
+                
+                # Parse arguments for right_replace
+                parts = shlex.split(op_args_clean) if '"' in op_args_clean or "'" in op_args_clean else op_args_clean.split()
+                
+                if len(parts) == 2:
+                    string1, string2 = parts
+                elif len(parts) == 1:
+                    string1 = ""
+                    string2 = parts[0]
+                else:
+                    self.poutput("Error: Invalid right_replace arguments.")
+                    return
+                
+                # Perform right replacement
+                if not string1:  # append mode
+                    self.current_lines[i] = original_line.rstrip("\n") + string2 + "\n"
+                else:
+                    if case_sensitive:
+                        idx = original_line.find(string1)
+                    else:
+                        idx = original_line.lower().find(string1.lower())
+                    if idx != -1:
+                        self.current_lines[i] = original_line[:idx] + string2 + "\n"
+                    else:
+                        self.current_lines[i] = original_line
+            
+            elif operation == "left_replace":
+                # Apply left_replace logic directly
+                if "case_sensitive" in operation_args:
+                    case_sensitive = True
+                    op_args_clean = operation_args.replace("case_sensitive", "").strip()
+                else:
+                    case_sensitive = False
+                    op_args_clean = operation_args
+                
+                # Parse arguments for left_replace
+                parts = shlex.split(op_args_clean) if '"' in op_args_clean or "'" in op_args_clean else op_args_clean.split()
+                
+                if len(parts) == 2:
+                    string1, string2 = parts
+                elif len(parts) == 1:
+                    string1 = ""
+                    string2 = parts[0]
+                else:
+                    self.poutput("Error: Invalid left_replace arguments.")
+                    return
+                
+                # Perform left replacement
+                if not string1:  # prepend mode
+                    self.current_lines[i] = string2 + original_line
+                else:
+                    if case_sensitive:
+                        idx = original_line.find(string1)
+                    else:
+                        idx = original_line.lower().find(string1.lower())
+                    if idx != -1:
+                        self.current_lines[i] = string2 + original_line[idx + len(string1):]
+                    else:
+                        self.current_lines[i] = original_line
+        
+        self.update_live_view()
+        self.poutput(f"Applied {operation} to {end_line - start_line + 1} selected lines.")
+
+    def remove_empty_lines_in_selection(self):
+        """Remove empty lines within the current selection."""
+        start_line, end_line = self.get_selection_line_range()
+        if start_line is None or end_line is None:
+            self.poutput("Error: No text selected.")
+            return
+        
+        self.do_remove_empty_lines_in_selection(f"{start_line + 1} {end_line + 1}")
+
+    def do_remove_empty_lines_in_selection(self, arg):
+        """Remove empty lines within a specified range."""
+        if not self.current_lines:
+            self.poutput("Error: No file is loaded.")
+            return
+        
+        args = arg.split()
+        if len(args) != 2:
+            self.poutput("Error: Usage: remove_empty_lines_in_selection start_line end_line")
+            return
+        
+        start_line = int(args[0]) - 1
+        end_line = int(args[1]) - 1
+        
+        if start_line < 0 or end_line >= len(self.current_lines) or start_line > end_line:
+            self.poutput("Error: Invalid line range.")
+            return
+        
+        # Save previous state
+        self.previous_lines = self.current_lines.copy()
+        
+        # Process only the selected range
+        before_selection = self.current_lines[:start_line]
+        selection = self.current_lines[start_line:end_line + 1]
+        after_selection = self.current_lines[end_line + 1:]
+        
+        # Remove empty lines from selection
+        non_empty_selection = [line for line in selection if line.strip()]
+        
+        # Recombine
+        self.current_lines = before_selection + non_empty_selection + after_selection
+        
+        self.update_live_view()
+        removed_count = len(selection) - len(non_empty_selection)
+        self.poutput(f"Removed {removed_count} empty lines from selection.")
+
+    def trim_whitespace_in_selection(self):
+        """Trim whitespace within the current selection."""
+        start_line, end_line = self.get_selection_line_range()
+        if start_line is None or end_line is None:
+            self.poutput("Error: No text selected.")
+            return
+        
+        self.do_trim_whitespace_in_selection(f"{start_line + 1} {end_line + 1}")
+
+    def do_trim_whitespace_in_selection(self, arg):
+        """Trim whitespace within a specified range."""
+        if not self.current_lines:
+            self.poutput("Error: No file is loaded.")
+            return
+        
+        args = arg.split()
+        if len(args) != 2:
+            self.poutput("Error: Usage: trim_whitespace_in_selection start_line end_line")
+            return
+        
+        start_line = int(args[0]) - 1
+        end_line = int(args[1]) - 1
+        
+        if start_line < 0 or end_line >= len(self.current_lines) or start_line > end_line:
+            self.poutput("Error: Invalid line range.")
+            return
+        
+        # Save previous state
+        self.previous_lines = self.current_lines.copy()
+        
+        # Trim whitespace only in selected range
+        for i in range(start_line, end_line + 1):
+            self.current_lines[i] = self.current_lines[i].strip() + "\n"
+        
+        self.update_live_view()
+        self.poutput(f"Trimmed whitespace in {end_line - start_line + 1} selected lines.")
 
 
     def do_tutorial(self, arg):

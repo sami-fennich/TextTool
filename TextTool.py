@@ -263,6 +263,12 @@ class TextTool(cmd2.Cmd):
         self.hidden_commands.append('filter_length')
         self.hidden_commands.append('find_mismatches')
         self.hidden_commands.append('csv_to_table')
+        self.hidden_commands.append('left_replace_in_selection')
+        self.hidden_commands.append('remove_empty_lines_in_selection')
+        self.hidden_commands.append('right_replace_in_selection')
+        self.hidden_commands.append('trim_whitespace_in_selection') 
+        self.hidden_commands.append('replace_in_selection')
+        
 
         self.liveview_box = None  # keep reference to the text box
         self.liveview_root = None        

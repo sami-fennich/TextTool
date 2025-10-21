@@ -254,8 +254,10 @@ class TextTool(cmd2.Cmd):
         self.hidden_commands.append('replace_confirm')
         self.hidden_commands.append('select_from_file')
         self.hidden_commands.append('extract_urls')        
-        
-        self.hidden_commands.append('select_lines')	
+        self.hidden_commands.append('filter_length')
+        self.hidden_commands.append('find_mismatches')
+        self.hidden_commands.append('csv_to_table')
+
         self.liveview_box = None  # keep reference to the text box
         self.liveview_root = None        
         self.start_live_view()
@@ -2312,11 +2314,14 @@ class TextTool(cmd2.Cmd):
 
             bulk_replace
             convert_case
+            csv_to_table
             extract_between
             extract_column
             extract_emails
             extract_urls
+            filter_length
             find_duplicates
+            find_mismatches
             insert_line
             merge_lines
             replace_between
@@ -2394,9 +2399,18 @@ class TextTool(cmd2.Cmd):
             self.hidden_commands.remove('split_lines')
         except:
             a = 0    
-
-     			
-   			
+        try:
+            self.hidden_commands.remove('filter_length')
+        except:
+            a = 0   
+        try:
+            self.hidden_commands.remove('find_mismatches')
+        except:
+            a = 0        			
+        try:
+            self.hidden_commands.remove('csv_to_table')
+        except:
+            a = 0    			
 
 
     def do_standard(self, arg):
@@ -2470,7 +2484,18 @@ class TextTool(cmd2.Cmd):
             self.hidden_commands.append('split_lines')
         except:
             a = 0  
-
+        try:
+            self.hidden_commands.append('filter_length')
+        except:
+            a = 0  
+        try:
+            self.hidden_commands.append('find_mismatches')
+        except:
+            a = 0  
+        try:
+            self.hidden_commands.append('csv_to_table')
+        except:
+            a = 0  
  		
 		
 

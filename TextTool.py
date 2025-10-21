@@ -223,8 +223,8 @@ class TextTool(cmd2.Cmd):
             f"- {self.COLOR_COMMAND}extract_emails{self.COLOR_RESET}: Extract email addresses from text.\n"
             f"- {self.COLOR_COMMAND}extract_urls{self.COLOR_RESET}: Extract URLs from text.\n"
             f"- {self.COLOR_COMMAND}replace_confirm{self.COLOR_RESET}: Interactive find-and-replace with user confirmation.\n"
-            f"- {self.COLOR_COMMAND}replace_in_lines{self.COLOR_RESET}: Replace text only in matching lines.\n"
-			f"- {self.COLOR_COMMAND}multiple_replace{self.COLOR_RESET}: Replace multiple strings in the current text using a mapping file.\n"
+            f"- {self.COLOR_COMMAND}conditional_replace{self.COLOR_RESET}: Replace text only in matching lines.\n"
+			f"- {self.COLOR_COMMAND}bulk_replace{self.COLOR_RESET}: Replace multiple strings in the current text using a mapping file.\n"
             f"- {self.COLOR_COMMAND}select_from_file{self.COLOR_RESET}: Select lines containing strings from a file.\n\n"
             f"To disable these functions and return to standard mode, use `{self.COLOR_COMMAND}standard{self.COLOR_RESET}`.\n\n"			
             f"{self.COLOR_COMMAND}Remember: Type 'tutorial' for an interactive guide through these features!{self.COLOR_RESET}\n\n"
@@ -243,11 +243,19 @@ class TextTool(cmd2.Cmd):
         self.hidden_commands.append('merge_lines')
         self.hidden_commands.append('split_lines')
         self.hidden_commands.append('convert_case')
-        self.hidden_commands.append('trim_whitespace')
         self.hidden_commands.append('reverse_lines')
         self.hidden_commands.append('extract_emails')
         self.hidden_commands.append('extract_urls')
-        self.hidden_commands.append('select_from_file')	
+        self.hidden_commands.append('bulk_replace')  
+        self.hidden_commands.append('extract_column')
+        self.hidden_commands.append('find_duplicates')
+        self.hidden_commands.append('replace_between')
+        self.hidden_commands.append('placeholder_replace')
+        self.hidden_commands.append('replace_confirm')
+        self.hidden_commands.append('select_from_file')
+        self.hidden_commands.append('extract_urls')        
+        
+        self.hidden_commands.append('select_lines')	
         self.liveview_box = None  # keep reference to the text box
         self.liveview_root = None        
         self.start_live_view()
@@ -700,7 +708,7 @@ class TextTool(cmd2.Cmd):
                             if not search_pattern or not target_pattern:
                                 messagebox.showwarning("Warning", "Both Search and Target patterns are required for Replace in Matching Lines.")
                                 return
-                            cmd = f'replace_in_lines "{search_pattern}" "{replace_pattern}" "{target_pattern}"'
+                            cmd = f'conditional_replace "{search_pattern}" "{replace_pattern}" "{target_pattern}"'
 
                         elif operation == "Right Replace":
                             # Allow empty search pattern → append mode
@@ -875,7 +883,7 @@ class TextTool(cmd2.Cmd):
                         
                         # Update Live View if command might have changed content
                         if command_name in ['load', 'replace', 'select', 'revert', 'sort', 'unique', 
-                                          'remove_empty_lines', 'multiple_replace']:
+                                          'remove_empty_lines', 'bulk_replace']:
                             self.update_live_view()
                         
                         palette.destroy()
@@ -1524,6 +1532,38 @@ class TextTool(cmd2.Cmd):
             self.poutput("Error: Invalid regex pattern.")
 
 
+    def do_filter(self, arg):
+        """Alias for 'select' command. Filter and display lines containing the given string(s) or regex pattern(s).
+
+        Usage:
+            filter <string>         - Select lines containing the specified string or regex.
+            filter "!string"        - Select lines that do NOT contain the specified string or regex.
+            filter "string1 OR string2" - Select lines containing either string1 or string2.
+            filter <string> case_sensitive - Make the search case sensitive.
+
+        Special Placeholders:
+            - Use [pipe] instead of the pipe character (|) in your input.
+            - Use [doublequote] instead of double quotes (") in your input.
+            - Use [quote] instead of quotes (') in your input.
+            - Use [tab] instead of tabulation character in your input.
+            - Use [spaces] to match one or more spaces (all kind of spaces)
+
+        Examples:
+            filter "error"          - Selects lines containing the word "error".
+            filter "!error"         - Selects lines that do NOT contain the word "error".
+            filter "error OR warning" - Selects lines containing either "error" or "warning".
+            filter "error" case_sensitive - Case sensitive selection.
+
+        Notes:
+            - By default, the selection is case-insensitive.
+            - Add 'case_sensitive' to make it case sensitive.
+            - Supports regex patterns for more complex selections.
+        """
+        if arg.strip() == "?":  # Check if the argument is just "?"
+            self.poutput(help_text)
+            return  # Exit the function        
+        return self.do_select(arg)
+
     def do_select(self, arg):
         """Select lines containing (or not containing) the given string(s) or regex pattern(s).
 
@@ -1843,12 +1883,12 @@ class TextTool(cmd2.Cmd):
         self.poutput("Reverted to the original full text with modified deleted lines.")
 
 
-    def do_multiple_replace(self, arg):
+    def do_bulk_replace(self, arg):
         """Replace multiple strings in the current text using a mapping file or clipboard content.
 
         Usage:
-            multiple_replace <map_file> [separator] [case_sensitive] [ > output_file ]
-            multiple_replace             - Use clipboard content as the mapping file with space as the separator.
+            bulk_replace <map_file> [separator] [case_sensitive] [ > output_file ]
+            bulk_replace             - Use clipboard content as the mapping file with space as the separator.
 
         Arguments:
             <map_file>     - Path to the mapping file (can be a text file or Excel file with two columns).
@@ -1862,12 +1902,12 @@ class TextTool(cmd2.Cmd):
             mapping file are parsed (ignored for Excel files).
 
         Examples:
-            multiple_replace map.txt tab  - Replaces text using a tab-separated mapping file.
-            multiple_replace map.xlsx     - Replaces text using an Excel mapping file.
-            multiple_replace map.xlsx > output.txt - Saves the output to 'output.txt'.
-            multiple_replace map.xlsx >   - Outputs the result to the clipboard.
-            multiple_replace              - Uses clipboard content as the mapping file with space as the separator.
-            multiple_replace map.txt tab case_sensitive - Case sensitive replacement.
+            bulk_replace map.txt tab  - Replaces text using a tab-separated mapping file.
+            bulk_replace map.xlsx     - Replaces text using an Excel mapping file.
+            bulk_replace map.xlsx > output.txt - Saves the output to 'output.txt'.
+            bulk_replace map.xlsx >   - Outputs the result to the clipboard.
+            bulk_replace              - Uses clipboard content as the mapping file with space as the separator.
+            bulk_replace map.txt tab case_sensitive - Case sensitive replacement.
 
         Notes:
             - By default, replacements are case-insensitive.
@@ -1879,8 +1919,8 @@ class TextTool(cmd2.Cmd):
         help_text = (
             f"{self.COLOR_HEADER}\nReplace multiple strings in the current text using a mapping file or clipboard content.{self.COLOR_RESET}\n\n"
             f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
-            f"  {self.COLOR_EXAMPLE}multiple_replace <map_file> [separator] [case_sensitive] [ > output_file ]{self.COLOR_RESET}\n"
-            f"  {self.COLOR_EXAMPLE}multiple_replace{self.COLOR_RESET}             - Use clipboard content as the mapping file with space as the separator.\n\n"
+            f"  {self.COLOR_EXAMPLE}bulk_replace <map_file> [separator] [case_sensitive] [ > output_file ]{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}bulk_replace{self.COLOR_RESET}             - Use clipboard content as the mapping file with space as the separator.\n\n"
             f"{self.COLOR_COMMAND}Arguments:{self.COLOR_RESET}\n"
             f"  {self.COLOR_EXAMPLE}<map_file>{self.COLOR_RESET}     - Path to the mapping file (can be a text file or Excel file with two columns).\n"
             f"  {self.COLOR_EXAMPLE}<separator>{self.COLOR_RESET}    - Separator for text mapping files. Use \"tab\" for tab characters, \"space\" for spaces,\n"
@@ -1891,12 +1931,12 @@ class TextTool(cmd2.Cmd):
             f"  with the corresponding text in the second column. The separator determines how the columns in the\n"
             f"  mapping file are parsed (ignored for Excel files).\n\n"
             f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
-            f"  {self.COLOR_EXAMPLE}multiple_replace map.txt tab{self.COLOR_RESET}  - Replaces text using a tab-separated mapping file.\n"
-            f"  {self.COLOR_EXAMPLE}multiple_replace map.xlsx{self.COLOR_RESET}     - Replaces text using an Excel mapping file.\n"
-            f"  {self.COLOR_EXAMPLE}multiple_replace map.xlsx > output.txt{self.COLOR_RESET} - Saves the output to 'output.txt'.\n"
-            f"  {self.COLOR_EXAMPLE}multiple_replace map.xlsx >{self.COLOR_RESET}   - Outputs the result to the clipboard.\n"
-            f"  {self.COLOR_EXAMPLE}multiple_replace{self.COLOR_RESET}              - Uses clipboard content as the mapping file with space as the separator.\n"
-            f"  {self.COLOR_EXAMPLE}multiple_replace map.txt tab case_sensitive{self.COLOR_RESET} - Case sensitive replacement.\n\n"
+            f"  {self.COLOR_EXAMPLE}bulk_replace map.txt tab{self.COLOR_RESET}  - Replaces text using a tab-separated mapping file.\n"
+            f"  {self.COLOR_EXAMPLE}bulk_replace map.xlsx{self.COLOR_RESET}     - Replaces text using an Excel mapping file.\n"
+            f"  {self.COLOR_EXAMPLE}bulk_replace map.xlsx > output.txt{self.COLOR_RESET} - Saves the output to 'output.txt'.\n"
+            f"  {self.COLOR_EXAMPLE}bulk_replace map.xlsx >{self.COLOR_RESET}   - Outputs the result to the clipboard.\n"
+            f"  {self.COLOR_EXAMPLE}bulk_replace{self.COLOR_RESET}              - Uses clipboard content as the mapping file with space as the separator.\n"
+            f"  {self.COLOR_EXAMPLE}bulk_replace map.txt tab case_sensitive{self.COLOR_RESET} - Case sensitive replacement.\n\n"
             f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
             f"  - By default, replacements are case-insensitive.\n"
             f"  - Add 'case_sensitive' to make replacements case sensitive.\n"
@@ -2270,60 +2310,91 @@ class TextTool(cmd2.Cmd):
     def do_advanced(self, arg):
         """enable advanced text operation functions :
 
-            do_extract_between
-            insert_line
-            merge_lines
-            split_lines
+            bulk_replace
             convert_case
-            trim_whitespace
-            reverse_lines
+            extract_between
+            extract_column
             extract_emails
             extract_urls
+            find_duplicates
+            insert_line
+            merge_lines
+            replace_between
+            placeholder_replace
             replace_confirm
+            reverse_lines
+            select_from_file
+            select_lines
+            split_lines
         """    
         if arg.strip() == "?":
             self.do_help("advanced")
             return
         try:
-            self.hidden_commands.remove('extract_between')
+            self.hidden_commands.remove('bulk_replace')
         except:
             a = 0                  
         try:
-            self.hidden_commands.remove('insert_line')
+            self.hidden_commands.remove('convert_case')
         except:
             a = 0
         try:
+            self.hidden_commands.remove('extract_between')
+        except:
+            a = 0    
+        try:
+            self.hidden_commands.remove('extract_column')
+        except:
+            a = 0         
+        try:
+            self.hidden_commands.remove('extract_emails')
+        except:
+            a = 0      
+        try:
+            self.hidden_commands.remove('extract_urls')
+        except:
+            a = 0     
+        try:
+            self.hidden_commands.remove('find_duplicates')
+        except:
+            a = 0     
+        try:
+            self.hidden_commands.remove('insert_line')
+        except:
+            a = 0     
+        try:
             self.hidden_commands.remove('merge_lines')
+        except:
+            a = 0            
+        try:
+            self.hidden_commands.remove('replace_between')
+        except:
+            a = 0    
+        try:
+            self.hidden_commands.remove('placeholder_replace')
+        except:
+            a = 0    
+        try:
+            self.hidden_commands.remove('replace_confirm')
+        except:
+            a = 0    
+        try:
+            self.hidden_commands.remove('reverse_lines')
+        except:
+            a = 0    
+        try:
+            self.hidden_commands.remove('select_from_file')
+        except:
+            a = 0    
+        try:
+            self.hidden_commands.remove('select_lines')
         except:
             a = 0    
         try:
             self.hidden_commands.remove('split_lines')
         except:
-            a = 0         
-        try:
-            self.hidden_commands.remove('convert_case')
-        except:
-            a = 0      
-        try:
-            self.hidden_commands.remove('trim_whitespace')
-        except:
-            a = 0     
-        try:
-            self.hidden_commands.remove('reverse_lines')
-        except:
-            a = 0     
-        try:
-            self.hidden_commands.remove('extract_emails')
-        except:
-            a = 0     
-        try:
-            self.hidden_commands.remove('extract_urls')
-        except:
-            a = 0            
-        try:
-            self.hidden_commands.remove('select_from_file')
-        except:
             a = 0    
+
      			
    			
 
@@ -2336,45 +2407,71 @@ class TextTool(cmd2.Cmd):
             self.do_help("standard")
             return
         try:
-            self.hidden_commands.append('extract_between')
+            self.hidden_commands.append('bulk_replace')
         except:
-            a = 0                  
-        try:
-            self.hidden_commands.append('insert_line')
-        except:
-            a = 0
-        try:
-            self.hidden_commands.append('merge_lines')
-        except:
-            a = 0    
-        try:
-            self.hidden_commands.append('split_lines')
-        except:
-            a = 0         
+            a = 0  
         try:
             self.hidden_commands.append('convert_case')
         except:
-            a = 0      
+            a = 0  
         try:
-            self.hidden_commands.append('trim_whitespace')
+            self.hidden_commands.append('extract_between')
         except:
-            a = 0     
+            a = 0  
         try:
-            self.hidden_commands.append('reverse_lines')
+            self.hidden_commands.append('extract_column')
         except:
-            a = 0     
+            a = 0  
         try:
             self.hidden_commands.append('extract_emails')
         except:
-            a = 0     
+            a = 0  
         try:
             self.hidden_commands.append('extract_urls')
         except:
-            a = 0                 
+            a = 0  
+        try:
+            self.hidden_commands.append('find_duplicates')
+        except:
+            a = 0  
+        try:
+            self.hidden_commands.append('insert_line')
+        except:
+            a = 0  
+        try:
+            self.hidden_commands.append('merge_lines')
+        except:
+            a = 0  
+        try:
+            self.hidden_commands.append('replace_between')
+        except:
+            a = 0  
+        try:
+            self.hidden_commands.append('placeholder_replace')
+        except:
+            a = 0  
+        try:
+            self.hidden_commands.append('replace_confirm')
+        except:
+            a = 0  
+        try:
+            self.hidden_commands.append('reverse_lines')
+        except:
+            a = 0  
         try:
             self.hidden_commands.append('select_from_file')
         except:
-            a = 0 		
+            a = 0  
+        try:
+            self.hidden_commands.append('select_lines')
+        except:
+            a = 0  
+        try:
+            self.hidden_commands.append('split_lines')
+        except:
+            a = 0  
+
+ 		
 		
 
     def do_replace_confirm(self, arg):
@@ -2517,17 +2614,17 @@ class TextTool(cmd2.Cmd):
             self.poutput("Error: Invalid regex pattern.")
 
 
-    def do_replace_in_lines(self, arg):
+    def do_conditional_replace(self, arg):
         """Replace a string or regex pattern only in lines that match another pattern.
 
         Usage:
-            replace_in_lines "search_pattern" "replace_pattern" "target_pattern" [case_sensitive]
+            conditional_replace "search_pattern" "replace_pattern" "target_pattern" [case_sensitive]
 
         By default, replacement is case insensitive.
         Add 'case_sensitive' to make it case sensitive.
         """
         if arg.strip() == "?":
-            self.do_help("replace_in_lines")
+            self.do_help("conditional_replace")
             return
         if not self.current_lines:
             self.poutput("Error: No file is loaded.")
@@ -2557,7 +2654,7 @@ class TextTool(cmd2.Cmd):
             # Split the arguments by spaces (for unquoted arguments)
             args = arg.split()
             if len(args) < 2:
-                self.poutput("Error: Invalid arguments. Usage: replace_in_lines \"search_pattern\" \"replace_pattern\" \"target_pattern\" ")
+                self.poutput("Error: Invalid arguments. Usage: conditional_replace \"search_pattern\" \"replace_pattern\" \"target_pattern\" ")
                 return
             search_pattern, replace_pattern, target_pattern= args[0], args[1], args[2]
             if (search_pattern.startswith("(") or search_pattern.startswith("\\") or "." in search_pattern) and not (search_pattern.startswith("^") and search_pattern.endswith("$")):
@@ -2599,7 +2696,7 @@ class TextTool(cmd2.Cmd):
             except Exception as d:
                 self.poutput(f"Literal Replacement failed. Details: {d}")
 
-    def complete_replace_in_lines(self, text, line, begidx, endidx):      
+    def complete_conditional_replace(self, text, line, begidx, endidx):      
         FRIENDS_T = ['case_sensitive','?']
         if not text:
           completions = FRIENDS_T[:]
@@ -3361,11 +3458,11 @@ class TextTool(cmd2.Cmd):
         self.poutput('\n'.join(diff))
 
 
-    def do_replace_placeholder(self, arg):
+    def do_placeholder_replace(self, arg):
         """Replace a placeholder with multiple values from a file or clipboard.
 
         Usage:
-            replace_placeholder "string1" [filename] [case_sensitive]
+            placeholder_replace "string1" [filename] [case_sensitive]
 
         Behavior:
             - If filename is provided → use its non-empty lines as replacement values.
@@ -3389,7 +3486,7 @@ class TextTool(cmd2.Cmd):
                 my phone is closed
 
             Command:
-                replace_placeholder "my" myfile.txt
+                placeholder_replace "my" myfile.txt
 
             Result:
                 hello abc dear
@@ -3403,7 +3500,7 @@ class TextTool(cmd2.Cmd):
                 geh phone is closed
         """
         if arg.strip() == "?":
-            self.do_help("replace_placeholder")
+            self.do_help("placeholder_replace")
             return
         import shlex, os, re
 
@@ -3515,7 +3612,7 @@ class TextTool(cmd2.Cmd):
 
 
 
-    def complete_replace_placeholder(self, text, line, begidx, endidx):      
+    def complete_placeholder_replace(self, text, line, begidx, endidx):      
         FRIENDS_T = ['case_sensitive','?']
         if not text:
           completions = FRIENDS_T[:]
@@ -3656,7 +3753,7 @@ class TextTool(cmd2.Cmd):
               ]
         return completions
 
-    def complete_multiple_replace(self, text, line, begidx, endidx):      
+    def complete_bulk_replace(self, text, line, begidx, endidx):      
         FRIENDS_T = ['case_sensitive','?']
         if not text:
           completions = FRIENDS_T[:]
@@ -3666,6 +3763,626 @@ class TextTool(cmd2.Cmd):
               if f.lower().startswith(text.lower()) 
               ]
         return completions
+
+
+    def do_extract_column(self, arg):
+        """Extract specific columns from delimited text.
+        
+        Usage:
+            extract_column <column_numbers> [delimiter]
+            
+        Arguments:
+            <column_numbers> - Comma-separated column numbers or ranges (1-based)
+                              Examples: "1,3,5" or "2-4" or "1,3-5,7"
+            [delimiter]      - Column delimiter (default: comma)
+                              Use "tab" for tab character, "space" for space
+            
+        Examples:
+            extract_column "1,3,5" ","     - Extract columns 1, 3, and 5 from CSV
+            extract_column "2-4" tab       - Extract columns 2 through 4 from tab-delimited
+            extract_column "1,3-5"         - Extract columns 1, 3, 4, and 5 (default comma delimiter)
+            extract_column "1" space       - Extract first column from space-delimited text
+            
+        Notes:
+            - Column numbers are 1-based (first column is 1)
+            - Ranges are inclusive (1-3 means columns 1, 2, and 3)
+            - Empty columns are preserved in the output
+        """
+        help_text = (
+            f"{self.COLOR_HEADER}\nExtract specific columns from delimited text.{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}extract_column <column_numbers> [delimiter]{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Arguments:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}<column_numbers>{self.COLOR_RESET} - Comma-separated column numbers or ranges (1-based)\n"
+            f"                      Examples: \"1,3,5\" or \"2-4\" or \"1,3-5,7\"\n"
+            f"  {self.COLOR_EXAMPLE}[delimiter]{self.COLOR_RESET}      - Column delimiter (default: comma)\n"
+            f"                      Use \"tab\" for tab character, \"space\" for space\n\n"
+            f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}extract_column \"1,3,5\" \",\"{self.COLOR_RESET}     - Extract columns 1, 3, and 5 from CSV\n"
+            f"  {self.COLOR_EXAMPLE}extract_column \"2-4\" tab{self.COLOR_RESET}       - Extract columns 2 through 4 from tab-delimited\n"
+            f"  {self.COLOR_EXAMPLE}extract_column \"1,3-5\"{self.COLOR_RESET}         - Extract columns 1, 3, 4, and 5 (default comma delimiter)\n\n"
+            f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
+            f"  - Column numbers are 1-based (first column is 1)\n"
+            f"  - Ranges are inclusive (1-3 means columns 1, 2, and 3)\n"
+            f"  - Empty columns are preserved in the output\n"
+        )
+        
+        if arg.strip() == "?":
+            self.poutput(help_text)
+            return
+            
+        if not self.current_lines:
+            self.poutput("Error: No file is loaded.")
+            return
+        
+        # Save previous state
+        self.previous_lines = self.current_lines.copy()
+        
+        # Parse arguments
+        args = arg.strip().split()
+        if not args:
+            self.poutput("Error: Missing column numbers. Usage: extract_column <column_numbers> [delimiter]")
+            return
+        
+        column_spec = args[0].strip('"').strip("'")
+        delimiter = "," if len(args) < 2 else args[1]
+        
+        # Handle special delimiter keywords
+        if delimiter.lower() == "tab":
+            delimiter = "\t"
+        elif delimiter.lower() == "space":
+            delimiter = " "
+        
+        # Parse column specification
+        try:
+            columns_to_extract = set()
+            parts = column_spec.split(',')
+            for part in parts:
+                part = part.strip()
+                if '-' in part:
+                    # Handle range (e.g., "2-4")
+                    start, end = part.split('-')
+                    start_col = int(start.strip())
+                    end_col = int(end.strip())
+                    if start_col < 1 or end_col < start_col:
+                        self.poutput(f"Error: Invalid range '{part}'")
+                        return
+                    columns_to_extract.update(range(start_col, end_col + 1))
+                else:
+                    # Handle single column
+                    col = int(part)
+                    if col < 1:
+                        self.poutput(f"Error: Column numbers must be positive (got {col})")
+                        return
+                    columns_to_extract.add(col)
+            
+            # Sort columns for consistent output
+            columns_to_extract = sorted(columns_to_extract)
+            
+        except ValueError as e:
+            self.poutput(f"Error: Invalid column specification. {e}")
+            return
+        
+        # Extract columns
+        new_lines = []
+        for line in self.current_lines:
+            # Remove trailing newline for processing
+            line_content = line.rstrip('\n\r')
+            
+            # Split by delimiter
+            columns = line_content.split(delimiter)
+            
+            # Extract specified columns
+            extracted = []
+            for col_num in columns_to_extract:
+                # Convert to 0-based index
+                idx = col_num - 1
+                if idx < len(columns):
+                    extracted.append(columns[idx])
+                else:
+                    # Column doesn't exist in this line, add empty string
+                    extracted.append("")
+            
+            # Join and add newline
+            new_line = delimiter.join(extracted) + "\n"
+            new_lines.append(new_line)
+        
+        self.current_lines = new_lines
+        self.update_live_view()
+        self.poutput(f"Extracted columns {column_spec} using delimiter '{delimiter}'. Total lines: {len(new_lines)}")
+
+
+    def complete_extract_column(self, text, line, begidx, endidx):      
+        FRIENDS_T = ['tab', 'space', ',', '|', ';', '?']
+        if not text:
+            completions = FRIENDS_T[:]
+        else: 
+            completions = [f for f in FRIENDS_T if f.lower().startswith(text.lower())]
+        return completions
+
+
+    def do_select_lines(self, arg):
+        """Select specific lines by line numbers or ranges.
+        
+        Usage:
+            select_lines <line_spec>
+            
+        Arguments:
+            <line_spec> - Comma-separated line numbers or ranges
+                         Examples: "1,5,10" or "10-20" or "1-5,10,15-20"
+            
+        Examples:
+            select_lines "1,5,10"       - Select lines 1, 5, and 10
+            select_lines "10-20"        - Select lines 10 through 20
+            select_lines "1-5,10,15-20" - Select lines 1-5, line 10, and lines 15-20
+            select_lines "1,3,5-"       - Select line 1, 3, and from 5 to end
+            
+        Notes:
+            - Line numbers are 1-based (first line is 1)
+            - Ranges are inclusive (10-20 means lines 10 through 20)
+            - Lines are selected in the order specified
+            - Duplicate line numbers are ignored
+            - Use "-" at the end of a range to select to the end (e.g., "10-")
+        """
+        help_text = (
+            f"{self.COLOR_HEADER}\nSelect specific lines by line numbers or ranges.{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}select_lines <line_spec>{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Arguments:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}<line_spec>{self.COLOR_RESET} - Comma-separated line numbers or ranges\n"
+            f"                 Examples: \"1,5,10\" or \"10-20\" or \"1-5,10,15-20\"\n\n"
+            f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}select_lines \"1,5,10\"{self.COLOR_RESET}       - Select lines 1, 5, and 10\n"
+            f"  {self.COLOR_EXAMPLE}select_lines \"10-20\"{self.COLOR_RESET}        - Select lines 10 through 20\n"
+            f"  {self.COLOR_EXAMPLE}select_lines \"1-5,10,15-20\"{self.COLOR_RESET} - Select multiple ranges\n"
+            f"  {self.COLOR_EXAMPLE}select_lines \"1,3,5-\"{self.COLOR_RESET}       - Select line 1, 3, and from 5 to end\n\n"
+            f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
+            f"  - Line numbers are 1-based (first line is 1)\n"
+            f"  - Ranges are inclusive\n"
+            f"  - Duplicate line numbers are ignored\n"
+        )
+        
+        if arg.strip() == "?":
+            self.poutput(help_text)
+            return
+            
+        if not self.current_lines:
+            self.poutput("Error: No file is loaded.")
+            return
+        
+        # Save previous state
+        self.previous_lines = self.current_lines.copy()
+        
+        line_spec = arg.strip().strip('"').strip("'")
+        if not line_spec:
+            self.poutput("Error: Missing line specification. Usage: select_lines <line_spec>")
+            return
+        
+        # Parse line specification
+        try:
+            lines_to_select = set()
+            parts = line_spec.split(',')
+            total_lines = len(self.current_lines)
+            
+            for part in parts:
+                part = part.strip()
+                if '-' in part:
+                    # Handle range (e.g., "10-20" or "10-")
+                    range_parts = part.split('-')
+                    if len(range_parts) != 2:
+                        self.poutput(f"Error: Invalid range '{part}'")
+                        return
+                    
+                    start_str = range_parts[0].strip()
+                    end_str = range_parts[1].strip()
+                    
+                    start_line = int(start_str) if start_str else 1
+                    end_line = int(end_str) if end_str else total_lines
+                    
+                    if start_line < 1:
+                        self.poutput(f"Error: Line numbers must be positive (got {start_line})")
+                        return
+                    if end_line < start_line:
+                        self.poutput(f"Error: Invalid range {start_line}-{end_line}")
+                        return
+                    
+                    lines_to_select.update(range(start_line, min(end_line + 1, total_lines + 1)))
+                else:
+                    # Handle single line
+                    line_num = int(part)
+                    if line_num < 1:
+                        self.poutput(f"Error: Line numbers must be positive (got {line_num})")
+                        return
+                    if line_num <= total_lines:
+                        lines_to_select.add(line_num)
+            
+            if not lines_to_select:
+                self.poutput("Error: No valid lines to select")
+                return
+            
+            # Sort line numbers
+            lines_to_select = sorted(lines_to_select)
+            
+            # Select the lines
+            new_lines = []
+            for line_num in lines_to_select:
+                # Convert to 0-based index
+                idx = line_num - 1
+                if idx < len(self.current_lines):
+                    new_lines.append(self.current_lines[idx])
+            
+            self.current_lines = new_lines
+            self.update_live_view()
+            self.poutput(f"Selected {len(new_lines)} line(s).")
+            
+        except ValueError as e:
+            self.poutput(f"Error: Invalid line specification. {e}")
+
+
+    def do_statistics(self, arg):
+        """Show statistics about the current text.
+        
+        Usage:
+            statistics
+            
+        Displays:
+            - Total lines
+            - Non-empty lines
+            - Total characters (including whitespace)
+            - Total characters (excluding whitespace)
+            - Total words
+            - Average line length
+            - Longest line (with preview)
+            - Shortest line (with preview)
+            - Most common words (top 10)
+            
+        Examples:
+            statistics  - Display comprehensive text statistics
+            
+        Notes:
+            - Statistics are calculated on the currently loaded/selected text
+            - Word counting uses simple whitespace splitting
+            - Character counts include newlines
+        """
+        help_text = (
+            f"{self.COLOR_HEADER}\nShow statistics about the current text.{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}statistics{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Displays:{self.COLOR_RESET}\n"
+            f"  - Total lines\n"
+            f"  - Non-empty lines\n"
+            f"  - Total characters\n"
+            f"  - Total words\n"
+            f"  - Average line length\n"
+            f"  - Longest/shortest lines\n"
+            f"  - Most common words\n"
+        )
+        
+        if arg.strip() == "?":
+            self.poutput(help_text)
+            return
+            
+        if not self.current_lines:
+            self.poutput("Error: No file is loaded.")
+            return
+        
+        # Calculate statistics
+        total_lines = len(self.current_lines)
+        non_empty_lines = sum(1 for line in self.current_lines if line.strip())
+        
+        total_chars_with_ws = sum(len(line) for line in self.current_lines)
+        total_chars_no_ws = sum(len(line.replace(' ', '').replace('\t', '').replace('\n', '').replace('\r', '')) 
+                               for line in self.current_lines)
+        
+        # Word counting
+        words = []
+        for line in self.current_lines:
+            words.extend(line.split())
+        total_words = len(words)
+        
+        # Average line length (excluding newlines)
+        line_lengths = [len(line.rstrip('\n\r')) for line in self.current_lines]
+        avg_line_length = sum(line_lengths) / len(line_lengths) if line_lengths else 0
+        
+        # Find longest and shortest lines
+        if line_lengths:
+            max_length = max(line_lengths)
+            min_length = min(line_lengths)
+            longest_line_idx = line_lengths.index(max_length)
+            shortest_line_idx = line_lengths.index(min_length)
+            longest_line = self.current_lines[longest_line_idx].rstrip('\n\r')
+            shortest_line = self.current_lines[shortest_line_idx].rstrip('\n\r')
+        else:
+            longest_line = shortest_line = ""
+            max_length = min_length = 0
+        
+        # Most common words (case-insensitive)
+        from collections import Counter
+        word_counts = Counter(word.lower() for word in words if len(word) > 2)  # Ignore short words
+        most_common = word_counts.most_common(10)
+        
+        # Display statistics
+        output = f"\n{self.COLOR_HEADER}=== Text Statistics ==={self.COLOR_RESET}\n\n"
+        output += f"{self.COLOR_COMMAND}Lines:{self.COLOR_RESET}\n"
+        output += f"  Total lines:     {total_lines:,}\n"
+        output += f"  Non-empty lines: {non_empty_lines:,}\n"
+        output += f"  Empty lines:     {total_lines - non_empty_lines:,}\n\n"
+        
+        output += f"{self.COLOR_COMMAND}Characters:{self.COLOR_RESET}\n"
+        output += f"  With whitespace:    {total_chars_with_ws:,}\n"
+        output += f"  Without whitespace: {total_chars_no_ws:,}\n\n"
+        
+        output += f"{self.COLOR_COMMAND}Words:{self.COLOR_RESET}\n"
+        output += f"  Total words: {total_words:,}\n\n"
+        
+        output += f"{self.COLOR_COMMAND}Line Length:{self.COLOR_RESET}\n"
+        output += f"  Average:  {avg_line_length:.2f} characters\n"
+        output += f"  Longest:  {max_length} characters\n"
+        output += f"  Shortest: {min_length} characters\n\n"
+        
+        if longest_line:
+            preview = longest_line[:100] + "..." if len(longest_line) > 100 else longest_line
+            output += f"{self.COLOR_COMMAND}Longest line (line {longest_line_idx + 1}):{self.COLOR_RESET}\n"
+            output += f"  {preview}\n\n"
+        
+        if shortest_line is not None:
+            preview = shortest_line[:100] + "..." if len(shortest_line) > 100 else shortest_line
+            output += f"{self.COLOR_COMMAND}Shortest non-empty line (line {shortest_line_idx + 1}):{self.COLOR_RESET}\n"
+            output += f"  {preview}\n\n"
+        
+        if most_common:
+            output += f"{self.COLOR_COMMAND}Most common words (>2 chars):{self.COLOR_RESET}\n"
+            for word, count in most_common:
+                output += f"  {word:.<20} {count:>6,} times\n"
+        
+        self.poutput(output)
+
+
+    def do_find_duplicates(self, arg):
+        """Find and show duplicate lines with their counts.
+        
+        Usage:
+            find_duplicates [threshold] [case_sensitive]
+            
+        Arguments:
+            [threshold]      - Minimum number of occurrences to display (default: 2)
+            [case_sensitive] - Make comparison case-sensitive
+            
+        Examples:
+            find_duplicates           - Show all lines appearing 2+ times
+            find_duplicates 5         - Show only lines appearing 5+ times
+            find_duplicates 3 case_sensitive - Case-sensitive, threshold 3
+            
+        Notes:
+            - By default, comparison is case-insensitive
+            - Results are sorted by occurrence count (descending)
+            - Original line format is preserved in output
+            - Empty lines are included in duplicate detection
+        """
+        help_text = (
+            f"{self.COLOR_HEADER}\nFind and show duplicate lines with their counts.{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}find_duplicates [threshold] [case_sensitive]{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Arguments:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}[threshold]{self.COLOR_RESET}      - Minimum occurrences to display (default: 2)\n"
+            f"  {self.COLOR_EXAMPLE}[case_sensitive]{self.COLOR_RESET} - Make comparison case-sensitive\n\n"
+            f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}find_duplicates{self.COLOR_RESET}           - Show all duplicates (2+ times)\n"
+            f"  {self.COLOR_EXAMPLE}find_duplicates 5{self.COLOR_RESET}         - Show lines appearing 5+ times\n"
+            f"  {self.COLOR_EXAMPLE}find_duplicates 3 case_sensitive{self.COLOR_RESET} - Case-sensitive search\n"
+        )
+        
+        if arg.strip() == "?":
+            self.poutput(help_text)
+            return
+            
+        if not self.current_lines:
+            self.poutput("Error: No file is loaded.")
+            return
+        
+        # Parse arguments
+        args = arg.strip().split()
+        threshold = 2
+        case_sensitive = False
+        
+        for a in args:
+            if a.lower() == "case_sensitive":
+                case_sensitive = True
+            else:
+                try:
+                    threshold = int(a)
+                    if threshold < 2:
+                        self.poutput("Error: Threshold must be at least 2")
+                        return
+                except ValueError:
+                    self.poutput(f"Error: Invalid threshold value '{a}'")
+                    return
+        
+        # Count occurrences
+        from collections import defaultdict
+        line_counts = defaultdict(list)  # key -> list of (line_number, original_line)
+        
+        for idx, line in enumerate(self.current_lines, start=1):
+            line_stripped = line.rstrip('\n\r')
+            # Use lowercase for comparison key if case-insensitive
+            key = line_stripped if case_sensitive else line_stripped.lower()
+            line_counts[key].append((idx, line_stripped))
+        
+        # Filter by threshold and sort by count
+        duplicates = {k: v for k, v in line_counts.items() if len(v) >= threshold}
+        sorted_duplicates = sorted(duplicates.items(), key=lambda x: len(x[1]), reverse=True)
+        
+        if not sorted_duplicates:
+            sensitivity = "case-sensitive" if case_sensitive else "case-insensitive"
+            self.poutput(f"No duplicate lines found with threshold {threshold} ({sensitivity}).")
+            return
+        
+        # Display results
+        output = f"\n{self.COLOR_HEADER}=== Duplicate Lines ==={self.COLOR_RESET}\n"
+        output += f"Threshold: {threshold}+ occurrences ({('case-sensitive' if case_sensitive else 'case-insensitive')})\n"
+        output += f"Found {len(sorted_duplicates)} unique duplicate line(s)\n\n"
+        
+        for key, occurrences in sorted_duplicates:
+            count = len(occurrences)
+            # Get the first occurrence for display (preserves original case)
+            first_line = occurrences[0][1]
+            line_numbers = [str(occ[0]) for occ in occurrences]
+            
+            # Truncate long lines for display
+            display_line = first_line[:80] + "..." if len(first_line) > 80 else first_line
+            
+            output += f"{self.COLOR_COMMAND}Count: {count}{self.COLOR_RESET}\n"
+            output += f"  Line: {display_line}\n"
+            output += f"  Found on lines: {', '.join(line_numbers[:20])}"
+            if len(line_numbers) > 20:
+                output += f" ... and {len(line_numbers) - 20} more"
+            output += "\n\n"
+        
+        self.poutput(output)
+
+
+    def complete_find_duplicates(self, text, line, begidx, endidx):      
+        FRIENDS_T = ['case_sensitive', '?']
+        if not text:
+            completions = FRIENDS_T[:]
+        else: 
+            completions = [f for f in FRIENDS_T if f.lower().startswith(text.lower())]
+        return completions
+
+
+    def do_replace_between(self, arg):
+        """Replace text between two delimiters.
+        
+        Usage:
+            replace_between "start_delimiter" "end_delimiter" "replacement" [case_sensitive]
+            
+        Arguments:
+            start_delimiter - Starting delimiter (can be regex)
+            end_delimiter   - Ending delimiter (can be regex)
+            replacement     - Text to replace the content between delimiters
+            case_sensitive  - Make delimiter matching case-sensitive
+            
+        Examples:
+            replace_between "<b>" "</b>" "BOLD"
+                - Replaces everything between <b> and </b> with "BOLD"
+                
+            replace_between "START" "END" ""
+                - Removes everything between START and END (including delimiters)
+                
+            replace_between "\\[" "\\]" "REDACTED"
+                - Replaces content between square brackets (regex escaped)
+                
+            replace_between "<!--" "-->" "" case_sensitive
+                - Remove HTML comments (case-sensitive)
+            
+        Notes:
+            - Delimiters themselves are included in the replacement
+            - Supports regex patterns for delimiters
+            - By default, matching is case-insensitive
+            - Non-greedy matching (replaces shortest match between delimiters)
+            - If end delimiter is not found, the line remains unchanged
+        """
+        help_text = (
+            f"{self.COLOR_HEADER}\nReplace text between two delimiters.{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}replace_between \"start\" \"end\" \"replacement\" [case_sensitive]{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}replace_between \"<b>\" \"</b>\" \"BOLD\"{self.COLOR_RESET}\n"
+            f"    - Replaces everything between <b> and </b> with \"BOLD\"\n\n"
+            f"  {self.COLOR_EXAMPLE}replace_between \"START\" \"END\" \"\"{self.COLOR_RESET}\n"
+            f"    - Removes everything between START and END\n\n"
+            f"  {self.COLOR_EXAMPLE}replace_between \"\\\\[\" \"\\\\]\" \"REDACTED\"{self.COLOR_RESET}\n"
+            f"    - Replaces content between square brackets\n\n"
+            f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
+            f"  - Delimiters are included in the replacement\n"
+            f"  - Supports regex patterns\n"
+            f"  - Non-greedy matching (shortest match)\n"
+        )
+        
+        if arg.strip() == "?":
+            self.poutput(help_text)
+            return
+            
+        if not self.current_lines:
+            self.poutput("Error: No file is loaded.")
+            return
+        
+        # Save previous state
+        self.previous_lines = self.current_lines.copy()
+        
+        # Parse arguments
+        import shlex
+        try:
+            args = shlex.split(arg)
+        except ValueError:
+            self.poutput("Error: Invalid quotes in arguments")
+            return
+        
+        # Check for case_sensitive flag
+        case_sensitive = False
+        if args and args[-1].lower() == "case_sensitive":
+            case_sensitive = True
+            args = args[:-1]
+        
+        if len(args) < 3:
+            self.poutput("Error: Missing parameters. Usage: replace_between \"start\" \"end\" \"replacement\"")
+            return
+        
+        start_delim = args[0]
+        end_delim = args[1]
+        replacement = args[2]
+        
+        try:
+            # Build regex pattern for matching between delimiters
+            # Use non-greedy matching (.*?) to get shortest match
+            flags = 0 if case_sensitive else re.IGNORECASE
+            
+            # Escape special regex characters in delimiters if they're not already regex patterns
+            # This is a simple heuristic - if it contains regex metacharacters, assume it's regex
+            regex_metacharacters = r'\.^$*+?{}[]()|\\'
+            
+            # Build pattern: start_delim + anything + end_delim (non-greedy)
+            pattern = re.escape(start_delim) + r'.*?' + re.escape(end_delim)
+            
+            # Try to compile - if user wants regex, they need to not quote special chars
+            # For simplicity, let's allow both escaped and unescaped
+            try:
+                regex = re.compile(pattern, flags)
+            except re.error:
+                # If escaped version fails, try unescaped (user provided regex)
+                pattern = start_delim + r'.*?' + end_delim
+                regex = re.compile(pattern, flags)
+            
+            # Replace in all lines
+            new_lines = []
+            total_replacements = 0
+            
+            for line in self.current_lines:
+                new_line, count = regex.subn(replacement, line)
+                total_replacements += count
+                new_lines.append(new_line)
+            
+            self.current_lines = new_lines
+            self.update_live_view()
+            
+            sensitivity = "case-sensitive" if case_sensitive else "case-insensitive"
+            self.poutput(f"Replaced {total_replacements} occurrence(s) between '{start_delim}' and '{end_delim}' ({sensitivity}).")
+            
+        except re.error as e:
+            self.poutput(f"Error: Invalid regex pattern. {e}")
+            self.poutput("Hint: Use double backslashes for literal backslashes (e.g., '\\\\[' for '[')")
+
+
+    def complete_replace_between(self, text, line, begidx, endidx):      
+        FRIENDS_T = ['case_sensitive', '?']
+        if not text:
+            completions = FRIENDS_T[:]
+        else: 
+            completions = [f for f in FRIENDS_T if f.lower().startswith(text.lower())]
+        return completions
+
+
+
 
 if __name__ == '__main__':
     app = TextTool()

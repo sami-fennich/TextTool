@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 
 import subprocess
 import sys
@@ -8,7 +9,12 @@ import importlib
 global input_file
 import difflib
 # List of required libraries
-required_libraries = ['cmd2', 'regex','pandas','regex','pathlib']
+required_libraries = [
+    'cmd2',           # Command-line interface framework
+    'regex',          # Advanced regular expressions
+    'pandas',         # Excel file handling and data manipulation
+    'win32clipboard', # Windows clipboard access
+]
 input_file= ""
 
 class ToolTip:

@@ -329,6 +329,45 @@ class TextTool(cmd2.Cmd):
             self.liveview_box = ScrolledText(
                 self.liveview_root, width=100, height=40, font=("Consolas", 10)
             )
+            def indent_selection(event=None):
+                """Indent selected lines with a tab instead of replacing them."""
+                try:
+                    text = self.liveview_box
+                    start = text.index(tk.SEL_FIRST)
+                    end = text.index(tk.SEL_LAST)
+                    start_line = int(start.split('.')[0])
+                    end_line = int(end.split('.')[0])
+
+                    for line in range(start_line, end_line + 1):
+                        text.insert(f"{line}.0", "    ")  # 4 spaces indentation
+                    return "break"  # prevent default tab behavior
+                except tk.TclError:
+                    # No selection — insert normal tab at cursor
+                    text.insert(tk.INSERT, "    ")
+                    return "break"
+
+            def unindent_selection(event=None):
+                """Remove one level of indentation from selected lines (Shift+Tab)."""
+                try:
+                    text = self.liveview_box
+                    start = text.index(tk.SEL_FIRST)
+                    end = text.index(tk.SEL_LAST)
+                    start_line = int(start.split('.')[0])
+                    end_line = int(end.split('.')[0])
+
+                    for line in range(start_line, end_line + 1):
+                        line_start = f"{line}.0"
+                        if text.get(line_start, f"{line_start}+4c") == "    ":
+                            text.delete(line_start, f"{line_start}+4c")
+                    return "break"
+                except tk.TclError:
+                    return "break"
+
+            # Bind Tab and Shift+Tab
+            self.liveview_box.bind("<Tab>", indent_selection)
+            #self.liveview_box.bind("<ISO_Left_Tab>", unindent_selection)  # For Linux/Windows Shift+Tab
+            self.liveview_box.bind("<Shift-Tab>", unindent_selection)     # For macOS
+                        
             self.liveview_box.pack(fill="both", expand=True)
 
             # Add context menu to the text widget

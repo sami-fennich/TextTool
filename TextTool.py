@@ -268,6 +268,8 @@ class TextTool(cmd2.Cmd):
         self.hidden_commands.append('right_replace_in_selection')
         self.hidden_commands.append('trim_whitespace_in_selection') 
         self.hidden_commands.append('replace_in_selection')
+        self.hidden_commands.append('select_lines')
+        self.hidden_commands.append('select_indented')
         
 
         self.liveview_box = None  # keep reference to the text box
@@ -371,38 +373,72 @@ class TextTool(cmd2.Cmd):
             self.liveview_box.pack(fill="both", expand=True)
 
             # Add context menu to the text widget
+            # In the start_live_view method, update the create_context_menu function:
+
+            # In the start_live_view method, update the create_context_menu function:
+
+            # In the start_live_view method, update the create_context_menu function:
+
             def create_context_menu(event):
                 context_menu = tk.Menu(self.liveview_root, tearoff=0)
                 
                 # Get selected text
+                has_selection = False
+                selected_text = ""
                 try:
                     selected_text = self.liveview_box.get(tk.SEL_FIRST, tk.SEL_LAST)
-                    if selected_text:
-                        # Options when text is selected
-                        context_menu.add_command(label="Clone Selection...", 
-                                               command=lambda: self.clone_selection_dialog())
-                        context_menu.add_command(label="Replace in Selection...", 
-                                               command=lambda: self.replace_in_selection_dialog())
-                        context_menu.add_command(label="Remove Empty Lines in Selection", 
-                                               command=lambda: self.remove_empty_lines_in_selection())
-                        context_menu.add_command(label="Trim Whitespace in Selection", 
-                                               command=lambda: self.trim_whitespace_in_selection())
-                        context_menu.add_separator()
+                    has_selection = bool(selected_text.strip())
                 except tk.TclError:
-                    # No selection - show Find option
-                    context_menu.add_command(label="Find...", 
-                                           command=lambda: self.open_find_safely())
+                    has_selection = False
+
+                # Always available options
+                if has_selection:
+                    context_menu.add_command(label="Copy", 
+                                           command=lambda: self.copy_selection())
                     context_menu.add_separator()
                 
-                # Always show these options
+                # Edit operations
+                context_menu.add_command(label="Paste", 
+                                       command=lambda: self.paste_to_liveview())
+                
+                if has_selection:
+                    context_menu.add_separator()
+                    # Selection-specific operations
+                    
+                    # Add Select Indented option for any selection
+                    clean_pattern = selected_text.strip()
+                    if clean_pattern:
+                        # Show the actual pattern that will be used
+                        display_pattern = clean_pattern
+                        if len(display_pattern) > 25:
+                            display_pattern = display_pattern[:22] + "..."
+                        
+                        context_menu.add_command(label=f"Select Indented: '{display_pattern}'", 
+                                               command=lambda: self.onecmd(f'select_indented "{clean_pattern}"'))
+                    
+                    context_menu.add_separator()
+                    context_menu.add_command(label="Clone Selection...", 
+                                           command=lambda: self.clone_selection_dialog())
+                    context_menu.add_command(label="Replace in Selection...", 
+                                           command=lambda: self.replace_in_selection_dialog())
+                    context_menu.add_command(label="Remove Empty Lines in Selection", 
+                                           command=lambda: self.remove_empty_lines_in_selection())
+                    context_menu.add_command(label="Trim Whitespace in Selection", 
+                                           command=lambda: self.trim_whitespace_in_selection())
+                    context_menu.add_separator()
+                
+                # Find and navigation
+                context_menu.add_command(label="Find...", 
+                                       command=lambda: self.open_find_safely())
+                context_menu.add_separator()
+                
+                # Selection
                 context_menu.add_command(label="Select All", 
                                        command=lambda: self.liveview_box.tag_add(tk.SEL, "1.0", tk.END))
                 
                 # Display the menu at cursor position
                 context_menu.tk_popup(event.x_root, event.y_root)
 
-
-            # Bind right-click to context menu
             self.liveview_box.bind("<Button-3>", create_context_menu)  # Button-3 is right-click
 
             def on_text_modified(event=None):
@@ -1756,6 +1792,61 @@ class TextTool(cmd2.Cmd):
             return
         
         self.do_trim_whitespace_in_selection(f"{start_line + 1} {end_line + 1}")
+
+
+    def copy_selection(self):
+        """Copy selected text to clipboard."""
+        try:
+            if hasattr(self, "liveview_box") and self.liveview_box:
+                selected_text = self.liveview_box.get(tk.SEL_FIRST, tk.SEL_LAST)
+                if selected_text:
+                    self.liveview_root.clipboard_clear()
+                    self.liveview_root.clipboard_append(selected_text)
+                    # Optional: show brief feedback
+                    self.show_status_message("Selection copied to clipboard")
+        except tk.TclError:
+            self.show_status_message("No text selected")
+
+    def paste_to_liveview(self):
+        """Paste clipboard content at cursor position."""
+        try:
+            if hasattr(self, "liveview_box") and self.liveview_root:
+                # Get clipboard content
+                clipboard_content = self.liveview_root.clipboard_get()
+                if clipboard_content:
+                    # Get current cursor position
+                    cursor_pos = self.liveview_box.index(tk.INSERT)
+                    
+                    # Insert at cursor position
+                    self.liveview_box.insert(cursor_pos, clipboard_content)
+                    
+                    # Mark text as changed
+                    self.text_changed = True
+                    
+                    # Optional: show brief feedback
+                    self.show_status_message("Content pasted from clipboard")
+                    
+                    # Update the display
+                    self.update_live_view()
+        except tk.TclError:
+            self.show_status_message("Clipboard is empty or contains non-text data")
+
+    def show_status_message(self, message, duration=2000):
+        """Show a temporary status message in the Live View."""
+        if hasattr(self, "liveview_root") and self.liveview_root:
+            try:
+                # Create or update status label
+                if not hasattr(self, 'status_label'):
+                    self.status_label = tk.Label(self.liveview_root, text="", 
+                                               font=("Consolas", 8), fg="green")
+                    self.status_label.pack(side=tk.BOTTOM, fill=tk.X)
+                
+                self.status_label.config(text=message)
+                
+                # Clear message after duration
+                self.liveview_root.after(duration, lambda: self.status_label.config(text=""))
+            except:
+                pass  # Silently fail if status display isn't available
 
     def do_trim_whitespace_in_selection(self, arg):
         """Trim whitespace within a specified range."""
@@ -3145,7 +3236,10 @@ class TextTool(cmd2.Cmd):
             self.hidden_commands.remove('csv_to_table')
         except:
             a = 0    			
-
+        try:
+            self.hidden_commands.remove('select_indented')
+        except:
+            a = 0  
 
     def do_standard(self, arg):
         """Disable the advanced text operation functions.
@@ -3263,7 +3357,10 @@ class TextTool(cmd2.Cmd):
             self.hidden_commands.append('csv_to_table')
         except:
             a = 0  
- 		
+        try:
+            self.hidden_commands.append('select_indented')
+        except:
+            a = 0   		
 		
 
     def do_replace_confirm(self, arg):
@@ -6372,6 +6469,171 @@ class TextTool(cmd2.Cmd):
             completions = [f for f in FRIENDS_T if f.lower().startswith(text.lower())]
         return completions
 
+    def do_select_indented(self, arg):
+        """Select all indented text under a specified heading or pattern.
+
+        Usage:
+            select_indented <pattern> [case_sensitive]
+
+        Description:
+            Finds lines matching the pattern and selects those lines plus all subsequent
+            lines that are more indented (have more leading whitespace). Stops when
+            encountering a line with equal or less indentation.
+
+        Examples:
+            select_indented "header-rule"    - Select header-rule and all its indented content
+            select_indented "element-rule"   - Select all element-rule blocks with their content
+            select_indented "function" case_sensitive - Case-sensitive selection
+
+        Behavior:
+            - Finds the target pattern in the text
+            - Includes the matching line itself
+            - Selects all subsequent lines with greater indentation
+            - Stops at lines with equal or less indentation
+            - Handles multiple matching sections independently
+            - Preserves the hierarchical structure
+
+        Notes:
+            - By default, search is case-insensitive
+            - Add 'case_sensitive' for exact case matching
+            - Perfect for configuration files, code blocks, and structured data
+        """
+        help_text = (
+            f"{self.COLOR_HEADER}Select Indented - Extract Hierarchical Blocks{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Description:{self.COLOR_RESET}\n"
+            f"  Select lines matching a pattern plus all indented content beneath them.\n"
+            f"  Automatically detects the indentation hierarchy and extracts complete blocks.\n"
+            f"  Essential for working with structured configuration files and code.\n\n"
+            f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}select_indented <pattern>{self.COLOR_RESET}  - Select pattern and indented content\n"
+            f"  {self.COLOR_EXAMPLE}select_indented <pattern> case_sensitive{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Selection Logic:{self.COLOR_RESET}\n"
+            f"  • Finds all lines matching the pattern\n"
+            f"  • Includes the matching line itself\n"
+            f"  • Adds all subsequent lines with {self.COLOR_COMMAND}greater indentation{self.COLOR_RESET}\n"
+            f"  • Stops at lines with {self.COLOR_COMMAND}equal or less indentation{self.COLOR_RESET}\n"
+            f"  • Handles {self.COLOR_COMMAND}multiple blocks{self.COLOR_RESET} independently\n"
+            f"  • Preserves the {self.COLOR_COMMAND}original structure{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}select_indented \"header-rule\"{self.COLOR_RESET}\n"
+            f"    - Selects header-rule line and all its indented sub-elements\n\n"
+            f"  {self.COLOR_EXAMPLE}select_indented \"element-rule\"{self.COLOR_RESET}\n"
+            f"    - Selects all element-rule blocks with their nested content\n\n"
+            f"  {self.COLOR_EXAMPLE}select_indented \"function\"{self.COLOR_RESET}\n"
+            f"    - Selects function definitions and their implementation\n\n"
+            f"  {self.COLOR_EXAMPLE}select_indented \"class \" case_sensitive{self.COLOR_RESET}\n"
+            f"    - Case-sensitive selection of class definitions\n\n"
+            f"{self.COLOR_COMMAND}Perfect For:{self.COLOR_RESET}\n"
+            f"  • Configuration files (YAML, JSON, XML, INI)\n"
+            f"  • Code blocks and function definitions\n"
+            f"  • Hierarchical data structures\n"
+            f"  • Log files with indented sections\n"
+            f"  • Documentation with nested content\n"
+            f"  • Any text with consistent indentation\n\n"
+            f"{self.COLOR_COMMAND}Technical Details:{self.COLOR_RESET}\n"
+            f"  • Case-insensitive by default (add {self.COLOR_EXAMPLE}case_sensitive{self.COLOR_RESET})\n"
+            f"  • Uses leading whitespace to determine indentation level\n"
+            f"  • Tabs and spaces are both supported\n"
+            f"  • Empty lines are included if they're within the indented block\n"
+            f"  • Multiple matching blocks are combined in output\n\n"
+            f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
+            f"  • Use {self.COLOR_EXAMPLE}unselect{self.COLOR_RESET} to return to full text\n"
+            f"  • Works best with consistently indented text\n"
+            f"  • Great for extracting specific sections from large files\n"
+            f"  • Combine with other commands for powerful text processing\n"
+        )
+        if arg.strip() == "?":
+            self.poutput(help_text)
+            return
+
+        if not self.current_lines:
+            self.poutput("Error: No file is loaded.")
+            return
+
+        # Save previous state
+        self.previous_lines = self.current_lines.copy()
+
+        # Parse arguments
+        args = arg.strip().split()
+        if not args:
+            self.poutput("Error: Please specify a pattern to search for.")
+            return
+
+        # Check for case_sensitive parameter
+        case_sensitive = "case_sensitive" in args
+        if case_sensitive:
+            args.remove("case_sensitive")
+
+        pattern = " ".join(args).strip('"').strip("'")
+        if not pattern:
+            self.poutput("Error: Invalid pattern specified.")
+            return
+
+        try:
+            # Compile regex pattern
+            flags = 0 if case_sensitive else re.IGNORECASE
+            regex = re.compile(pattern.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+"), flags)
+
+            selected_lines = []
+            i = 0
+            
+            while i < len(self.current_lines):
+                line = self.current_lines[i]
+                
+                # Check if this line matches our pattern
+                if regex.search(line):
+                    # Calculate base indentation (count leading whitespace)
+                    base_indent = len(line) - len(line.lstrip())
+                    
+                    # Add the matching line
+                    selected_lines.append(line)
+                    
+                    # Process subsequent lines with greater indentation
+                    j = i + 1
+                    while j < len(self.current_lines):
+                        next_line = self.current_lines[j]
+                        
+                        # Skip completely empty lines but include them in the selection
+                        if not next_line.strip():
+                            selected_lines.append(next_line)
+                            j += 1
+                            continue
+                        
+                        # Calculate next line's indentation
+                        next_indent = len(next_line) - len(next_line.lstrip())
+                        
+                        # If next line has equal or less indentation, we've reached the end of this block
+                        if next_indent <= base_indent:
+                            break
+                        
+                        # Line has greater indentation - include it
+                        selected_lines.append(next_line)
+                        j += 1
+                    
+                    # Move i to where we left off
+                    i = j
+                else:
+                    i += 1
+
+            if selected_lines:
+                self.current_lines = selected_lines
+                self.update_live_view()
+                sensitivity = "case sensitive" if case_sensitive else "case insensitive"
+                self.poutput(f"Selected {len(selected_lines)} lines of indented content under '{pattern}' ({sensitivity}).")
+            else:
+                self.poutput(f"No matching indented blocks found for pattern '{pattern}'.")
+                
+        except re.error as e:
+            self.poutput(f"Error: Invalid regex pattern. {e}")
+
+
+    def complete_select_indented(self, text, line, begidx, endidx):      
+        FRIENDS_T = ['case_sensitive', '?']
+        if not text:
+            completions = FRIENDS_T[:]
+        else: 
+            completions = [f for f in FRIENDS_T if f.lower().startswith(text.lower())]
+        return completions
 
 if __name__ == '__main__':
     app = TextTool()

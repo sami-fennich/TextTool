@@ -21,7 +21,7 @@ TextTool is a powerful command-line tool designed for advanced text manipulation
 2. Install the required libraries using pip:
 
    ```bash
-   pip install cmd2 regex pandas
+   pip install cmd2 regex pandas win32clipboard
    ```
 
 ## Usage

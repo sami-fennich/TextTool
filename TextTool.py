@@ -16,6 +16,46 @@ required_libraries = [
 ]
 input_file= ""
 
+
+
+
+def install_library(library):
+    """Install a library using pip."""
+    try:
+        subprocess.check_call([sys.executable, '-m', 'pip', 'install', library])
+    except:
+        return
+
+def check_and_install_libraries():
+    """Check if the required libraries are installed, and install them if not."""
+    for library in required_libraries:
+        try:
+            # Try to import the library
+            importlib.import_module(library)
+            #print(f"{library} is already installed.")
+        except ImportError:
+            if library=='win32clipboard':
+                print("pywin32 is not installed. Installing...")
+                install_library('pywin32')
+                print("pywin32 has been installed.")
+            else:              
+                # If the library is not installed, install it
+                print(f"{library} is not installed. Installing...")
+                install_library(library)
+                print(f"{library} has been installed.")
+
+# Check and install required libraries
+check_and_install_libraries()   
+
+_unquote = lambda s: s[1:-1] if s[0] == '"' == s[-1] else s
+
+import cmd2
+import regex as re
+import os
+import threading
+import tkinter as tk
+from tkinter.scrolledtext import ScrolledText
+
 class ToolTip:
     """Create a tooltip for a given widget."""
     def __init__(self, widget, text, delay=500):
@@ -61,44 +101,6 @@ class ToolTip:
         if self.tooltip_window:
             self.tooltip_window.destroy()
             self.tooltip_window = None
-
-
-
-def install_library(library):
-    """Install a library using pip."""
-    try:
-        subprocess.check_call([sys.executable, '-m', 'pip', 'install', library])
-    except:
-        return
-
-def check_and_install_libraries():
-    """Check if the required libraries are installed, and install them if not."""
-    for library in required_libraries:
-        try:
-            # Try to import the library
-            importlib.import_module(library)
-            #print(f"{library} is already installed.")
-        except ImportError:
-            # If the library is not installed, install it
-            print(f"{library} is not installed. Installing...")
-            install_library(library)
-            print(f"{library} has been installed.")
-
-# Check and install required libraries
-check_and_install_libraries()
-try:
-    import win32clipboard
-except:
-    install_library('pywin32')
-    import win32clipboard
-_unquote = lambda s: s[1:-1] if s[0] == '"' == s[-1] else s
-
-import cmd2
-import regex as re
-import os
-import threading
-import tkinter as tk
-from tkinter.scrolledtext import ScrolledText
 
 
 if len(sys.argv)>1:

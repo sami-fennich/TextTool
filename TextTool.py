@@ -1206,7 +1206,44 @@ class TextTool(cmd2.Cmd):
 
         
     def do_liveview(self, arg):
-        """Open a live viewer window that shows current_lines in real time."""
+        """Open a live viewer window that shows current_lines in real time.
+
+        Usage:
+            liveview  - Open or refresh the live viewer window
+
+        Notes:
+            - Shows real-time updates of the current text
+            - Supports editing directly in the window
+            - Includes search, replace, and navigation features
+            - Multiple Live View windows are not supported
+        """
+        help_text = (
+            f"{self.COLOR_HEADER}Live View - Visual Text Editor{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Description:{self.COLOR_RESET}\n"
+            f"  Open a graphical window showing the current text with real-time updates.\n"
+            f"  Edit text visually or use the integrated tools for faster processing.\n\n"
+            f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}liveview{self.COLOR_RESET}  - Open/refresh the Live View window\n\n"
+            f"{self.COLOR_COMMAND}Window Features:{self.COLOR_RESET}\n"
+            f"  • {self.COLOR_COMMAND}Real-time updates{self.COLOR_RESET} - See changes immediately\n"
+            f"  • {self.COLOR_COMMAND}Visual editing{self.COLOR_RESET} - Edit text directly in the window\n"
+            f"  • {self.COLOR_COMMAND}Search & replace{self.COLOR_RESET} - Find text with highlighting\n"
+            f"  • {self.COLOR_COMMAND}Line navigation{self.COLOR_RESET} - Jump to specific lines\n"
+            f"  • {self.COLOR_COMMAND}File operations{self.COLOR_RESET} - Load/save from the interface\n\n"
+            f"{self.COLOR_COMMAND}Integration:{self.COLOR_RESET}\n"
+            f"  • Changes in CLI automatically update Live View\n"
+            f"  • Edits in Live View sync back to CLI (with {self.COLOR_EXAMPLE}sync_from_liveview{self.COLOR_RESET})\n"
+            f"  • Perfect for visual verification of operations\n"
+            f"  • Great for large files where scrolling in CLI is difficult\n\n"
+            f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
+            f"  • Only one Live View window at a time\n"
+            f"  • Window position and size are remembered\n"
+            f"  • Use {self.COLOR_EXAMPLE}Ctrl+F{self.COLOR_RESET} in Live View for search\n"
+            f"  • Close with standard window controls\n"
+        )
+        if arg.strip() == "?":
+            self.poutput(help_text)
+            return
         self.start_live_view()
         self.poutput("Live viewer started")
 
@@ -1721,12 +1758,23 @@ class TextTool(cmd2.Cmd):
             - The tutorial includes real examples and demonstrates key features.
         """
         help_text = (
-            f"{self.COLOR_HEADER}\nStart an interactive tutorial that demonstrates how to use the Text Tool.{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_HEADER}Interactive Tutorial - Learn Text Tool Features{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Description:{self.COLOR_RESET}\n"
+            f"  Start a guided tutorial that walks you through the main features of the Text Tool\n"
+            f"  with practical examples and step-by-step instructions.\n\n"
             f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
-            f"  {self.COLOR_EXAMPLE}tutorial{self.COLOR_RESET}  - Start the interactive tutorial.\n\n"
+            f"  {self.COLOR_EXAMPLE}tutorial{self.COLOR_RESET}  - Launch the interactive tutorial\n\n"
+            f"{self.COLOR_COMMAND}Features Covered:{self.COLOR_RESET}\n"
+            f"  • Loading files and clipboard content\n"
+            f"  • Filtering and selecting lines\n"
+            f"  • Text replacement with regex\n"
+            f"  • Sorting and removing duplicates\n"
+            f"  • Saving and reverting changes\n\n"
             f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
-            f"  - Press Enter to advance through each step of the tutorial.\n"
-            f"  - The tutorial includes real examples and demonstrates key features.\n"
+            f"  - Press {self.COLOR_EXAMPLE}Enter{self.COLOR_RESET} to advance through each step\n"
+            f"  - Includes real-world examples and sample data\n"
+            f"  - No changes are permanently applied during the tutorial\n"
+            f"  - Perfect for beginners to learn the tool quickly\n"
         )
         if arg.strip() == "?":
             self.poutput(help_text)
@@ -1916,17 +1964,24 @@ class TextTool(cmd2.Cmd):
             - The clipboard content will be treated as a list of lines.
         """
         help_text = (
-            f"{self.COLOR_HEADER}\nLoad a text file or clipboard content for operations.{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_HEADER}Load Content - File or Clipboard{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Description:{self.COLOR_RESET}\n"
+            f"  Load text content from a file or the system clipboard for processing.\n"
+            f"  The loaded content becomes the working text for all operations.\n\n"
             f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
-            f"  {self.COLOR_EXAMPLE}load <file_path>{self.COLOR_RESET}  - Load a text file from the specified path.\n"
-            f"  {self.COLOR_EXAMPLE}load{self.COLOR_RESET}             - Load content from the clipboard.\n\n"
+            f"  {self.COLOR_EXAMPLE}load <file_path>{self.COLOR_RESET}  - Load text from specified file\n"
+            f"  {self.COLOR_EXAMPLE}load{self.COLOR_RESET}             - Load content from clipboard\n\n"
             f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
-            f"  {self.COLOR_EXAMPLE}load \"C:/example.txt\"{self.COLOR_RESET}  - Loads the file 'example.txt'.\n"
-            f"  {self.COLOR_EXAMPLE}load{self.COLOR_RESET}                  - Loads content from the clipboard.\n\n"
-            f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
-            f"  - If no file path is provided, the tool will attempt to load text from the clipboard.\n"
-            f"  - The clipboard content will be treated as a list of lines.\n"
-        )        
+            f"  {self.COLOR_EXAMPLE}load \"C:/documents/example.txt\"{self.COLOR_RESET}  - Load from file path\n"
+            f"  {self.COLOR_EXAMPLE}load \"data.csv\"{self.COLOR_RESET}                - Load relative file path\n"
+            f"  {self.COLOR_EXAMPLE}load{self.COLOR_RESET}                            - Load from clipboard\n\n"
+            f"{self.COLOR_COMMAND}Features:{self.COLOR_RESET}\n"
+            f"  • Automatic encoding detection (UTF-8 → Latin-1 fallback)\n"
+            f"  • Supports file paths copied to clipboard\n"
+            f"  • Preserves file path for easy saving\n"
+            f"  • Handles both Windows and Unix path formats\n"
+            f"  • Live View automatically updates with loaded content\n"
+        )       
         if arg.strip() == "?":  # Check if the argument is just "?"
             self.poutput(help_text)
             return  # Exit the function
@@ -1996,17 +2051,25 @@ class TextTool(cmd2.Cmd):
             - Supports regex patterns for more complex searches.
         """
         help_text = (
-            f"{self.COLOR_HEADER}\nShow lines containing the given string(s) or regex pattern(s).{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_HEADER}Show Lines - Filter and Display Content{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Description:{self.COLOR_RESET}\n"
+            f"  Display lines that match specific patterns or strings.\n"
+            f"  Supports simple text matching, regex patterns, and multiple criteria.\n\n"
             f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
-            f"  {self.COLOR_EXAMPLE}show <string>{self.COLOR_RESET}         - Show lines containing the specified string or regex.\n"
-            f"  {self.COLOR_EXAMPLE}show \"string1 OR string2\"{self.COLOR_RESET} - Show lines containing either string1 or string2.\n\n"
+            f"  {self.COLOR_EXAMPLE}show <string>{self.COLOR_RESET}         - Show lines containing string/regex\n"
+            f"  {self.COLOR_EXAMPLE}show \"string1 OR string2\"{self.COLOR_RESET} - Show lines with either pattern\n"
+            f"  {self.COLOR_EXAMPLE}show <pattern> >{self.COLOR_RESET}      - Copy results to clipboard\n\n"
             f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
-            f"  {self.COLOR_EXAMPLE}show \"error\"{self.COLOR_RESET}          - Shows all lines containing the word \"error\".\n"
-            f"  {self.COLOR_EXAMPLE}show \"error OR warning\"{self.COLOR_RESET} - Shows lines containing either \"error\" or \"warning\".\n\n"
-            f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
-            f"  - The search is case-sensitive.\n"
-            f"  - Supports regex patterns for more complex searches.\n"
-        )        
+            f"  {self.COLOR_EXAMPLE}show \"error\"{self.COLOR_RESET}          - Lines containing 'error'\n"
+            f"  {self.COLOR_EXAMPLE}show \"^[A-Z]\"{self.COLOR_RESET}         - Lines starting with capital letter\n"
+            f"  {self.COLOR_EXAMPLE}show \"error OR warning\"{self.COLOR_RESET} - Error or warning lines\n"
+            f"  {self.COLOR_EXAMPLE}show \"error\" >{self.COLOR_RESET}        - Copy error lines to clipboard\n\n"
+            f"{self.COLOR_COMMAND}Special Features:{self.COLOR_RESET}\n"
+            f"  • {self.COLOR_COMMAND}Regex support{self.COLOR_RESET} - Use powerful regular expressions\n"
+            f"  • {self.COLOR_COMMAND}Multiple patterns{self.COLOR_RESET} - Combine with OR operator\n"
+            f"  • {self.COLOR_COMMAND}Clipboard output{self.COLOR_RESET} - Add > to copy results\n"
+            f"  • {self.COLOR_COMMAND}Live highlighting{self.COLOR_RESET} - Matching lines highlighted in Live View\n"
+        )       
         if arg.strip() == "?":  # Check if the argument is just "?"
             self.poutput(help_text)
             return  # Exit the function
@@ -2109,28 +2172,31 @@ class TextTool(cmd2.Cmd):
             - Supports regex patterns for more complex selections.
         """
         help_text = (
-            f"{self.COLOR_HEADER}\nSelect lines containing (or not containing) the given string(s) or regex pattern(s).{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_HEADER}Select Lines - Filter Working Content{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Description:{self.COLOR_RESET}\n"
+            f"  Filter the current text to keep only lines matching (or not matching) specified criteria.\n"
+            f"  This permanently modifies the working text until reverted or unselected.\n\n"
             f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
-            f"  {self.COLOR_EXAMPLE}select <string>{self.COLOR_RESET}         - Select lines containing the specified string or regex.\n"
-            f"  {self.COLOR_EXAMPLE}select \"!string\"{self.COLOR_RESET}        - Select lines that do NOT contain the specified string or regex.\n"
-            f"  {self.COLOR_EXAMPLE}select \"string1 OR string2\"{self.COLOR_RESET} - Select lines containing either string1 or string2.\n"
-            f"  {self.COLOR_EXAMPLE}select <string> case_sensitive{self.COLOR_RESET} - Make the search case sensitive.\n\n"
+            f"  {self.COLOR_EXAMPLE}select <string>{self.COLOR_RESET}         - Keep lines containing string/regex\n"
+            f"  {self.COLOR_EXAMPLE}select \"!string\"{self.COLOR_RESET}        - Keep lines NOT containing string\n"
+            f"  {self.COLOR_EXAMPLE}select \"string1 OR string2\"{self.COLOR_RESET} - Keep lines with either pattern\n"
+            f"  {self.COLOR_EXAMPLE}select <string> case_sensitive{self.COLOR_RESET} - Case-sensitive matching\n\n"
             f"{self.COLOR_COMMAND}Special Placeholders:{self.COLOR_RESET}\n"
-            f"  - Use {self.COLOR_EXAMPLE}[pipe]{self.COLOR_RESET} instead of the pipe character (|) in your input.\n"
-            f"  - Use {self.COLOR_EXAMPLE}[doublequote]{self.COLOR_RESET} instead of double quotes (\") in your input.\n"
-            f"  - Use {self.COLOR_EXAMPLE}[quote]{self.COLOR_RESET} instead of quotes (') in your input.\n"
-            f"  - Use {self.COLOR_EXAMPLE}[tab]{self.COLOR_RESET} instead of tabulation character in your input.\n"
-            f"  - Use {self.COLOR_EXAMPLE}[spaces]{self.COLOR_RESET} to match one or more spaces (all kind of spaces).\n\n"
+            f"  {self.COLOR_EXAMPLE}[pipe]{self.COLOR_RESET}        - Pipe character {self.COLOR_EXAMPLE}|{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}[doublequote]{self.COLOR_RESET} - Double quote {self.COLOR_EXAMPLE}\"{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}[quote]{self.COLOR_RESET}       - Single quote {self.COLOR_EXAMPLE}'{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}[tab]{self.COLOR_RESET}         - Tab character\n"
+            f"  {self.COLOR_EXAMPLE}[spaces]{self.COLOR_RESET}      - One or more spaces\n\n"
             f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
-            f"  {self.COLOR_EXAMPLE}select \"error\"{self.COLOR_RESET}          - Selects lines containing the word \"error\".\n"
-            f"  {self.COLOR_EXAMPLE}select \"!error\"{self.COLOR_RESET}         - Selects lines that do NOT contain the word \"error\".\n"
-            f"  {self.COLOR_EXAMPLE}select \"error OR warning\"{self.COLOR_RESET} - Selects lines containing either \"error\" or \"warning\".\n"
-            f"  {self.COLOR_EXAMPLE}select \"error\" case_sensitive{self.COLOR_RESET} - Case sensitive selection.\n\n"
+            f"  {self.COLOR_EXAMPLE}select \"error\"{self.COLOR_RESET}          - Keep only error lines\n"
+            f"  {self.COLOR_EXAMPLE}select \"!debug\"{self.COLOR_RESET}         - Remove debug lines\n"
+            f"  {self.COLOR_EXAMPLE}select \"error OR warning\"{self.COLOR_RESET} - Keep error/warning lines\n"
+            f"  {self.COLOR_EXAMPLE}select \"^[A-Z].*[.!]$\"{self.COLOR_RESET}  - Keep complete sentences\n\n"
             f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
-            f"  - By default, the selection is case-insensitive.\n"
-            f"  - Add 'case_sensitive' to make it case sensitive.\n"
-            f"  - Supports regex patterns for more complex selections.\n"
-        )        
+            f"  • Use {self.COLOR_EXAMPLE}unselect{self.COLOR_RESET} to revert to full text\n"
+            f"  • Case-insensitive by default, add {self.COLOR_EXAMPLE}case_sensitive{self.COLOR_RESET} to change\n"
+            f"  • Supports complex regex patterns for advanced filtering\n"
+        )   
         if arg.strip() == "?":  # Check if the argument is just "?"
             self.poutput(help_text)
             return  # Exit the function
@@ -2208,12 +2274,25 @@ class TextTool(cmd2.Cmd):
             - This command restores the original full text but overwrites the selected lines with their modified versions.
         """
         help_text = (
-            f"{self.COLOR_HEADER}\nRevert the last select action while keeping other modifications.{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_HEADER}Unselect - Restore Full Text{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Description:{self.COLOR_RESET}\n"
+            f"  Revert the last selection operation to restore the complete original text\n"
+            f"  while preserving any text modifications made to the selected lines.\n\n"
             f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
-            f"  {self.COLOR_EXAMPLE}unselect{self.COLOR_RESET}  - Reverts the last select action.\n\n"
+            f"  {self.COLOR_EXAMPLE}unselect{self.COLOR_RESET}  - Restore full text with modifications\n\n"
+            f"{self.COLOR_COMMAND}How It Works:{self.COLOR_RESET}\n"
+            f"  1. Restores the complete original text before selection\n"
+            f"  2. Applies all modifications made to selected lines\n"
+            f"  3. Preserves the working state with all changes intact\n\n"
+            f"{self.COLOR_COMMAND}Use Cases:{self.COLOR_RESET}\n"
+            f"  • After filtering lines with {self.COLOR_EXAMPLE}select{self.COLOR_RESET} to see full context\n"
+            f"  • When you want to apply changes to selected lines but keep all content\n"
+            f"  • To undo accidental filtering while keeping text modifications\n\n"
             f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
-            f"  - This command restores the original full text but overwrites the selected lines with their modified versions.\n"
-        )        
+            f"  • Only affects selection filtering, not replacement operations\n"
+            f"  • Requires previous selection operation to be available\n"
+            f"  • Live View updates to show complete restored text\n"
+        )     
         if arg.strip() == "?":  # Check if the argument is just "?"
             self.poutput(help_text)
             return  # Exit the function
@@ -2267,28 +2346,30 @@ class TextTool(cmd2.Cmd):
             - Supports regex patterns for more complex deletions.
         """
         help_text = (
-            f"{self.COLOR_HEADER}\nDelete lines containing (or not containing) the given string(s) or regex pattern(s).{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_HEADER}Delete Lines - Remove Content{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Description:{self.COLOR_RESET}\n"
+            f"  Permanently remove lines from the current text based on matching criteria.\n"
+            f"  Useful for cleaning data, removing noise, or extracting specific content.\n\n"
             f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
-            f"  {self.COLOR_EXAMPLE}delete <string>{self.COLOR_RESET}         - Delete lines containing the specified string or regex.\n"
-            f"  {self.COLOR_EXAMPLE}delete \"!string\"{self.COLOR_RESET}        - Delete lines that do NOT contain the specified string or regex.\n"
-            f"  {self.COLOR_EXAMPLE}delete \"string1 OR string2\"{self.COLOR_RESET} - Delete lines containing either string1 or string2.\n"
-            f"  {self.COLOR_EXAMPLE}delete <string> case_sensitive{self.COLOR_RESET} - Make the search case sensitive.\n\n"
-            f"{self.COLOR_COMMAND}Special Placeholders:{self.COLOR_RESET}\n"
-            f"  - Use {self.COLOR_EXAMPLE}[pipe]{self.COLOR_RESET} instead of the pipe character (|) in your input.\n"
-            f"  - Use {self.COLOR_EXAMPLE}[doublequote]{self.COLOR_RESET} instead of double quotes (\") in your input.\n"
-            f"  - Use {self.COLOR_EXAMPLE}[quote]{self.COLOR_RESET} instead of quotes (') in your input.\n"
-            f"  - Use {self.COLOR_EXAMPLE}[tab]{self.COLOR_RESET} instead of tabulation character in your input.\n"
-            f"  - Use {self.COLOR_EXAMPLE}[spaces]{self.COLOR_RESET} to match one or more spaces (all kind of spaces).\n\n"
+            f"  {self.COLOR_EXAMPLE}delete <string>{self.COLOR_RESET}         - Remove lines containing string/regex\n"
+            f"  {self.COLOR_EXAMPLE}delete \"!string\"{self.COLOR_RESET}        - Remove lines NOT containing string\n"
+            f"  {self.COLOR_EXAMPLE}delete \"string1 OR string2\"{self.COLOR_RESET} - Remove lines with either pattern\n"
+            f"  {self.COLOR_EXAMPLE}delete <string> case_sensitive{self.COLOR_RESET} - Case-sensitive deletion\n\n"
             f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
-            f"  {self.COLOR_EXAMPLE}delete \"error\"{self.COLOR_RESET}          - Deletes lines containing the word \"error\".\n"
-            f"  {self.COLOR_EXAMPLE}delete \"!error\"{self.COLOR_RESET}         - Deletes lines that do NOT contain the word \"error\".\n"
-            f"  {self.COLOR_EXAMPLE}delete \"error OR warning\"{self.COLOR_RESET} - Deletes lines containing either \"error\" or \"warning\".\n"
-            f"  {self.COLOR_EXAMPLE}delete \"error\" case_sensitive{self.COLOR_RESET} - Case sensitive deletion.\n\n"
+            f"  {self.COLOR_EXAMPLE}delete \"^#\"{self.COLOR_RESET}            - Remove comment lines\n"
+            f"  {self.COLOR_EXAMPLE}delete \"^$\"{self.COLOR_RESET}            - Remove empty lines\n"
+            f"  {self.COLOR_EXAMPLE}delete \"debug\"{self.COLOR_RESET}         - Remove debug statements\n"
+            f"  {self.COLOR_EXAMPLE}delete \"!important\"{self.COLOR_RESET}    - Keep only 'important' lines\n\n"
+            f"{self.COLOR_COMMAND}Special Features:{self.COLOR_RESET}\n"
+            f"  • Same placeholders as {self.COLOR_EXAMPLE}select{self.COLOR_RESET} command\n"
+            f"  • Case-insensitive by default\n"
+            f"  • Full regex support for complex patterns\n"
+            f"  • Use {self.COLOR_EXAMPLE}undelete{self.COLOR_RESET} to restore deleted lines\n\n"
             f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
-            f"  - By default, the deletion is case-insensitive.\n"
-            f"  - Add 'case_sensitive' to make it case sensitive.\n"
-            f"  - Supports regex patterns for more complex deletions.\n"
-        )        
+            f"  • Operation is permanent until undone with {self.COLOR_EXAMPLE}revert{self.COLOR_RESET}\n"
+            f"  • Live View updates immediately to show remaining lines\n"
+            f"  • Use carefully as deleted content cannot be recovered without revert\n"
+        )      
         if arg.strip() == "?":  # Check if the argument is just "?"
             self.poutput(help_text)
             return  # Exit the function
@@ -2369,12 +2450,26 @@ class TextTool(cmd2.Cmd):
             - This command restores the original full text but overwrites the deleted lines with their modified versions.
         """
         help_text = (
-            f"{self.COLOR_HEADER}\nRevert the last delete action while keeping other modifications.{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_HEADER}Undelete - Restore Deleted Lines{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Description:{self.COLOR_RESET}\n"
+            f"  Restore lines that were deleted in the last delete operation\n"
+            f"  while preserving modifications made to the remaining lines.\n\n"
             f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
-            f"  {self.COLOR_EXAMPLE}undelete{self.COLOR_RESET}  - Reverts the last delete action.\n\n"
+            f"  {self.COLOR_EXAMPLE}undelete{self.COLOR_RESET}  - Restore deleted lines with modifications\n\n"
+            f"{self.COLOR_COMMAND}How It Works:{self.COLOR_RESET}\n"
+            f"  1. Restores the complete original text before deletion\n"
+            f"  2. Applies all modifications made to remaining lines\n"
+            f"  3. Preserves the working state with all changes intact\n\n"
+            f"{self.COLOR_COMMAND}Use Cases:{self.COLOR_RESET}\n"
+            f"  • After accidentally deleting important lines\n"
+            f"  • When you want to modify remaining lines but keep all content\n"
+            f"  • To review changes before finalizing deletion\n\n"
             f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
-            f"  - This command restores the original full text but overwrites the deleteed lines with their modified versions.\n"
-        )        
+            f"  • Only affects the most recent delete operation\n"
+            f"  • Requires previous delete operation to be available\n"
+            f"  • Live View updates to show complete restored text\n"
+            f"  • Different from {self.COLOR_EXAMPLE}revert{self.COLOR_RESET} which undoes all changes\n"
+        )     
         if arg.strip() == "?":  # Check if the argument is just "?"
             self.poutput(help_text)
             return  # Exit the function
@@ -2564,13 +2659,31 @@ class TextTool(cmd2.Cmd):
         Add 'case_sensitive' to make it case sensitive.
         """
         help_text = (
-            f"{self.COLOR_HEADER}\nReplace a string with another in the current text. Supports regex and capture groups.{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_HEADER}Replace Text - Find and Replace{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Description:{self.COLOR_RESET}\n"
+            f"  Find and replace text using simple strings or powerful regular expressions.\n"
+            f"  Supports capture groups, backreferences, and complex pattern matching.\n\n"
             f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
-            f"  {self.COLOR_EXAMPLE}replace \"string1\" \"string2\"{self.COLOR_RESET}  - Replace string1 with string2 (case insensitive).\n"
-            f"  {self.COLOR_EXAMPLE}replace \"string1\" \"string2\" case_sensitive{self.COLOR_RESET}  - Case sensitive replacement.\n"
-            f"  {self.COLOR_EXAMPLE}replace string1 string2{self.COLOR_RESET}      - Replace string1 with string2 (if no spaces in strings).\n\n"
-            # ... rest of help text remains the same
-        )        
+            f"  {self.COLOR_EXAMPLE}replace \"string1\" \"string2\"{self.COLOR_RESET}  - Basic text replacement\n"
+            f"  {self.COLOR_EXAMPLE}replace \"pattern\" \"replacement\" case_sensitive{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}replace string1 string2{self.COLOR_RESET}      - Without quotes (no spaces)\n\n"
+            f"{self.COLOR_COMMAND}Advanced Features:{self.COLOR_RESET}\n"
+            f"  • {self.COLOR_COMMAND}Regex Support{self.COLOR_RESET} - Full regular expression patterns\n"
+            f"  • {self.COLOR_COMMAND}Capture Groups{self.COLOR_RESET} - Use {self.COLOR_EXAMPLE}\\1{self.COLOR_RESET}, {self.COLOR_EXAMPLE}\\2{self.COLOR_RESET} for captured text\n"
+            f"  • {self.COLOR_EXAMPLE}\\0{self.COLOR_RESET} - Reference the entire matched text\n"
+            f"  • {self.COLOR_COMMAND}Case Control{self.COLOR_RESET} - Case-insensitive by default\n\n"
+            f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}replace \"cat\" \"dog\"{self.COLOR_RESET}           - Simple text replacement\n"
+            f"  {self.COLOR_EXAMPLE}replace \"(\\\\d{{2}})-(\\\\d{{2}})-(\\\\d{{4}})\" \"\\\\3/\\\\2/\\\\1\"{self.COLOR_RESET}\n"
+            f"                              - Convert dd-mm-yyyy to yyyy/mm/dd\n"
+            f"  {self.COLOR_EXAMPLE}replace \"error\" \"ERROR\" case_sensitive{self.COLOR_RESET} - Case sensitive\n"
+            f"  {self.COLOR_EXAMPLE}replace \"^.*(error).*$\" \"Found: \\\\1\"{self.COLOR_RESET} - Extract with groups\n\n"
+            f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
+            f"  • Use {self.COLOR_EXAMPLE}cheat_sheet_regex{self.COLOR_RESET} for regex help\n"
+            f"  • Fallback to literal replacement if regex fails\n"
+            f"  • Live View updates immediately with changes\n"
+            f"  • Use {self.COLOR_EXAMPLE}revert{self.COLOR_RESET} to undo replacement\n"
+        )     
         if arg.strip() == "?":  # Check if the argument is just "?"
             self.poutput(help_text)
             return  # Exit the function
@@ -2686,13 +2799,28 @@ class TextTool(cmd2.Cmd):
             - Only the last action can be reverted.
         """
         help_text = (
-            f"{self.COLOR_HEADER}\nRevert the last replace or select action.{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_HEADER}Revert - Undo Last Operation{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Description:{self.COLOR_RESET}\n"
+            f"  Undo the most recent text modification operation and restore the previous state.\n"
+            f"  Essential for experimenting with changes without permanent consequences.\n\n"
             f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
-            f"  {self.COLOR_EXAMPLE}revert{self.COLOR_RESET}  - Reverts the last replace or select action.\n\n"
+            f"  {self.COLOR_EXAMPLE}revert{self.COLOR_RESET}  - Restore text to state before last operation\n\n"
+            f"{self.COLOR_COMMAND}Supported Operations:{self.COLOR_RESET}\n"
+            f"  • {self.COLOR_EXAMPLE}replace{self.COLOR_RESET} - Text replacements and regex changes\n"
+            f"  • {self.COLOR_EXAMPLE}select{self.COLOR_RESET}  - Line filtering and selection operations\n"
+            f"  • {self.COLOR_EXAMPLE}delete{self.COLOR_RESET}  - Line deletion operations\n"
+            f"  • Most other text modification commands\n\n"
+            f"{self.COLOR_COMMAND}Use Cases:{self.COLOR_RESET}\n"
+            f"  • Undo accidental changes or replacements\n"
+            f"  • Compare before/after states of operations\n"
+            f"  • Experiment with different approaches safely\n"
+            f"  • Recover from unintended filtering results\n\n"
             f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
-            f"  - This command restores the text to its state before the last replace or select operation.\n"
-            f"  - Only the last action can be reverted.\n"
-        )        
+            f"  • Only one level of undo is maintained\n"
+            f"  • Some advanced operations may not be revertible\n"
+            f"  • Live View updates to show restored state\n"
+            f"  • Different from {self.COLOR_EXAMPLE}unselect{self.COLOR_RESET} which handles selections specifically\n"
+        )       
         if arg.strip() == "?":  # Check if the argument is just "?"
             self.poutput(help_text)
             return  # Exit the function
@@ -2716,13 +2844,30 @@ class TextTool(cmd2.Cmd):
               quantifiers, anchors, character classes, groups, and special characters.
         """
         help_text = (
-            f"{self.COLOR_HEADER}\nDisplay an extensive regex cheat sheet with examples and explanations.{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_HEADER}Regex Cheat Sheet - Pattern Matching Reference{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Description:{self.COLOR_RESET}\n"
+            f"  Comprehensive reference for regular expression patterns used in\n"
+            f"  {self.COLOR_EXAMPLE}replace{self.COLOR_RESET}, {self.COLOR_EXAMPLE}select{self.COLOR_RESET}, and {self.COLOR_EXAMPLE}show{self.COLOR_RESET} commands.\n\n"
             f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
-            f"  {self.COLOR_EXAMPLE}cheat_sheet_regex{self.COLOR_RESET}  - Displays a regex cheat sheet.\n\n"
+            f"  {self.COLOR_EXAMPLE}cheat_sheet_regex{self.COLOR_RESET}  - Display the full cheat sheet\n\n"
+            f"{self.COLOR_COMMAND}Topics Covered:{self.COLOR_RESET}\n"
+            f"  • Basic patterns and character classes\n"
+            f"  • Quantifiers and repetition\n"
+            f"  • Anchors and boundaries\n"
+            f"  • Groups and capture references\n"
+            f"  • Special characters and escapes\n"
+            f"  • Replacement string rules\n\n"
+            f"{self.COLOR_COMMAND}Essential Patterns:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}\\d{self.COLOR_RESET} - Digits          {self.COLOR_EXAMPLE}\\w{self.COLOR_RESET} - Word chars\n"
+            f"  {self.COLOR_EXAMPLE}\\s{self.COLOR_RESET} - Whitespace      {self.COLOR_EXAMPLE}.{self.COLOR_RESET} - Any char\n"
+            f"  {self.COLOR_EXAMPLE}*{self.COLOR_RESET} - Zero or more    {self.COLOR_EXAMPLE}+{self.COLOR_RESET} - One or more\n"
+            f"  {self.COLOR_EXAMPLE}?{self.COLOR_RESET} - Zero or one     {self.COLOR_EXAMPLE}^${self.COLOR_RESET} - Start/end\n\n"
             f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
-            f"  - The cheat sheet provides examples and explanations for common regex patterns,\n"
-            f"    quantifiers, anchors, character classes, groups, and special characters.\n"
-        )        
+            f"  • Use this when constructing complex search patterns\n"
+            f"  • Essential for advanced text processing tasks\n"
+            f"  • Bookmark this command for quick reference\n"
+            f"  • Examples show both pattern and usage context\n"
+        )     
         if arg.strip() == "?":  # Check if the argument is just "?"
             self.poutput(help_text)
             return  # Exit the function
@@ -2783,25 +2928,46 @@ class TextTool(cmd2.Cmd):
         self.poutput(cheat_sheet)
 
     def do_save(self, arg):
-        """Save the modified text to an output file. If no file path is provided, overwrite the original file.
+        """Save the modified text to an output file.
 
         Usage:
-            save [file_path]  - Save the modified text to the specified file path.
-            save             - Overwrite the original file with the modified text.
+            save [file_path]  - Save the modified text to the specified file path
+            save             - Overwrite the original file with the modified text
 
         Examples:
-            save "C:/output.txt"  - Saves the modified text to 'output.txt'.
-            save                 - Overwrites the original file with the modified text.
+            save "C:/output.txt"  - Saves the modified text to 'output.txt'
+            save                 - Overwrites the original file
 
         Notes:
-            - If no file path is provided, the tool will attempt to overwrite the original file.
-            - If the original file path is not available, a file path must be provided.
+            - If no file path is provided, overwrites the original file
+            - If original file path is not available, a file path must be provided
+            - Creates directories automatically if they don't exist
         """
-        if arg.strip() == "?":  # Check if the argument is just "?"
-            function_name = inspect.currentframe().f_code.co_name # Returns 'do_create'
-            command_name = function_name[3:] # Remove 'do_' prefix to get 'create'
-            self.do_help(command_name)  # Execute help for the current function
-            return  # Exit the function
+        help_text = (
+            f"{self.COLOR_HEADER}Save - Export Modified Text{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Description:{self.COLOR_RESET}\n"
+            f"  Save the current working text to a file, either overwriting the original\n"
+            f"  or creating a new file. Essential for persisting your changes.\n\n"
+            f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}save <file_path>{self.COLOR_RESET}  - Save to specified file path\n"
+            f"  {self.COLOR_EXAMPLE}save{self.COLOR_RESET}             - Overwrite original file\n\n"
+            f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}save \"C:/results/output.txt\"{self.COLOR_RESET}  - Save to new location\n"
+            f"  {self.COLOR_EXAMPLE}save \"cleaned_data.csv\"{self.COLOR_RESET}       - Save with different name\n"
+            f"  {self.COLOR_EXAMPLE}save{self.COLOR_RESET}                          - Save to original file\n\n"
+            f"{self.COLOR_COMMAND}Features:{self.COLOR_RESET}\n"
+            f"  • {self.COLOR_COMMAND}Auto-directory creation{self.COLOR_RESET} - Creates missing folders\n"
+            f"  • {self.COLOR_COMMAND}Path preservation{self.COLOR_RESET} - Remembers original file location\n"
+            f"  • {self.COLOR_COMMAND}Flexible output{self.COLOR_RESET} - Save as new file or overwrite\n\n"
+            f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
+            f"  • Original file path is remembered from {self.COLOR_EXAMPLE}load{self.COLOR_RESET} operation\n"
+            f"  • Clipboard-loaded content requires explicit file path\n"
+            f"  • File is saved exactly as shown in Live View\n"
+            f"  • No confirmation for overwrite - use carefully\n"
+        )
+        if arg.strip() == "?":
+            self.poutput(help_text)
+            return
         if not self.current_lines:
             self.poutput("Error: No file is loaded.")
             return
@@ -2825,30 +2991,44 @@ class TextTool(cmd2.Cmd):
 
 
     def do_advanced(self, arg):
-        """enable advanced text operation functions :
+        """Enable advanced text operation functions.
 
-            bulk_replace
-            convert_case
-            csv_to_table
-            extract_between
-            extract_column
-            extract_emails
-            extract_urls
-            filter_length
-            find_duplicates
-            find_mismatches
-            insert_line
-            merge_lines
-            replace_between
-            placeholder_replace
-            replace_confirm
-            reverse_lines
-            select_from_file
-            select_lines
-            split_lines
-        """    
+        Usage:
+            advanced  - Enable advanced functions
+
+        Notes:
+            - Unlocks powerful text processing capabilities
+            - Functions remain available until standard mode is activated
+            - Includes extraction, transformation, and analysis tools
+        """
+        help_text = (
+            f"{self.COLOR_HEADER}Advanced Mode - Unlock Powerful Features{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Description:{self.COLOR_RESET}\n"
+            f"  Enable advanced text processing functions that provide specialized\n"
+            f"  capabilities for complex data manipulation and analysis tasks.\n\n"
+            f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}advanced{self.COLOR_RESET}  - Enable advanced functions\n\n"
+            f"{self.COLOR_COMMAND}Advanced Functions Unlocked:{self.COLOR_RESET}\n"
+            f"  • {self.COLOR_EXAMPLE}extract_between{self.COLOR_RESET}    - Extract text between delimiters\n"
+            f"  • {self.COLOR_EXAMPLE}extract_column{self.COLOR_RESET}     - Extract specific columns from data\n"
+            f"  • {self.COLOR_EXAMPLE}extract_emails{self.COLOR_RESET}     - Find and extract email addresses\n"
+            f"  • {self.COLOR_EXAMPLE}extract_urls{self.COLOR_RESET}       - Find and extract URLs\n"
+            f"  • {self.COLOR_EXAMPLE}bulk_replace{self.COLOR_RESET}       - Multiple replacements from mapping\n"
+            f"  • {self.COLOR_EXAMPLE}convert_case{self.COLOR_RESET}       - Change text case (upper/lower/title)\n"
+            f"  • {self.COLOR_EXAMPLE}find_duplicates{self.COLOR_RESET}    - Find and analyze duplicate lines\n"
+            f"  • {self.COLOR_EXAMPLE}filter_length{self.COLOR_RESET}      - Filter by line length\n"
+            f"  • {self.COLOR_EXAMPLE}replace_between{self.COLOR_RESET}    - Replace content between delimiters\n"
+            f"  • {self.COLOR_EXAMPLE}placeholder_replace{self.COLOR_RESET} - Template-based replacement\n"
+            f"  • {self.COLOR_EXAMPLE}replace_confirm{self.COLOR_RESET}    - Interactive replacement\n"
+            f"  • {self.COLOR_EXAMPLE}select_from_file{self.COLOR_RESET}   - Filter using external lists\n\n"
+            f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
+            f"  • Advanced functions remain available until {self.COLOR_EXAMPLE}standard{self.COLOR_RESET} is used\n"
+            f"  • No performance impact when functions are enabled\n"
+            f"  • Each function has detailed help ({self.COLOR_EXAMPLE}function_name ?{self.COLOR_RESET})\n"
+            f"  • Perfect for data cleaning, analysis, and transformation\n"
+        )
         if arg.strip() == "?":
-            self.do_help("advanced")
+            self.poutput(help_text)
             return
         try:
             self.hidden_commands.remove('bulk_replace')
@@ -2929,11 +3109,44 @@ class TextTool(cmd2.Cmd):
 
 
     def do_standard(self, arg):
-        """disable the advanced text operation functions.
+        """Disable the advanced text operation functions.
 
-        """    
+        Usage:
+            standard  - Disable advanced functions
+
+        Notes:
+            - Returns to basic text processing mode
+            - Advanced functions become hidden but not removed
+            - Can be re-enabled with 'advanced' command
+        """
+        help_text = (
+            f"{self.COLOR_HEADER}Standard Mode - Basic Text Processing{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Description:{self.COLOR_RESET}\n"
+            f"  Disable advanced functions and return to basic text processing mode.\n"
+            f"  Simplifies the interface for common operations and beginners.\n\n"
+            f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}standard{self.COLOR_RESET}  - Disable advanced functions\n\n"
+            f"{self.COLOR_COMMAND}What's Available in Standard Mode:{self.COLOR_RESET}\n"
+            f"  • {self.COLOR_EXAMPLE}load{self.COLOR_RESET}/{self.COLOR_EXAMPLE}save{self.COLOR_RESET} - File operations\n"
+            f"  • {self.COLOR_EXAMPLE}show{self.COLOR_RESET}/{self.COLOR_EXAMPLE}select{self.COLOR_RESET} - Filtering and viewing\n"
+            f"  • {self.COLOR_EXAMPLE}replace{self.COLOR_RESET} - Find and replace\n"
+            f"  • {self.COLOR_EXAMPLE}sort{self.COLOR_RESET}/{self.COLOR_EXAMPLE}unique{self.COLOR_RESET} - Organization\n"
+            f"  • {self.COLOR_EXAMPLE}revert{self.COLOR_RESET}/{self.COLOR_EXAMPLE}unselect{self.COLOR_RESET} - Undo operations\n"
+            f"  • {self.COLOR_EXAMPLE}liveview{self.COLOR_RESET} - Visual editing\n"
+            f"  • {self.COLOR_EXAMPLE}count{self.COLOR_RESET}/{self.COLOR_EXAMPLE}diff{self.COLOR_RESET} - Analysis tools\n\n"
+            f"{self.COLOR_COMMAND}When to Use Standard Mode:{self.COLOR_RESET}\n"
+            f"  • Teaching others to use the tool\n"
+            f"  • Performing simple text operations\n"
+            f"  • Reducing command clutter\n"
+            f"  • Focused work on basic tasks\n\n"
+            f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
+            f"  • Advanced functions are hidden, not removed\n"
+            f"  • Can be re-enabled anytime with {self.COLOR_EXAMPLE}advanced{self.COLOR_RESET}\n"
+            f"  • No data loss when switching modes\n"
+            f"  • Current text and operations are unaffected\n"
+        )
         if arg.strip() == "?":
-            self.do_help("standard")
+            self.poutput(help_text)
             return
         try:
             self.hidden_commands.append('bulk_replace')
@@ -3020,19 +3233,77 @@ class TextTool(cmd2.Cmd):
         Usage:
             replace_confirm "old_text" "new_text" [case_sensitive]
         
+        Arguments:
+            old_text       - Text pattern to search for.
+            new_text       - Replacement text.
+            case_sensitive - Optional flag for case-sensitive matching.
+        
         The user is prompted for each match:
-          - (y)es → Replace this occurrence
-          - (n)o → Skip this occurrence
-          - (a)ll → Replace all occurrences
-          - (q)uit → Stop replacing
-          
+            - (y)es  → Replace this occurrence
+            - (n)o   → Skip this occurrence
+            - (a)ll  → Replace all remaining occurrences
+            - (q)uit → Stop replacing and exit
+        
+        Examples:
+            replace_confirm "error" "warning"
+                - Interactively replace "error" with "warning" (case-insensitive).
+            
+            replace_confirm "TODO" "DONE" case_sensitive
+                - Replace "TODO" with "DONE" with confirmation (case-sensitive).
+            
+            replace_confirm "http:" "https:"
+                - Upgrade HTTP URLs to HTTPS with confirmation.
+        
         Notes:
             - By default, the search is case-insensitive.
             - Add 'case_sensitive' to make it case sensitive.
+            - Each match is highlighted in red for easy identification.
+            - Choosing "all" replaces all remaining matches without prompting.
+            - Choosing "quit" preserves changes made so far.
+            - Useful for selective replacements in mixed content.
         """
 
+        help_text = (
+            f"{self.COLOR_HEADER}Replace Confirm - Interactive Find & Replace{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Description:{self.COLOR_RESET}\n"
+            f"  Find and replace text with interactive confirmation for each match.\n"
+            f"  See each occurrence highlighted and decide individually whether to replace it.\n"
+            f"  Essential for precise editing and avoiding unintended changes.\n\n"
+            f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}replace_confirm \"old_text\" \"new_text\"{self.COLOR_RESET}  - Interactive replacement\n"
+            f"  {self.COLOR_EXAMPLE}replace_confirm \"pattern\" \"replacement\" case_sensitive{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Interactive Options:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}y{self.COLOR_RESET} (yes)    - Replace this specific occurrence\n"
+            f"  {self.COLOR_EXAMPLE}n{self.COLOR_RESET} (no)     - Skip this occurrence, keep looking\n"
+            f"  {self.COLOR_EXAMPLE}a{self.COLOR_RESET} (all)    - Replace all remaining matches automatically\n"
+            f"  {self.COLOR_EXAMPLE}q{self.COLOR_RESET} (quit)   - Stop the replacement process entirely\n\n"
+            f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}replace_confirm \"colour\" \"color\"{self.COLOR_RESET}\n"
+            f"    - Convert British spelling with confirmation for each instance\n\n"
+            f"  {self.COLOR_EXAMPLE}replace_confirm \"\\b([A-Z][a-z]+)\\b\" \"NAME: \\1\"{self.COLOR_RESET}\n"
+            f"    - Add prefix to capitalized words, confirming each one\n\n"
+            f"  {self.COLOR_EXAMPLE}replace_confirm \"error\" \"ERROR\" case_sensitive{self.COLOR_RESET}\n"
+            f"    - Case-sensitive replacement of exact matches only\n\n"
+            f"{self.COLOR_COMMAND}Visual Features:{self.COLOR_RESET}\n"
+            f"  • {self.COLOR_COMMAND}Real-time highlighting{self.COLOR_RESET} - Each match shown in red\n"
+            f"  • {self.COLOR_COMMAND}Context display{self.COLOR_RESET} - See the full line with match highlighted\n"
+            f"  • {self.COLOR_COMMAND}Progress indication{self.COLOR_RESET} - Know where you are in the text\n"
+            f"  • {self.COLOR_COMMAND}Immediate feedback{self.COLOR_RESET} - See changes as you make decisions\n\n"
+            f"{self.COLOR_COMMAND}Best Use Cases:{self.COLOR_RESET}\n"
+            f"  • Replacing some but not all occurrences of a pattern\n"
+            f"  • Verifying complex regex replacements work correctly\n"
+            f"  • Handling sensitive data where precision is critical\n"
+            f"  • Learning how replacement patterns work in practice\n"
+            f"  • Cleaning data with multiple similar but different patterns\n\n"
+            f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
+            f"  • Case-insensitive by default (add {self.COLOR_EXAMPLE}case_sensitive{self.COLOR_RESET} to change)\n"
+            f"  • Uses literal matching (special regex chars are escaped)\n"
+            f"  • Changes are applied immediately as you confirm them\n"
+            f"  • Use {self.COLOR_EXAMPLE}revert{self.COLOR_RESET} to undo all changes if needed\n"
+            f"  • Perfect alternative to trial-and-error with regular replace\n"
+        )
         if arg.strip() == "?":
-            self.do_help("replace_confirm")
+            self.poutput(help_text)
             return
 
         if not self.current_lines:
@@ -3117,14 +3388,38 @@ class TextTool(cmd2.Cmd):
         self.poutput(f"Replacement completed ({sensitivity}).")
 
     def do_exit(self, arg):
-        """Exit the tool.
+        """Exit the text manipulation tool.
 
         Usage:
-            exit  - Exits the text manipulation tool.
+            exit  - Exits the text manipulation tool
 
         Notes:
-            - This command will terminate the application.
+            - This command will terminate the application
+            - Command history is preserved for next session
+            - Unsaved changes will be lost unless saved first
         """
+        help_text = (
+            f"{self.COLOR_HEADER}Exit - Close Text Tool{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Description:{self.COLOR_RESET}\n"
+            f"  Gracefully exit the Text Tool application.\n"
+            f"  All command history is automatically saved for your next session.\n\n"
+            f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}exit{self.COLOR_RESET}  - Close the application\n\n"
+            f"{self.COLOR_COMMAND}Features:{self.COLOR_RESET}\n"
+            f"  • {self.COLOR_COMMAND}Auto-save history{self.COLOR_RESET} - Commands saved in {self.COLOR_EXAMPLE}.text_tool_history.txt{self.COLOR_RESET}\n"
+            f"  • {self.COLOR_COMMAND}Clean shutdown{self.COLOR_RESET} - All resources properly released\n"
+            f"  • {self.COLOR_COMMAND}Session persistence{self.COLOR_RESET} - Pick up where you left off\n\n"
+            f"{self.COLOR_COMMAND}Important:{self.COLOR_RESET}\n"
+            f"  • {self.COLOR_COMMAND}Unsaved changes will be lost!{self.COLOR_RESET}\n"
+            f"  • Use {self.COLOR_EXAMPLE}save{self.COLOR_RESET} before exiting to preserve work\n"
+            f"  • Live View windows are automatically closed\n"
+            f"  • Can also use {self.COLOR_EXAMPLE}Ctrl+D{self.COLOR_RESET} or {self.COLOR_EXAMPLE}quit{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Quick Return:{self.COLOR_RESET}\n"
+            f"  The tool will remember your commands - just run the script again to continue!\n"
+        )
+        if arg.strip() == "?":
+            self.poutput(help_text)
+            return True
         self.poutput("Exiting...")
         return True
 
@@ -3133,13 +3428,43 @@ class TextTool(cmd2.Cmd):
         """Count the occurrences of a specific string or regex pattern in the current text.
 
         Usage:
-            count <pattern>  - Count the occurrences of the specified pattern.
+            count <pattern>  - Count the occurrences of the specified pattern
 
         Examples:
-            count "error"  - Counts the number of times "error" appears in the text.
+            count "error"  - Counts the number of times "error" appears
+            count "\\d+"    - Counts lines containing numbers
+
+        Notes:
+            - The search is case-sensitive
+            - Supports regex patterns for complex counting
+            - Counts lines containing the pattern, not total occurrences
         """
+        help_text = (
+            f"{self.COLOR_HEADER}Count - Pattern Occurrence Counter{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Description:{self.COLOR_RESET}\n"
+            f"  Count how many lines contain a specific string or regular expression pattern.\n"
+            f"  Useful for statistics, debugging, and data analysis tasks.\n\n"
+            f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}count <pattern>{self.COLOR_RESET}  - Count lines containing pattern\n\n"
+            f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}count \"error\"{self.COLOR_RESET}       - Count error lines\n"
+            f"  {self.COLOR_EXAMPLE}count \"warning\"{self.COLOR_RESET}     - Count warning lines\n"
+            f"  {self.COLOR_EXAMPLE}count \"^[A-Z]\"{self.COLOR_RESET}      - Count lines starting with capital\n"
+            f"  {self.COLOR_EXAMPLE}count \"\\\\d+\"{self.COLOR_RESET}         - Count lines with numbers\n"
+            f"  {self.COLOR_EXAMPLE}count \"^$\"{self.COLOR_RESET}          - Count empty lines\n\n"
+            f"{self.COLOR_COMMAND}Counting Behavior:{self.COLOR_RESET}\n"
+            f"  • {self.COLOR_COMMAND}Line-based counting{self.COLOR_RESET} - Counts lines, not total occurrences\n"
+            f"  • {self.COLOR_COMMAND}Case-sensitive{self.COLOR_RESET} - 'Error' ≠ 'error'\n"
+            f"  • {self.COLOR_COMMAND}Regex support{self.COLOR_RESET} - Use patterns for complex matching\n"
+            f"  • {self.COLOR_COMMAND}Multiple matches{self.COLOR_RESET} - Line counted once even with multiple matches\n\n"
+            f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
+            f"  • Use {self.COLOR_EXAMPLE}show <pattern>{self.COLOR_RESET} to see the actual lines\n"
+            f"  • Combine with {self.COLOR_EXAMPLE}select{self.COLOR_RESET} to work with matching lines\n"
+            f"  • No changes to text - safe for analysis\n"
+            f"  • Great for log analysis and data profiling\n"
+        )
         if arg.strip() == "?":
-            self.do_help("count")
+            self.poutput(help_text)
             return
         if not self.current_lines:
             self.poutput("Error: No file is loaded.")
@@ -3160,11 +3485,58 @@ class TextTool(cmd2.Cmd):
         Usage:
             conditional_replace "search_pattern" "replace_pattern" "target_pattern" [case_sensitive]
 
-        By default, replacement is case insensitive.
-        Add 'case_sensitive' to make it case sensitive.
+        Arguments:
+            search_pattern  - Pattern to search for in matching lines.
+            replace_pattern - Replacement text.
+            target_pattern  - Pattern to identify which lines to modify.
+            case_sensitive  - Optional flag for case-sensitive matching.
+
+        Special Placeholders:
+            - Use [pipe] instead of the pipe character (|) in your input.
+            - Use [doublequote] instead of double quotes (") in your input.
+            - Use [quote] instead of quotes (') in your input.
+            - Use [tab] instead of tabulation character in your input.
+            - Use [spaces] to match one or more spaces (all kind of spaces).
+
+        Examples:
+            conditional_replace "error" "warning" "critical"
+                - Replace "error" with "warning" only in lines containing "critical".
+            
+            conditional_replace "\\d+" "NUMBER" "line" case_sensitive
+                - Replace digits with "NUMBER" in lines containing "line" (case-sensitive).
+
+        Notes:
+            - By default, replacement is case insensitive.
+            - Add 'case_sensitive' to make it case sensitive.
+            - Supports regex patterns for all three parameters.
         """
+        help_text = (
+            f"{self.COLOR_HEADER}\nReplace a string or regex pattern only in lines that match another pattern.{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}conditional_replace \"search_pattern\" \"replace_pattern\" \"target_pattern\" [case_sensitive]{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Arguments:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}search_pattern{self.COLOR_RESET}  - Pattern to search for in matching lines.\n"
+            f"  {self.COLOR_EXAMPLE}replace_pattern{self.COLOR_RESET} - Replacement text.\n"
+            f"  {self.COLOR_EXAMPLE}target_pattern{self.COLOR_RESET}  - Pattern to identify which lines to modify.\n"
+            f"  {self.COLOR_EXAMPLE}case_sensitive{self.COLOR_RESET}  - Optional flag for case-sensitive matching.\n\n"
+            f"{self.COLOR_COMMAND}Special Placeholders:{self.COLOR_RESET}\n"
+            f"  - Use {self.COLOR_EXAMPLE}[pipe]{self.COLOR_RESET} instead of the pipe character (|) in your input.\n"
+            f"  - Use {self.COLOR_EXAMPLE}[doublequote]{self.COLOR_RESET} instead of double quotes (\") in your input.\n"
+            f"  - Use {self.COLOR_EXAMPLE}[quote]{self.COLOR_RESET} instead of quotes (') in your input.\n"
+            f"  - Use {self.COLOR_EXAMPLE}[tab]{self.COLOR_RESET} instead of tabulation character in your input.\n"
+            f"  - Use {self.COLOR_EXAMPLE}[spaces]{self.COLOR_RESET} to match one or more spaces (all kind of spaces).\n\n"
+            f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}conditional_replace \"error\" \"warning\" \"critical\"{self.COLOR_RESET}\n"
+            f"    - Replace \"error\" with \"warning\" only in lines containing \"critical\".\n\n"
+            f"  {self.COLOR_EXAMPLE}conditional_replace \"\\\\d+\" \"NUMBER\" \"line\" case_sensitive{self.COLOR_RESET}\n"
+            f"    - Replace digits with \"NUMBER\" in lines containing \"line\" (case-sensitive).\n\n"
+            f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
+            f"  - By default, replacement is case insensitive.\n"
+            f"  - Add 'case_sensitive' to make it case sensitive.\n"
+            f"  - Supports regex patterns for all three parameters.\n"
+        )
         if arg.strip() == "?":
-            self.do_help("conditional_replace")
+            self.poutput(help_text)
             return
         if not self.current_lines:
             self.poutput("Error: No file is loaded.")
@@ -3253,21 +3625,90 @@ class TextTool(cmd2.Cmd):
         Usage:
             extract_between "start_pattern" "end_pattern" [case_sensitive]
 
+        Arguments:
+            start_pattern  - Pattern marking the beginning of extraction (can be regex).
+            end_pattern    - Pattern marking the end of extraction (can be regex).
+            case_sensitive - Optional flag for case-sensitive matching.
+
         Description:
             Finds every occurrence of start_pattern and extracts all text from that point
             until the next occurrence of end_pattern (inclusive). The process repeats
-            for the whole text.
+            for the whole text. Only the extracted sections are kept in the output.
 
-        Example:
+        Special Placeholders:
+            - Use [pipe] instead of the pipe character (|) in your input.
+            - Use [doublequote] instead of double quotes (") in your input.
+            - Use [quote] instead of quotes (') in your input.
+            - Use [tab] instead of tabulation character in your input.
+            - Use [spaces] to match one or more spaces (all kind of spaces).
+
+        Examples:
             extract_between "BEGIN" "END"
-            → extracts all segments between each 'BEGIN' and the next 'END'.
+                → Extracts all segments between each 'BEGIN' and the next 'END'.
+            
+            extract_between "<div>" "</div>"
+                → Extracts content between HTML div tags.
+            
+            extract_between "START:" "STOP:" case_sensitive
+                → Case-sensitive extraction between markers.
+            
+            extract_between "\\[" "\\]"
+                → Extracts content between square brackets (regex).
             
         Notes:
             - By default, the search is case-insensitive.
             - Add 'case_sensitive' to make it case sensitive.
+            - Both start and end patterns are included in the output.
+            - If no end_pattern is found after a start_pattern, that section is skipped.
+            - Supports regex patterns for complex matching.
+            - Original text is replaced with only the extracted sections.
+            - Useful for extracting log sections, code blocks, or tagged content.
         """
+        
+        help_text = (
+            f"{self.COLOR_HEADER}Extract Between - Extract Text Between Delimiters{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Description:{self.COLOR_RESET}\n"
+            f"  Extract complete text sections bounded by start and end patterns.\n"
+            f"  Finds each start pattern and captures everything until the corresponding end pattern.\n"
+            f"  Perfect for extracting code blocks, configuration sections, or marked content.\n\n"
+            f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}extract_between \"start\" \"end\"{self.COLOR_RESET}  - Extract between delimiters\n"
+            f"  {self.COLOR_EXAMPLE}extract_between \"start\" \"end\" case_sensitive{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Extraction Behavior:{self.COLOR_RESET}\n"
+            f"  • {self.COLOR_COMMAND}Multiple sections{self.COLOR_RESET} - Extracts all matching pairs in the text\n"
+            f"  • {self.COLOR_COMMAND}Inclusive extraction{self.COLOR_RESET} - Includes both start and end markers\n"
+            f"  • {self.COLOR_COMMAND}Complete pairs only{self.COLOR_RESET} - Requires both start and end patterns\n"
+            f"  • {self.COLOR_COMMAND}Line-based{self.COLOR_RESET} - Can span multiple lines within sections\n\n"
+            f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}extract_between \"<!--\" \"-->\"{self.COLOR_RESET}\n"
+            f"    - Extract all HTML/XML comments from a document\n\n"
+            f"  {self.COLOR_EXAMPLE}extract_between \"function\" \"end\"{self.COLOR_RESET}\n"
+            f"    - Extract function definitions from code (if 'end' marks the end)\n\n"
+            f"  {self.COLOR_EXAMPLE}extract_between \"[[\" \"]]\"{self.COLOR_RESET}\n"
+            f"    - Extract wiki-style links or marked sections\n\n"
+            f"  {self.COLOR_EXAMPLE}extract_between \"<div class=\\\"special\\\">\" \"</div>\"{self.COLOR_RESET}\n"
+            f"    - Extract specific HTML elements with their content\n\n"
+            f"{self.COLOR_COMMAND}Common Use Cases:{self.COLOR_RESET}\n"
+            f"  • Extracting code blocks from documentation\n"
+            f"  • Isolating configuration sections from files\n"
+            f"  • Pulling specific elements from HTML/XML\n"
+            f"  • Capturing marked regions in text documents\n"
+            f"  • Separating structured data segments\n"
+            f"  • Isolating template blocks or components\n\n"
+            f"{self.COLOR_COMMAND}Technical Details:{self.COLOR_RESET}\n"
+            f"  • Case-insensitive by default (add {self.COLOR_EXAMPLE}case_sensitive{self.COLOR_RESET})\n"
+            f"  • Uses regex matching for flexible pattern definition\n"
+            f"  • Non-greedy matching between patterns\n"
+            f"  • Only extracts complete start-end pairs\n"
+            f"  • Original text outside sections is discarded\n\n"
+            f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
+            f"  • Use {self.COLOR_EXAMPLE}revert{self.COLOR_RESET} to restore original text if needed\n"
+            f"  • For nested structures, only the outer pairs are extracted\n"
+            f"  • Empty sections (start immediately followed by end) are included\n"
+            f"  • Perfect for preprocessing before more detailed analysis\n"
+        )
         if arg.strip() == "?":
-            self.do_help("extract_between")
+            self.poutput(help_text)
             return
         if not self.current_lines:
             self.poutput("Error: No file is loaded.")
@@ -3351,11 +3792,40 @@ class TextTool(cmd2.Cmd):
         Usage:
             insert_line <line_number> "text_to_insert"
 
+        Arguments:
+            line_number    - Position where to insert the new line (1-based).
+            text_to_insert - Content of the new line to insert.
+
         Examples:
             insert_line 5 "This is a new line"  - Inserts the text at line 5.
+            insert_line 1 "Header line"         - Inserts text at the beginning.
+            insert_line 100 "Footer line"       - Inserts text at line 100.
+
+        Notes:
+            - Line numbers are 1-based (first line is 1).
+            - The new line is inserted BEFORE the specified line number.
+            - All subsequent lines are shifted down.
+            - A newline character is automatically added.
         """
+        help_text = (
+            f"{self.COLOR_HEADER}\nInsert a line of text at a specific line number.{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}insert_line <line_number> \"text_to_insert\"{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Arguments:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}line_number{self.COLOR_RESET}    - Position where to insert the new line (1-based).\n"
+            f"  {self.COLOR_EXAMPLE}text_to_insert{self.COLOR_RESET} - Content of the new line to insert.\n\n"
+            f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}insert_line 5 \"This is a new line\"{self.COLOR_RESET}  - Inserts the text at line 5.\n"
+            f"  {self.COLOR_EXAMPLE}insert_line 1 \"Header line\"{self.COLOR_RESET}         - Inserts text at the beginning.\n"
+            f"  {self.COLOR_EXAMPLE}insert_line 100 \"Footer line\"{self.COLOR_RESET}       - Inserts text at line 100.\n\n"
+            f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
+            f"  - Line numbers are 1-based (first line is 1).\n"
+            f"  - The new line is inserted BEFORE the specified line number.\n"
+            f"  - All subsequent lines are shifted down.\n"
+            f"  - A newline character is automatically added.\n"
+        )
         if arg.strip() == "?":
-            self.do_help("insert_line")
+            self.poutput(help_text)
             return
         if not self.current_lines:
             self.poutput("Error: No file is loaded.")
@@ -3388,11 +3858,40 @@ class TextTool(cmd2.Cmd):
         Usage:
             split_lines <delimiter>
 
+        Arguments:
+            delimiter - Character or string used to split lines.
+
         Examples:
-            split_lines ","  - Splits lines at each comma.
+            split_lines ","      - Splits lines at each comma.
+            split_lines ";"      - Splits lines at each semicolon.
+            split_lines " "      - Splits lines at each space.
+            split_lines "::"     - Splits lines at double colons.
+
+        Notes:
+            - Each split creates a new line in the output.
+            - The delimiter itself is removed from the output.
+            - Empty segments are preserved as empty lines.
+            - Useful for converting delimited data to line-per-item format.
         """
+        help_text = (
+            f"{self.COLOR_HEADER}\nSplit lines by a specified delimiter into multiple lines.{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}split_lines <delimiter>{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Arguments:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}delimiter{self.COLOR_RESET} - Character or string used to split lines.\n\n"
+            f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}split_lines \",\"{self.COLOR_RESET}      - Splits lines at each comma.\n"
+            f"  {self.COLOR_EXAMPLE}split_lines \";\"{self.COLOR_RESET}      - Splits lines at each semicolon.\n"
+            f"  {self.COLOR_EXAMPLE}split_lines \" \"{self.COLOR_RESET}      - Splits lines at each space.\n"
+            f"  {self.COLOR_EXAMPLE}split_lines \"::\"{self.COLOR_RESET}     - Splits lines at double colons.\n\n"
+            f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
+            f"  - Each split creates a new line in the output.\n"
+            f"  - The delimiter itself is removed from the output.\n"
+            f"  - Empty segments are preserved as empty lines.\n"
+            f"  - Useful for converting delimited data to line-per-item format.\n"
+        )
         if arg.strip() == "?":
-            self.do_help("split_lines")
+            self.poutput(help_text)
             return
         if not self.current_lines:
             self.poutput("Error: No file is loaded.")
@@ -3414,11 +3913,40 @@ class TextTool(cmd2.Cmd):
         Usage:
             merge_lines [delimiter]
 
+        Arguments:
+            delimiter - Optional separator between merged lines (default: empty string).
+
         Examples:
-            merge_lines ","  - Merges all lines into a single line separated by commas.
+            merge_lines ","   - Merges all lines into a single line separated by commas.
+            merge_lines " "   - Merges all lines with spaces between them.
+            merge_lines       - Merges all lines without any separator.
+            merge_lines " | " - Merges lines with pipe separator.
+
+        Notes:
+            - If no delimiter is specified, lines are concatenated directly.
+            - Leading/trailing whitespace from each line is preserved.
+            - The result is always a single line.
+            - Original newline characters are removed.
         """
+        help_text = (
+            f"{self.COLOR_HEADER}\nMerge multiple lines into a single line, optionally separated by a delimiter.{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}merge_lines [delimiter]{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Arguments:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}delimiter{self.COLOR_RESET} - Optional separator between merged lines (default: empty string).\n\n"
+            f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}merge_lines \",\"{self.COLOR_RESET}   - Merges all lines into a single line separated by commas.\n"
+            f"  {self.COLOR_EXAMPLE}merge_lines \" \"{self.COLOR_RESET}   - Merges all lines with spaces between them.\n"
+            f"  {self.COLOR_EXAMPLE}merge_lines{self.COLOR_RESET}       - Merges all lines without any separator.\n"
+            f"  {self.COLOR_EXAMPLE}merge_lines \" | \"{self.COLOR_RESET} - Merges lines with pipe separator.\n\n"
+            f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
+            f"  - If no delimiter is specified, lines are concatenated directly.\n"
+            f"  - Leading/trailing whitespace from each line is preserved.\n"
+            f"  - The result is always a single line.\n"
+            f"  - Original newline characters are removed.\n"
+        )
         if arg.strip() == "?":
-            self.do_help("merge_lines")
+            self.poutput(help_text)
             return
         if not self.current_lines:
             self.poutput("Error: No file is loaded.")
@@ -3546,11 +4074,40 @@ class TextTool(cmd2.Cmd):
         Usage:
             convert_case <upper|lower|title>
 
+        Arguments:
+            upper - Convert all text to UPPERCASE.
+            lower - Convert all text to lowercase.
+            title - Convert Text To Title Case.
+
         Examples:
             convert_case upper  - Converts all text to uppercase.
+            convert_case lower  - Converts all text to lowercase.
+            convert_case title  - Converts text to title case (first letter of each word capitalized).
+
+        Notes:
+            - The conversion applies to all loaded lines.
+            - Title case capitalizes the first letter of each word.
+            - Original line structure is preserved.
         """
+        help_text = (
+            f"{self.COLOR_HEADER}\nConvert the text to uppercase, lowercase, or title case.{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}convert_case <upper|lower|title>{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Arguments:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}upper{self.COLOR_RESET} - Convert all text to UPPERCASE.\n"
+            f"  {self.COLOR_EXAMPLE}lower{self.COLOR_RESET} - Convert all text to lowercase.\n"
+            f"  {self.COLOR_EXAMPLE}title{self.COLOR_RESET} - Convert Text To Title Case.\n\n"
+            f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}convert_case upper{self.COLOR_RESET}  - Converts all text to uppercase.\n"
+            f"  {self.COLOR_EXAMPLE}convert_case lower{self.COLOR_RESET}  - Converts all text to lowercase.\n"
+            f"  {self.COLOR_EXAMPLE}convert_case title{self.COLOR_RESET}  - Converts text to title case (first letter of each word capitalized).\n\n"
+            f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
+            f"  - The conversion applies to all loaded lines.\n"
+            f"  - Title case capitalizes the first letter of each word.\n"
+            f"  - Original line structure is preserved.\n"
+        )
         if arg.strip() == "?":
-            self.do_help("convert_case")
+            self.poutput(help_text)
             return
         if not self.current_lines:
             self.poutput("Error: No file is loaded.")
@@ -3583,9 +4140,27 @@ class TextTool(cmd2.Cmd):
 
         Examples:
             trim_whitespace  - Removes leading and trailing spaces from each line.
+
+        Notes:
+            - Removes spaces, tabs, and other whitespace characters from line ends.
+            - Content within the line is not affected.
+            - Empty lines become completely empty (no spaces).
+            - A newline character is added back to each trimmed line.
         """
+        help_text = (
+            f"{self.COLOR_HEADER}\nTrim leading and trailing whitespace from each line.{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}trim_whitespace{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}trim_whitespace{self.COLOR_RESET}  - Removes leading and trailing spaces from each line.\n\n"
+            f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
+            f"  - Removes spaces, tabs, and other whitespace characters from line ends.\n"
+            f"  - Content within the line is not affected.\n"
+            f"  - Empty lines become completely empty (no spaces).\n"
+            f"  - A newline character is added back to each trimmed line.\n"
+        )
         if arg.strip() == "?":
-            self.do_help("trim_whitespace")
+            self.poutput(help_text)
             return
         if not self.current_lines:
             self.poutput("Error: No file is loaded.")
@@ -3606,9 +4181,25 @@ class TextTool(cmd2.Cmd):
 
         Examples:
             reverse_lines  - Reverses the order of all lines.
+
+        Notes:
+            - The first line becomes the last, the last becomes the first.
+            - Content within each line is not reversed, only line order.
+            - Useful for inverting chronologically ordered data.
         """
+        help_text = (
+            f"{self.COLOR_HEADER}\nReverse the order of lines in the text.{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}reverse_lines{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}reverse_lines{self.COLOR_RESET}  - Reverses the order of all lines.\n\n"
+            f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
+            f"  - The first line becomes the last, the last becomes the first.\n"
+            f"  - Content within each line is not reversed, only line order.\n"
+            f"  - Useful for inverting chronologically ordered data.\n"
+        )
         if arg.strip() == "?":
-            self.do_help("reverse_lines")
+            self.poutput(help_text)
             return
         if not self.current_lines:
             self.poutput("Error: No file is loaded.")
@@ -3630,9 +4221,27 @@ class TextTool(cmd2.Cmd):
 
         Examples:
             extract_urls  - Extracts all URLs from the text.
+
+        Notes:
+            - Detects URLs starting with http:// or https://.
+            - Each URL is placed on a separate line in the output.
+            - Original text is replaced with the list of URLs.
+            - Duplicate URLs are not automatically removed.
         """
+        help_text = (
+            f"{self.COLOR_HEADER}\nExtract all URLs from the text.{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}extract_urls{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}extract_urls{self.COLOR_RESET}  - Extracts all URLs from the text.\n\n"
+            f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
+            f"  - Detects URLs starting with http:// or https://.\n"
+            f"  - Each URL is placed on a separate line in the output.\n"
+            f"  - Original text is replaced with the list of URLs.\n"
+            f"  - Duplicate URLs are not automatically removed.\n"
+        )
         if arg.strip() == "?":
-            self.do_help("extract_urls")
+            self.poutput(help_text)
             return
         if not self.current_lines:
             self.poutput("Error: No file is loaded.")
@@ -3654,9 +4263,27 @@ class TextTool(cmd2.Cmd):
 
         Examples:
             extract_emails  - Extracts all email addresses from the text.
+
+        Notes:
+            - Uses regex pattern to identify valid email formats.
+            - Each email is placed on a separate line in the output.
+            - Original text is replaced with the list of emails.
+            - Duplicate emails are not automatically removed.
         """
+        help_text = (
+            f"{self.COLOR_HEADER}\nExtract all email addresses from the text.{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}extract_emails{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}extract_emails{self.COLOR_RESET}  - Extracts all email addresses from the text.\n\n"
+            f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
+            f"  - Uses regex pattern to identify valid email formats.\n"
+            f"  - Each email is placed on a separate line in the output.\n"
+            f"  - Original text is replaced with the list of emails.\n"
+            f"  - Duplicate emails are not automatically removed.\n"
+        )
         if arg.strip() == "?":
-            self.do_help("extract_emails")
+            self.poutput(help_text)
             return
         if not self.current_lines:
             self.poutput("Error: No file is loaded.")
@@ -3703,17 +4330,40 @@ class TextTool(cmd2.Cmd):
         """Sort the lines in the current text.
 
         Usage:
-            sort  - Sorts the lines in the current text.
+            sort  - Sorts the lines in the current text
 
         Notes:
-            - This command sorts the lines in ascending order.
-            - The sorting is case-sensitive.
+            - This command sorts the lines in ascending order
+            - The sorting is case-sensitive
+            - Empty lines are included in the sort
+            - Useful for organizing data or finding duplicates
         """
-        if arg.strip() == "?":  # Check if the argument is just "?"
-            function_name = inspect.currentframe().f_code.co_name # Returns 'do_create'
-            command_name = function_name[3:] # Remove 'do_' prefix to get 'create'
-            self.do_help(command_name)  # Execute help for the current function
-            return  # Exit the function        
+        help_text = (
+            f"{self.COLOR_HEADER}Sort - Organize Lines Alphabetically{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Description:{self.COLOR_RESET}\n"
+            f"  Sort all lines in the current text in ascending alphabetical order.\n"
+            f"  Case-sensitive sorting with all lines included in the operation.\n\n"
+            f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}sort{self.COLOR_RESET}  - Sort all lines alphabetically\n\n"
+            f"{self.COLOR_COMMAND}Sorting Behavior:{self.COLOR_RESET}\n"
+            f"  • {self.COLOR_COMMAND}Ascending order{self.COLOR_RESET} - A to Z, then a to z\n"
+            f"  • {self.COLOR_COMMAND}Case-sensitive{self.COLOR_RESET} - Uppercase before lowercase\n"
+            f"  • {self.COLOR_COMMAND}All lines included{self.COLOR_RESET} - Empty lines sorted too\n"
+            f"  • {self.COLOR_COMMAND}Original order lost{self.COLOR_RESET} - Use {self.COLOR_EXAMPLE}revert{self.COLOR_RESET} to undo\n\n"
+            f"{self.COLOR_COMMAND}Use Cases:{self.COLOR_RESET}\n"
+            f"  • Organizing lists of names, items, or values\n"
+            f"  • Preparing data for duplicate detection\n"
+            f"  • Standardizing file formats\n"
+            f"  • Making data more readable and navigable\n\n"
+            f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
+            f"  • For numerical sorting, use regex extraction first\n"
+            f"  • Combine with {self.COLOR_EXAMPLE}unique{self.COLOR_RESET} for duplicate removal\n"
+            f"  • Live View updates to show sorted result\n"
+            f"  • Use {self.COLOR_EXAMPLE}revert{self.COLOR_RESET} to restore original order\n"
+        )
+        if arg.strip() == "?":
+            self.poutput(help_text)
+            return      
         if not self.current_lines:
             self.poutput("Error: No file is loaded.")
             return
@@ -3727,20 +4377,43 @@ class TextTool(cmd2.Cmd):
         self.poutput("Lines sorted successfully.")
 
     def do_unique(self, arg):
-        """Remove duplicate lines from the current text and display the number of deleted lines.
+        """Remove duplicate lines from the current text.
 
         Usage:
-            unique  - Removes duplicate lines from the current text.
+            unique  - Removes duplicate lines from the current text
 
         Notes:
-            - This command removes duplicate lines, keeping only the first occurrence of each line.
-            - The number of deleted lines is displayed after the operation.
+            - This command removes duplicate lines, keeping only the first occurrence
+            - The number of deleted lines is displayed after the operation
+            - Lines must be exact matches (including whitespace)
+            - Often used after sort for complete duplicate cleanup
         """
-        if arg.strip() == "?":  # Check if the argument is just "?"
-            function_name = inspect.currentframe().f_code.co_name # Returns 'do_create'
-            command_name = function_name[3:] # Remove 'do_' prefix to get 'create'
-            self.do_help(command_name)  # Execute help for the current function
-            return  # Exit the function
+        help_text = (
+            f"{self.COLOR_HEADER}Unique - Remove Duplicate Lines{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Description:{self.COLOR_RESET}\n"
+            f"  Remove duplicate lines from the text, preserving only the first occurrence\n"
+            f"  of each unique line. Exact matching including whitespace and case.\n\n"
+            f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}unique{self.COLOR_RESET}  - Remove duplicate lines\n\n"
+            f"{self.COLOR_COMMAND}Operation Details:{self.COLOR_RESET}\n"
+            f"  • {self.COLOR_COMMAND}Exact matching{self.COLOR_RESET} - Whitespace and case must match\n"
+            f"  • {self.COLOR_COMMAND}First occurrence kept{self.COLOR_RESET} - Subsequent duplicates removed\n"
+            f"  • {self.COLOR_COMMAND}Count reported{self.COLOR_RESET} - Shows how many lines were removed\n"
+            f"  • {self.COLOR_COMMAND}Order preserved{self.COLOR_RESET} - Remaining lines keep original order\n\n"
+            f"{self.COLOR_COMMAND}Best Practices:{self.COLOR_RESET}\n"
+            f"  • Use {self.COLOR_EXAMPLE}sort{self.COLOR_RESET} first for complete duplicate cleanup\n"
+            f"  • Use {self.COLOR_EXAMPLE}trim_whitespace{self.COLOR_RESET} to normalize spacing\n"
+            f"  • Use {self.COLOR_EXAMPLE}convert_case{self.COLOR_RESET} for case normalization\n"
+            f"  • Check results with {self.COLOR_EXAMPLE}show{self.COLOR_RESET} before final save\n\n"
+            f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
+            f"  • Empty lines are also deduplicated\n"
+            f"  • Use {self.COLOR_EXAMPLE}revert{self.COLOR_RESET} to restore duplicates\n"
+            f"  • Live View updates with unique lines only\n"
+            f"  • Perfect for cleaning data exports or logs\n"
+        )
+        if arg.strip() == "?":
+            self.poutput(help_text)
+            return
         if arg.strip() == "?":  # Check if the argument is just "?"
             self.do_help(self._cmd_func_name)  # Execute help for the current function
             return  # Exit the function
@@ -3772,17 +4445,41 @@ class TextTool(cmd2.Cmd):
         """Remove empty lines from the current text.
 
         Usage:
-            remove_empty_lines  - Removes empty lines from the current text.
+            remove_empty_lines  - Removes empty lines from the current text
 
         Notes:
-            - This command removes lines that are empty or contain only whitespace.
-            - The number of deleted lines is displayed after the operation.
+            - This command removes lines that are empty or contain only whitespace
+            - The number of deleted lines is displayed after the operation
+            - Useful for cleaning up data and reducing file size
         """
-        if arg.strip() == "?":  # Check if the argument is just "?"
-            function_name = inspect.currentframe().f_code.co_name # Returns 'do_create'
-            command_name = function_name[3:] # Remove 'do_' prefix to get 'create'
-            self.do_help(command_name)  # Execute help for the current function
-            return  # Exit the function
+        help_text = (
+            f"{self.COLOR_HEADER}Remove Empty Lines - Clean Up Whitespace{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Description:{self.COLOR_RESET}\n"
+            f"  Remove lines that contain only whitespace or are completely empty.\n"
+            f"  Essential for cleaning up data files, logs, and exported content.\n\n"
+            f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}remove_empty_lines{self.COLOR_RESET}  - Remove blank lines\n\n"
+            f"{self.COLOR_COMMAND}What Gets Removed:{self.COLOR_RESET}\n"
+            f"  • Completely empty lines\n"
+            f"  • Lines with only spaces\n"
+            f"  • Lines with only tabs\n"
+            f"  • Lines with mixed whitespace only\n"
+            f"  • Lines with only invisible characters\n\n"
+            f"{self.COLOR_COMMAND}Use Cases:{self.COLOR_RESET}\n"
+            f"  • Cleaning data exports from databases\n"
+            f"  • Reducing log file size\n"
+            f"  • Preparing text for processing\n"
+            f"  • Improving readability of documents\n"
+            f"  • Standardizing file formats\n\n"
+            f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
+            f"  • Count of removed lines is displayed\n"
+            f"  • Use {self.COLOR_EXAMPLE}revert{self.COLOR_RESET} to restore empty lines\n"
+            f"  • Live View updates with cleaned text\n"
+            f"  • Often used before {self.COLOR_EXAMPLE}sort{self.COLOR_RESET} or {self.COLOR_EXAMPLE}unique{self.COLOR_RESET}\n"
+        )
+        if arg.strip() == "?":
+            self.poutput(help_text)
+            return
         if not self.current_lines:
             self.poutput("Error: No file is loaded.")
             return
@@ -3844,12 +4541,50 @@ class TextTool(cmd2.Cmd):
         Usage:
             right_replace "string1" "string2" [case_sensitive]
 
+        Arguments:
+            string1        - Pattern to search for (marks start of replacement).
+            string2        - Replacement text that replaces from string1 to end of line.
+            case_sensitive - Optional flag for case-sensitive matching.
+
+        Examples:
+            right_replace "error" "ERROR FOUND"
+                - Replace "error" and everything after it with "ERROR FOUND".
+            
+            right_replace "" "SUFFIX"
+                - Append "SUFFIX" to the end of all lines.
+            
+            right_replace ":" " -> END"
+                - Replace from first colon to end of line with " -> END".
+
         Notes:
-            - If string1 is empty or only string2 is provided, string2 is appended to all lines.
-            - Supports case-sensitive or case-insensitive replacement.
+            - If string1 is empty, string2 is appended to all lines.
+            - Everything from string1 (inclusive) to line end is replaced.
+            - By default, matching is case-insensitive.
+            - Add 'case_sensitive' for case-sensitive matching.
         """
+        help_text = (
+            f"{self.COLOR_HEADER}\nReplace everything from and including string1 to the end of the line with string2.{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}right_replace \"string1\" \"string2\" [case_sensitive]{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Arguments:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}string1{self.COLOR_RESET}        - Pattern to search for (marks start of replacement).\n"
+            f"  {self.COLOR_EXAMPLE}string2{self.COLOR_RESET}        - Replacement text that replaces from string1 to end of line.\n"
+            f"  {self.COLOR_EXAMPLE}case_sensitive{self.COLOR_RESET} - Optional flag for case-sensitive matching.\n\n"
+            f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}right_replace \"error\" \"ERROR FOUND\"{self.COLOR_RESET}\n"
+            f"    - Replace \"error\" and everything after it with \"ERROR FOUND\".\n\n"
+            f"  {self.COLOR_EXAMPLE}right_replace \"\" \"SUFFIX\"{self.COLOR_RESET}\n"
+            f"    - Append \"SUFFIX\" to the end of all lines.\n\n"
+            f"  {self.COLOR_EXAMPLE}right_replace \":\" \" -> END\"{self.COLOR_RESET}\n"
+            f"    - Replace from first colon to end of line with \" -> END\".\n\n"
+            f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
+            f"  - If string1 is empty, string2 is appended to all lines.\n"
+            f"  - Everything from string1 (inclusive) to line end is replaced.\n"
+            f"  - By default, matching is case-insensitive.\n"
+            f"  - Add 'case_sensitive' for case-sensitive matching.\n"
+        )
         if arg.strip() == "?":
-            self.do_help("right_replace")
+            self.poutput(help_text)
             return
         if not self.current_lines:
             self.poutput("Error: No file is loaded.")
@@ -3921,12 +4656,50 @@ class TextTool(cmd2.Cmd):
         Usage:
             left_replace "string1" "string2" [case_sensitive]
 
+        Arguments:
+            string1        - Pattern to search for (marks end of replacement).
+            string2        - Replacement text that replaces from line start to string1.
+            case_sensitive - Optional flag for case-sensitive matching.
+
+        Examples:
+            left_replace "error" "WARNING"
+                - Replace line start through "error" with "WARNING".
+            
+            left_replace "" "PREFIX: "
+                - Prepend "PREFIX: " to the beginning of all lines.
+            
+            left_replace ":" "LABEL"
+                - Replace from line start through first colon with "LABEL".
+
         Notes:
-            - If string1 is empty or only string2 is provided, string2 is prepended to all lines.
-            - Supports case-sensitive or case-insensitive replacement.
+            - If string1 is empty, string2 is prepended to all lines.
+            - Everything from line start to string1 (inclusive) is replaced.
+            - By default, matching is case-insensitive.
+            - Add 'case_sensitive' for case-sensitive matching.
         """
+        help_text = (
+            f"{self.COLOR_HEADER}\nReplace everything from the start of the line up to and including string1 with string2.{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}left_replace \"string1\" \"string2\" [case_sensitive]{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Arguments:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}string1{self.COLOR_RESET}        - Pattern to search for (marks end of replacement).\n"
+            f"  {self.COLOR_EXAMPLE}string2{self.COLOR_RESET}        - Replacement text that replaces from line start to string1.\n"
+            f"  {self.COLOR_EXAMPLE}case_sensitive{self.COLOR_RESET} - Optional flag for case-sensitive matching.\n\n"
+            f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}left_replace \"error\" \"WARNING\"{self.COLOR_RESET}\n"
+            f"    - Replace line start through \"error\" with \"WARNING\".\n\n"
+            f"  {self.COLOR_EXAMPLE}left_replace \"\" \"PREFIX: \"{self.COLOR_RESET}\n"
+            f"    - Prepend \"PREFIX: \" to the beginning of all lines.\n\n"
+            f"  {self.COLOR_EXAMPLE}left_replace \":\" \"LABEL\"{self.COLOR_RESET}\n"
+            f"    - Replace from line start through first colon with \"LABEL\".\n\n"
+            f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
+            f"  - If string1 is empty, string2 is prepended to all lines.\n"
+            f"  - Everything from line start to string1 (inclusive) is replaced.\n"
+            f"  - By default, matching is case-insensitive.\n"
+            f"  - Add 'case_sensitive' for case-sensitive matching.\n"
+        )
         if arg.strip() == "?":
-            self.do_help("left_replace")
+            self.poutput(help_text)
             return
         if not self.current_lines:
             self.poutput("Error: No file is loaded.")
@@ -3991,6 +4764,44 @@ class TextTool(cmd2.Cmd):
         return completions
 
     def do_diff(self, arg):
+        """Show differences between previous and current text states.
+
+        Usage:
+            diff  - Shows differences between previous and current states
+
+        Notes:
+            - Uses unified diff format for clear visualization
+            - Shows what changed in the last operation
+            - Helpful for verifying changes and debugging
+        """
+        help_text = (
+            f"{self.COLOR_HEADER}Diff - Compare Text States{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Description:{self.COLOR_RESET}\n"
+            f"  Display differences between the previous and current text states\n"
+            f"  using standard unified diff format. Perfect for change verification.\n\n"
+            f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}diff{self.COLOR_RESET}  - Show changes from last operation\n\n"
+            f"{self.COLOR_COMMAND}Diff Format Explained:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}--- previous{self.COLOR_RESET}    - Lines from previous state\n"
+            f"  {self.COLOR_EXAMPLE}+++ current{self.COLOR_RESET}     - Lines from current state\n"
+            f"  {self.COLOR_EXAMPLE}@@ -1,3 +1,4 @@{self.COLOR_RESET} - Line range changes\n"
+            f"  {self.COLOR_EXAMPLE}- deleted line{self.COLOR_RESET}  - Line removed (red)\n"
+            f"  {self.COLOR_EXAMPLE}+ added line{self.COLOR_RESET}    - Line added (green)\n"
+            f"  {self.COLOR_EXAMPLE} unchanged line{self.COLOR_RESET} - Line unchanged\n\n"
+            f"{self.COLOR_COMMAND}Use Cases:{self.COLOR_RESET}\n"
+            f"  • Verify complex replacement operations\n"
+            f"  • Debug unexpected text changes\n"
+            f"  • Understand what a command actually did\n"
+            f"  • Review changes before saving\n\n"
+            f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
+            f"  • Requires previous state to be available\n"
+            f"  • Shows only the most recent changes\n"
+            f"  • No changes to text - read-only operation\n"
+            f"  • Output uses standard diff format for compatibility\n"
+        )
+        if arg.strip() == "?":
+            self.poutput(help_text)
+            return
         diff = difflib.unified_diff(
             self.previous_lines, self.current_lines,
             fromfile='previous', tofile='current', lineterm=''
@@ -3999,48 +4810,135 @@ class TextTool(cmd2.Cmd):
 
 
     def do_placeholder_replace(self, arg):
-        """Replace a placeholder with multiple values from a file or clipboard.
+        """Replace placeholders with multiple values from a file or clipboard.
 
         Usage:
-            placeholder_replace "string1" [filename] [case_sensitive]
+            placeholder_replace "placeholder1" ["placeholder2" ...] [filename] [case_sensitive]
 
         Behavior:
-            - If filename is provided → use its non-empty lines as replacement values.
+            - If filename is provided → use its lines as replacement values.
             - If filename is omitted → use clipboard text lines instead.
+            - Creates multiple copies of the original text, one for each mapping line.
+            - Each copy has ALL placeholders replaced with values from that mapping line.
             - The new text replaces the old one (original lines are not kept).
             - Add 'case_sensitive' to make matching case-sensitive.
-            - Remark : The function works also if you have many placeholders (i.e "string1" "string2" etc.), given that filename (or clipboard) include the same number of columns)
-            - For each mapping line, we produce a full copy of the ORIGINAL current text
-              with ALL replacements from that mapping applied, and append that copy to the output.
-            - The ORIGINAL text is never changed while building other mapping outputs.
 
-        Example:
-            Clipboard or file contains:
+        Arguments:
+            placeholder1, placeholder2, ... - One or more placeholder strings to replace.
+            filename                        - Optional file containing replacement values.
+            case_sensitive                  - Optional flag for case-sensitive matching.
+
+        Mapping File Format:
+            Each line in the file (or clipboard) should contain space-separated values,
+            one value for each placeholder. Lines with incorrect number of values are skipped.
+            
+            Example mapping file (3 placeholders):
+                abc def ghi
+                xyz uvw rst
+                123 456 789
+
+        Examples:
+            placeholder_replace "NAME" names.txt
+                - Replace "NAME" with values from names.txt (one value per line).
+            
+            placeholder_replace "FNAME" "LNAME" people.txt
+                - Replace two placeholders with two values per line from people.txt.
+            
+            placeholder_replace "CITY" "COUNTRY" "CODE"
+                - Use clipboard (must have 3 space-separated values per line).
+            
+            placeholder_replace "ID" "VALUE" data.txt case_sensitive
+                - Case-sensitive replacement from data.txt.
+
+        Detailed Example:
+            Original text:
+                hello MY dear
+                yes MY baby
+                MY phone is closed
+            
+            Mapping file (myfile.txt):
                 abc
                 def
-                geh
-
-            Current text:
-                hello my dear
-                yes my baby
-                my phone is closed
-
+                ghi
+            
             Command:
-                placeholder_replace "my" myfile.txt
-
-            Result:
+                placeholder_replace "MY" myfile.txt
+            
+            Result (3 copies of original, each with different replacement):
                 hello abc dear
                 yes abc baby
                 abc phone is closed
                 hello def dear
                 yes def baby
                 def phone is closed
-                hello geh dear
-                yes geh baby
-                geh phone is closed
+                hello ghi dear
+                yes ghi baby
+                ghi phone is closed
+
+        Notes:
+            - If no filename: mapping comes from clipboard content.
+            - Mapping lines must have same number of values as placeholders.
+            - Lines with mismatched value counts are skipped with a warning.
+            - By default, matching is case-insensitive.
+            - Add 'case_sensitive' for case-sensitive matching.
+            - The ORIGINAL text is preserved while building each mapping output.
+            - Each placeholder can appear multiple times in the text.
+            - Useful for mail merge, test data generation, and template expansion.
         """
+        help_text = (
+            f"{self.COLOR_HEADER}Placeholder Replace - Template-Based Batch Replacement{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Description:{self.COLOR_RESET}\n"
+            f"  Replace multiple placeholders with values from a mapping file or clipboard.\n"
+            f"  Each line in the mapping provides a set of values, generating multiple output versions.\n"
+            f"  Essentially performs batch template filling with your text as the template.\n\n"
+            f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}placeholder_replace \"placeholder1\" [filename] [case_sensitive]{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}placeholder_replace \"ph1\" \"ph2\" \"ph3\" mapping.txt{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Input Methods:{self.COLOR_RESET}\n"
+            f"  • {self.COLOR_COMMAND}File mapping{self.COLOR_RESET} - Provide filename with replacement values\n"
+            f"  • {self.COLOR_COMMAND}Clipboard mapping{self.COLOR_RESET} - Use clipboard content if no file\n"
+            f"  • {self.COLOR_COMMAND}Multiple placeholders{self.COLOR_RESET} - Specify 1, 2, or more placeholders\n\n"
+            f"{self.COLOR_COMMAND}Mapping Format:{self.COLOR_RESET}\n"
+            f"  Each line in mapping should have the same number of values as placeholders:\n"
+            f"  {self.COLOR_EXAMPLE}value1 value2 value3{self.COLOR_RESET}  - For 3 placeholders\n"
+            f"  {self.COLOR_EXAMPLE}alpha beta gamma{self.COLOR_RESET}     - Space/tab separated values\n"
+            f"  {self.COLOR_EXAMPLE}john 25 london{self.COLOR_RESET}       - Real data example\n\n"
+            f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}placeholder_replace \"{{name}}\" names.txt{self.COLOR_RESET}\n"
+            f"    - Replace {{name}} with each name from file, creating multiple outputs\n\n"
+            f"  {self.COLOR_EXAMPLE}placeholder_replace \"{{user}}\" \"{{role}}\" users.txt{self.COLOR_RESET}\n"
+            f"    - Replace two placeholders with user-role pairs from file\n\n"
+            f"  {self.COLOR_EXAMPLE}placeholder_replace \"%%DATE%%\" \"%%TIME%%\"{self.COLOR_RESET}\n"
+            f"    - Use clipboard content with date-time pairs (one per line)\n\n"
+            f"  {self.COLOR_EXAMPLE}placeholder_replace \"var1\" \"var2\" \"var3\" data.txt case_sensitive{self.COLOR_RESET}\n"
+            f"    - Case-sensitive replacement of three variables\n\n"
+            f"{self.COLOR_COMMAND}Output Generation:{self.COLOR_RESET}\n"
+            f"  • {self.COLOR_COMMAND}Template replication{self.COLOR_RESET} - Original text copied for each mapping line\n"
+            f"  • {self.COLOR_COMMAND}Simultaneous replacement{self.COLOR_RESET} - All placeholders replaced at once\n"
+            f"  • {self.COLOR_COMMAND}Complete coverage{self.COLOR_RESET} - Every combination from mapping applied\n"
+            f"  • {self.COLOR_COMMAND}Order preservation{self.COLOR_RESET} - Mapping line order maintained in output\n\n"
+            f"{self.COLOR_COMMAND}Practical Applications:{self.COLOR_RESET}\n"
+            f"  • Generating multiple configuration files from template\n"
+            f"  • Creating personalized documents or emails\n"
+            f"  • Bulk data transformation with variable inputs\n"
+            f"  • Testing code with different input combinations\n"
+            f"  • Localization of text with multiple language strings\n"
+            f"  • Parameter sweeping for experimentation\n\n"
+            f"{self.COLOR_COMMAND}Technical Details:{self.COLOR_RESET}\n"
+            f"  • Case-insensitive by default (add {self.COLOR_EXAMPLE}case_sensitive{self.COLOR_RESET})\n"
+            f"  • Placeholders are treated as literal text (not regex)\n"
+            f"  • Mapping lines with wrong column count are skipped\n"
+            f"  • Original text serves as immutable template\n"
+            f"  • Output lines = template lines × mapping lines\n\n"
+            f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
+            f"  • Use {self.COLOR_EXAMPLE}revert{self.COLOR_RESET} to return to original template\n"
+            f"  • Mapping file should use spaces/tabs to separate values\n"
+            f"  • Clipboard content should have one mapping per line\n"
+            f"  • Perfect for automation and batch processing workflows\n"
+            f"  • Much more efficient than manual repetitive replacements\n"
+        )
         if arg.strip() == "?":
-            self.do_help("placeholder_replace")
+            self.poutput(help_text)
             return
         import shlex, os, re
 
@@ -4318,15 +5216,16 @@ class TextTool(cmd2.Cmd):
                               Use "tab" for tab character, "space" for space
             
         Examples:
-            extract_column "1,3,5" ","     - Extract columns 1, 3, and 5 from CSV
-            extract_column "2-4" tab       - Extract columns 2 through 4 from tab-delimited
-            extract_column "1,3-5"         - Extract columns 1, 3, 4, and 5 (default comma delimiter)
-            extract_column "1" space       - Extract first column from space-delimited text
+            extract_column "1,3,5" ","     - Extract columns 1, 3, and 5 from CSV.
+            extract_column "2-4" tab       - Extract columns 2 through 4 from tab-delimited.
+            extract_column "1,3-5"         - Extract columns 1, 3, 4, and 5 (default comma delimiter).
+            extract_column "1" space       - Extract first column from space-delimited text.
             
         Notes:
-            - Column numbers are 1-based (first column is 1)
-            - Ranges are inclusive (1-3 means columns 1, 2, and 3)
-            - Empty columns are preserved in the output
+            - Column numbers are 1-based (first column is 1).
+            - Ranges are inclusive (1-3 means columns 1, 2, and 3).
+            - Empty columns are preserved in the output.
+            - Useful for extracting specific fields from CSV or TSV files.
         """
         help_text = (
             f"{self.COLOR_HEADER}\nExtract specific columns from delimited text.{self.COLOR_RESET}\n\n"
@@ -4338,15 +5237,15 @@ class TextTool(cmd2.Cmd):
             f"  {self.COLOR_EXAMPLE}[delimiter]{self.COLOR_RESET}      - Column delimiter (default: comma)\n"
             f"                      Use \"tab\" for tab character, \"space\" for space\n\n"
             f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
-            f"  {self.COLOR_EXAMPLE}extract_column \"1,3,5\" \",\"{self.COLOR_RESET}     - Extract columns 1, 3, and 5 from CSV\n"
-            f"  {self.COLOR_EXAMPLE}extract_column \"2-4\" tab{self.COLOR_RESET}       - Extract columns 2 through 4 from tab-delimited\n"
-            f"  {self.COLOR_EXAMPLE}extract_column \"1,3-5\"{self.COLOR_RESET}         - Extract columns 1, 3, 4, and 5 (default comma delimiter)\n\n"
+            f"  {self.COLOR_EXAMPLE}extract_column \"1,3,5\" \",\"{self.COLOR_RESET}     - Extract columns 1, 3, and 5 from CSV.\n"
+            f"  {self.COLOR_EXAMPLE}extract_column \"2-4\" tab{self.COLOR_RESET}       - Extract columns 2 through 4 from tab-delimited.\n"
+            f"  {self.COLOR_EXAMPLE}extract_column \"1,3-5\"{self.COLOR_RESET}         - Extract columns 1, 3, 4, and 5 (default comma delimiter).\n\n"
             f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
-            f"  - Column numbers are 1-based (first column is 1)\n"
-            f"  - Ranges are inclusive (1-3 means columns 1, 2, and 3)\n"
-            f"  - Empty columns are preserved in the output\n"
+            f"  - Column numbers are 1-based (first column is 1).\n"
+            f"  - Ranges are inclusive (1-3 means columns 1, 2, and 3).\n"
+            f"  - Empty columns are preserved in the output.\n"
+            f"  - Useful for extracting specific fields from CSV or TSV files.\n"
         )
-        
         if arg.strip() == "?":
             self.poutput(help_text)
             return
@@ -4452,17 +5351,17 @@ class TextTool(cmd2.Cmd):
                          Examples: "1,5,10" or "10-20" or "1-5,10,15-20"
             
         Examples:
-            select_lines "1,5,10"       - Select lines 1, 5, and 10
-            select_lines "10-20"        - Select lines 10 through 20
-            select_lines "1-5,10,15-20" - Select lines 1-5, line 10, and lines 15-20
-            select_lines "1,3,5-"       - Select line 1, 3, and from 5 to end
+            select_lines "1,5,10"       - Select lines 1, 5, and 10.
+            select_lines "10-20"        - Select lines 10 through 20.
+            select_lines "1-5,10,15-20" - Select lines 1-5, line 10, and lines 15-20.
+            select_lines "1,3,5-"       - Select line 1, 3, and from 5 to end.
             
         Notes:
-            - Line numbers are 1-based (first line is 1)
-            - Ranges are inclusive (10-20 means lines 10 through 20)
-            - Lines are selected in the order specified
-            - Duplicate line numbers are ignored
-            - Use "-" at the end of a range to select to the end (e.g., "10-")
+            - Line numbers are 1-based (first line is 1).
+            - Ranges are inclusive (10-20 means lines 10 through 20).
+            - Lines are selected in the order specified.
+            - Duplicate line numbers are ignored.
+            - Use "-" at the end of a range to select to the end (e.g., "10-").
         """
         help_text = (
             f"{self.COLOR_HEADER}\nSelect specific lines by line numbers or ranges.{self.COLOR_RESET}\n\n"
@@ -4472,16 +5371,16 @@ class TextTool(cmd2.Cmd):
             f"  {self.COLOR_EXAMPLE}<line_spec>{self.COLOR_RESET} - Comma-separated line numbers or ranges\n"
             f"                 Examples: \"1,5,10\" or \"10-20\" or \"1-5,10,15-20\"\n\n"
             f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
-            f"  {self.COLOR_EXAMPLE}select_lines \"1,5,10\"{self.COLOR_RESET}       - Select lines 1, 5, and 10\n"
-            f"  {self.COLOR_EXAMPLE}select_lines \"10-20\"{self.COLOR_RESET}        - Select lines 10 through 20\n"
-            f"  {self.COLOR_EXAMPLE}select_lines \"1-5,10,15-20\"{self.COLOR_RESET} - Select multiple ranges\n"
-            f"  {self.COLOR_EXAMPLE}select_lines \"1,3,5-\"{self.COLOR_RESET}       - Select line 1, 3, and from 5 to end\n\n"
+            f"  {self.COLOR_EXAMPLE}select_lines \"1,5,10\"{self.COLOR_RESET}       - Select lines 1, 5, and 10.\n"
+            f"  {self.COLOR_EXAMPLE}select_lines \"10-20\"{self.COLOR_RESET}        - Select lines 10 through 20.\n"
+            f"  {self.COLOR_EXAMPLE}select_lines \"1-5,10,15-20\"{self.COLOR_RESET} - Select multiple ranges.\n"
+            f"  {self.COLOR_EXAMPLE}select_lines \"1,3,5-\"{self.COLOR_RESET}       - Select line 1, 3, and from 5 to end.\n\n"
             f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
-            f"  - Line numbers are 1-based (first line is 1)\n"
-            f"  - Ranges are inclusive\n"
-            f"  - Duplicate line numbers are ignored\n"
+            f"  - Line numbers are 1-based (first line is 1).\n"
+            f"  - Ranges are inclusive.\n"
+            f"  - Duplicate line numbers are ignored.\n"
+            f"  - Use \"-\" at the end to select to the end of the file.\n"
         )
-        
         if arg.strip() == "?":
             self.poutput(help_text)
             return
@@ -4577,27 +5476,33 @@ class TextTool(cmd2.Cmd):
             - Most common words (top 10)
             
         Examples:
-            statistics  - Display comprehensive text statistics
+            statistics  - Display comprehensive text statistics.
             
         Notes:
-            - Statistics are calculated on the currently loaded/selected text
-            - Word counting uses simple whitespace splitting
-            - Character counts include newlines
+            - Statistics are calculated on the currently loaded/selected text.
+            - Word counting uses simple whitespace splitting.
+            - Character counts include newlines.
+            - Most common words filter excludes short words (2 chars or less).
         """
         help_text = (
             f"{self.COLOR_HEADER}\nShow statistics about the current text.{self.COLOR_RESET}\n\n"
             f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
             f"  {self.COLOR_EXAMPLE}statistics{self.COLOR_RESET}\n\n"
             f"{self.COLOR_COMMAND}Displays:{self.COLOR_RESET}\n"
-            f"  - Total lines\n"
-            f"  - Non-empty lines\n"
-            f"  - Total characters\n"
+            f"  - Total lines and non-empty lines\n"
+            f"  - Total characters (with and without whitespace)\n"
             f"  - Total words\n"
             f"  - Average line length\n"
-            f"  - Longest/shortest lines\n"
-            f"  - Most common words\n"
+            f"  - Longest and shortest lines with previews\n"
+            f"  - Most common words (top 10)\n\n"
+            f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}statistics{self.COLOR_RESET}  - Display comprehensive text statistics.\n\n"
+            f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
+            f"  - Statistics are calculated on the currently loaded/selected text.\n"
+            f"  - Word counting uses simple whitespace splitting.\n"
+            f"  - Character counts include newlines.\n"
+            f"  - Most common words filter excludes short words (2 chars or less).\n"
         )
-        
         if arg.strip() == "?":
             self.poutput(help_text)
             return
@@ -4685,33 +5590,38 @@ class TextTool(cmd2.Cmd):
             find_duplicates [threshold] [case_sensitive]
             
         Arguments:
-            [threshold]      - Minimum number of occurrences to display (default: 2)
-            [case_sensitive] - Make comparison case-sensitive
+            [threshold]      - Minimum number of occurrences to display (default: 2).
+            [case_sensitive] - Make comparison case-sensitive.
             
         Examples:
-            find_duplicates           - Show all lines appearing 2+ times
-            find_duplicates 5         - Show only lines appearing 5+ times
-            find_duplicates 3 case_sensitive - Case-sensitive, threshold 3
+            find_duplicates           - Show all lines appearing 2+ times.
+            find_duplicates 5         - Show only lines appearing 5+ times.
+            find_duplicates 3 case_sensitive - Case-sensitive, threshold 3.
             
         Notes:
-            - By default, comparison is case-insensitive
-            - Results are sorted by occurrence count (descending)
-            - Original line format is preserved in output
-            - Empty lines are included in duplicate detection
+            - By default, comparison is case-insensitive.
+            - Results are sorted by occurrence count (descending).
+            - Original line format is preserved in output.
+            - Empty lines are included in duplicate detection.
+            - Shows line numbers where duplicates appear.
         """
         help_text = (
             f"{self.COLOR_HEADER}\nFind and show duplicate lines with their counts.{self.COLOR_RESET}\n\n"
             f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
             f"  {self.COLOR_EXAMPLE}find_duplicates [threshold] [case_sensitive]{self.COLOR_RESET}\n\n"
             f"{self.COLOR_COMMAND}Arguments:{self.COLOR_RESET}\n"
-            f"  {self.COLOR_EXAMPLE}[threshold]{self.COLOR_RESET}      - Minimum occurrences to display (default: 2)\n"
-            f"  {self.COLOR_EXAMPLE}[case_sensitive]{self.COLOR_RESET} - Make comparison case-sensitive\n\n"
+            f"  {self.COLOR_EXAMPLE}[threshold]{self.COLOR_RESET}      - Minimum occurrences to display (default: 2).\n"
+            f"  {self.COLOR_EXAMPLE}[case_sensitive]{self.COLOR_RESET} - Make comparison case-sensitive.\n\n"
             f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
-            f"  {self.COLOR_EXAMPLE}find_duplicates{self.COLOR_RESET}           - Show all duplicates (2+ times)\n"
-            f"  {self.COLOR_EXAMPLE}find_duplicates 5{self.COLOR_RESET}         - Show lines appearing 5+ times\n"
-            f"  {self.COLOR_EXAMPLE}find_duplicates 3 case_sensitive{self.COLOR_RESET} - Case-sensitive search\n"
+            f"  {self.COLOR_EXAMPLE}find_duplicates{self.COLOR_RESET}           - Show all duplicates (2+ times).\n"
+            f"  {self.COLOR_EXAMPLE}find_duplicates 5{self.COLOR_RESET}         - Show lines appearing 5+ times.\n"
+            f"  {self.COLOR_EXAMPLE}find_duplicates 3 case_sensitive{self.COLOR_RESET} - Case-sensitive search.\n\n"
+            f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
+            f"  - By default, comparison is case-insensitive.\n"
+            f"  - Results are sorted by occurrence count (descending).\n"
+            f"  - Original line format is preserved in output.\n"
+            f"  - Shows line numbers where duplicates appear.\n"
         )
-        
         if arg.strip() == "?":
             self.poutput(help_text)
             return
@@ -4797,48 +5707,53 @@ class TextTool(cmd2.Cmd):
             replace_between "start_delimiter" "end_delimiter" "replacement" [case_sensitive]
             
         Arguments:
-            start_delimiter - Starting delimiter (can be regex)
-            end_delimiter   - Ending delimiter (can be regex)
-            replacement     - Text to replace the content between delimiters
-            case_sensitive  - Make delimiter matching case-sensitive
+            start_delimiter - Starting delimiter (can be regex).
+            end_delimiter   - Ending delimiter (can be regex).
+            replacement     - Text to replace the content between delimiters.
+            case_sensitive  - Make delimiter matching case-sensitive.
             
         Examples:
             replace_between "<b>" "</b>" "BOLD"
-                - Replaces everything between <b> and </b> with "BOLD"
+                - Replaces everything between <b> and </b> with "BOLD".
                 
             replace_between "START" "END" ""
-                - Removes everything between START and END (including delimiters)
+                - Removes everything between START and END (including delimiters).
                 
             replace_between "\\[" "\\]" "REDACTED"
-                - Replaces content between square brackets (regex escaped)
+                - Replaces content between square brackets (regex escaped).
                 
             replace_between "<!--" "-->" "" case_sensitive
-                - Remove HTML comments (case-sensitive)
-            
+                - Remove HTML comments (case-sensitive).
+        
         Notes:
-            - Delimiters themselves are included in the replacement
-            - Supports regex patterns for delimiters
-            - By default, matching is case-insensitive
-            - Non-greedy matching (replaces shortest match between delimiters)
-            - If end delimiter is not found, the line remains unchanged
+            - Delimiters themselves are included in the replacement.
+            - Supports regex patterns for delimiters.
+            - By default, matching is case-insensitive.
+            - Non-greedy matching (replaces shortest match between delimiters).
+            - If end delimiter is not found, the line remains unchanged.
         """
         help_text = (
             f"{self.COLOR_HEADER}\nReplace text between two delimiters.{self.COLOR_RESET}\n\n"
             f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
             f"  {self.COLOR_EXAMPLE}replace_between \"start\" \"end\" \"replacement\" [case_sensitive]{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Arguments:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}start_delimiter{self.COLOR_RESET} - Starting delimiter (can be regex).\n"
+            f"  {self.COLOR_EXAMPLE}end_delimiter{self.COLOR_RESET}   - Ending delimiter (can be regex).\n"
+            f"  {self.COLOR_EXAMPLE}replacement{self.COLOR_RESET}     - Text to replace the content between delimiters.\n"
+            f"  {self.COLOR_EXAMPLE}case_sensitive{self.COLOR_RESET}  - Make delimiter matching case-sensitive.\n\n"
             f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
             f"  {self.COLOR_EXAMPLE}replace_between \"<b>\" \"</b>\" \"BOLD\"{self.COLOR_RESET}\n"
-            f"    - Replaces everything between <b> and </b> with \"BOLD\"\n\n"
+            f"    - Replaces everything between <b> and </b> with \"BOLD\".\n\n"
             f"  {self.COLOR_EXAMPLE}replace_between \"START\" \"END\" \"\"{self.COLOR_RESET}\n"
-            f"    - Removes everything between START and END\n\n"
+            f"    - Removes everything between START and END.\n\n"
             f"  {self.COLOR_EXAMPLE}replace_between \"\\\\[\" \"\\\\]\" \"REDACTED\"{self.COLOR_RESET}\n"
-            f"    - Replaces content between square brackets\n\n"
+            f"    - Replaces content between square brackets.\n\n"
             f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
-            f"  - Delimiters are included in the replacement\n"
-            f"  - Supports regex patterns\n"
-            f"  - Non-greedy matching (shortest match)\n"
+            f"  - Delimiters are included in the replacement.\n"
+            f"  - Supports regex patterns.\n"
+            f"  - Non-greedy matching (shortest match).\n"
+            f"  - Use double backslashes for literal backslashes (e.g., '\\\\[' for '[').\n"
         )
-        
         if arg.strip() == "?":
             self.poutput(help_text)
             return
@@ -4929,38 +5844,39 @@ class TextTool(cmd2.Cmd):
             filter_length min_length [max_length] [keep|remove]
         
         Arguments:
-            min_length - Minimum line length (inclusive)
-            max_length - Maximum line length (inclusive, optional)
-            keep|remove - Action to perform (default: keep matching lines)
+            min_length - Minimum line length (inclusive).
+            max_length - Maximum line length (inclusive, optional).
+            keep|remove - Action to perform (default: keep matching lines).
         
         Examples:
-            filter_length 10        - Keep lines with at least 10 characters
-            filter_length 5 50      - Keep lines between 5 and 50 characters
-            filter_length 20 100 remove - Remove lines between 20 and 100 characters
-            filter_length 0 10      - Keep lines with 10 characters or less
+            filter_length 10        - Keep lines with at least 10 characters.
+            filter_length 5 50      - Keep lines between 5 and 50 characters.
+            filter_length 20 100 remove - Remove lines between 20 and 100 characters.
+            filter_length 0 10      - Keep lines with 10 characters or less.
         
         Notes:
-            - Line length includes whitespace and newline characters
-            - Use 0 for min_length to specify only maximum length
+            - Line length includes whitespace but not newline characters.
+            - Use 0 for min_length to specify only maximum length.
+            - Useful for filtering out very short or very long lines.
         """
         help_text = (
             f"{self.COLOR_HEADER}\nFilter lines by minimum and/or maximum length.{self.COLOR_RESET}\n\n"
             f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
             f"  {self.COLOR_EXAMPLE}filter_length min_length [max_length] [keep|remove]{self.COLOR_RESET}\n\n"
             f"{self.COLOR_COMMAND}Arguments:{self.COLOR_RESET}\n"
-            f"  {self.COLOR_EXAMPLE}min_length{self.COLOR_RESET} - Minimum line length (inclusive)\n"
-            f"  {self.COLOR_EXAMPLE}max_length{self.COLOR_RESET} - Maximum line length (inclusive, optional)\n"
-            f"  {self.COLOR_EXAMPLE}keep|remove{self.COLOR_RESET} - Action to perform (default: keep matching lines)\n\n"
+            f"  {self.COLOR_EXAMPLE}min_length{self.COLOR_RESET} - Minimum line length (inclusive).\n"
+            f"  {self.COLOR_EXAMPLE}max_length{self.COLOR_RESET} - Maximum line length (inclusive, optional).\n"
+            f"  {self.COLOR_EXAMPLE}keep|remove{self.COLOR_RESET} - Action to perform (default: keep matching lines).\n\n"
             f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
-            f"  {self.COLOR_EXAMPLE}filter_length 10{self.COLOR_RESET}        - Keep lines with at least 10 characters\n"
-            f"  {self.COLOR_EXAMPLE}filter_length 5 50{self.COLOR_RESET}      - Keep lines between 5 and 50 characters\n"
-            f"  {self.COLOR_EXAMPLE}filter_length 20 100 remove{self.COLOR_RESET} - Remove lines between 20 and 100 characters\n"
-            f"  {self.COLOR_EXAMPLE}filter_length 0 10{self.COLOR_RESET}      - Keep lines with 10 characters or less\n\n"
+            f"  {self.COLOR_EXAMPLE}filter_length 10{self.COLOR_RESET}        - Keep lines with at least 10 characters.\n"
+            f"  {self.COLOR_EXAMPLE}filter_length 5 50{self.COLOR_RESET}      - Keep lines between 5 and 50 characters.\n"
+            f"  {self.COLOR_EXAMPLE}filter_length 20 100 remove{self.COLOR_RESET} - Remove lines between 20 and 100 characters.\n"
+            f"  {self.COLOR_EXAMPLE}filter_length 0 10{self.COLOR_RESET}      - Keep lines with 10 characters or less.\n\n"
             f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
-            f"  - Line length includes whitespace and newline characters\n"
-            f"  - Use 0 for min_length to specify only maximum length\n"
+            f"  - Line length includes whitespace but not newline characters.\n"
+            f"  - Use 0 for min_length to specify only maximum length.\n"
+            f"  - Useful for filtering out very short or very long lines.\n"
         )
-        
         if arg.strip() == "?":
             self.poutput(help_text)
             return
@@ -5059,22 +5975,23 @@ class TextTool(cmd2.Cmd):
             find_mismatches regex <pattern> [invert] [case_sensitive]
         
         Arguments:
-            pattern        - String pattern to match against
-            length min max - Find lines outside length range
-            regex pattern  - Use regex pattern for matching
-            invert         - Invert the match (find lines that DO match)
-            case_sensitive - Case sensitive matching
+            pattern        - String pattern to match against.
+            length min max - Find lines outside length range.
+            regex pattern  - Use regex pattern for matching.
+            invert         - Invert the match (find lines that DO match).
+            case_sensitive - Case sensitive matching.
         
         Examples:
-            find_mismatches "error"          - Find lines without "error"
-            find_mismatches "error" invert   - Find lines with "error"
-            find_mismatches length 10 100    - Find lines outside 10-100 char range
-            find_mismatches regex "^\\d"     - Find lines not starting with digit
-            find_mismatches regex "^[A-Z]" case_sensitive - Case sensitive regex
+            find_mismatches "error"          - Find lines without "error".
+            find_mismatches "error" invert   - Find lines with "error".
+            find_mismatches length 10 100    - Find lines outside 10-100 char range.
+            find_mismatches regex "^\\d"     - Find lines not starting with digit.
+            find_mismatches regex "^[A-Z]" case_sensitive - Case sensitive regex.
         
         Notes:
-            - Default behavior finds lines that DON'T match the pattern
-            - Use 'invert' to find lines that DO match
+            - Default behavior finds lines that DON'T match the pattern.
+            - Use 'invert' to find lines that DO match.
+            - Useful for data validation and quality checks.
         """
         help_text = (
             f"{self.COLOR_HEADER}\nFind lines that don't match expected patterns or formats.{self.COLOR_RESET}\n\n"
@@ -5083,22 +6000,21 @@ class TextTool(cmd2.Cmd):
             f"  {self.COLOR_EXAMPLE}find_mismatches length <min> [max] [invert]{self.COLOR_RESET}\n"
             f"  {self.COLOR_EXAMPLE}find_mismatches regex <pattern> [invert] [case_sensitive]{self.COLOR_RESET}\n\n"
             f"{self.COLOR_COMMAND}Arguments:{self.COLOR_RESET}\n"
-            f"  {self.COLOR_EXAMPLE}pattern{self.COLOR_RESET}        - String pattern to match against\n"
-            f"  {self.COLOR_EXAMPLE}length min max{self.COLOR_RESET} - Find lines outside length range\n"
-            f"  {self.COLOR_EXAMPLE}regex pattern{self.COLOR_RESET}  - Use regex pattern for matching\n"
-            f"  {self.COLOR_EXAMPLE}invert{self.COLOR_RESET}         - Invert the match (find lines that DO match)\n"
-            f"  {self.COLOR_EXAMPLE}case_sensitive{self.COLOR_RESET} - Case sensitive matching\n\n"
+            f"  {self.COLOR_EXAMPLE}pattern{self.COLOR_RESET}        - String pattern to match against.\n"
+            f"  {self.COLOR_EXAMPLE}length min max{self.COLOR_RESET} - Find lines outside length range.\n"
+            f"  {self.COLOR_EXAMPLE}regex pattern{self.COLOR_RESET}  - Use regex pattern for matching.\n"
+            f"  {self.COLOR_EXAMPLE}invert{self.COLOR_RESET}         - Invert the match (find lines that DO match).\n"
+            f"  {self.COLOR_EXAMPLE}case_sensitive{self.COLOR_RESET} - Case sensitive matching.\n\n"
             f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
-            f"  {self.COLOR_EXAMPLE}find_mismatches \"error\"{self.COLOR_RESET}          - Find lines without \"error\"\n"
-            f"  {self.COLOR_EXAMPLE}find_mismatches \"error\" invert{self.COLOR_RESET}   - Find lines with \"error\"\n"
-            f"  {self.COLOR_EXAMPLE}find_mismatches length 10 100{self.COLOR_RESET}    - Find lines outside 10-100 char range\n"
-            f"  {self.COLOR_EXAMPLE}find_mismatches regex \"^\\\\d\"{self.COLOR_RESET}     - Find lines not starting with digit\n"
-            f"  {self.COLOR_EXAMPLE}find_mismatches regex \"^[A-Z]\" case_sensitive{self.COLOR_RESET} - Case sensitive regex\n\n"
+            f"  {self.COLOR_EXAMPLE}find_mismatches \"error\"{self.COLOR_RESET}          - Find lines without \"error\".\n"
+            f"  {self.COLOR_EXAMPLE}find_mismatches \"error\" invert{self.COLOR_RESET}   - Find lines with \"error\".\n"
+            f"  {self.COLOR_EXAMPLE}find_mismatches length 10 100{self.COLOR_RESET}    - Find lines outside 10-100 char range.\n"
+            f"  {self.COLOR_EXAMPLE}find_mismatches regex \"^\\\\d\"{self.COLOR_RESET}     - Find lines not starting with digit.\n\n"
             f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
-            f"  - Default behavior finds lines that DON'T match the pattern\n"
-            f"  - Use 'invert' to find lines that DO match\n"
+            f"  - Default behavior finds lines that DON'T match the pattern.\n"
+            f"  - Use 'invert' to find lines that DO match.\n"
+            f"  - Useful for data validation and quality checks.\n"
         )
-        
         if arg.strip() == "?":
             self.poutput(help_text)
             return
@@ -5246,21 +6162,22 @@ class TextTool(cmd2.Cmd):
         
         Arguments:
             delimiter - Field delimiter (default: ",")
-                       Use "tab", "space", "pipe", "semicolon", or specific character
-            header    - Treat first line as header (add "noheader" to disable)
-            max_cols  - Maximum number of columns to display (default: 10)
-            max_width - Maximum column width (default: 30)
+                       Use "tab", "space", "pipe", "semicolon", or specific character.
+            header    - Treat first line as header (add "noheader" to disable).
+            max_cols  - Maximum number of columns to display (default: 10).
+            max_width - Maximum column width (default: 30).
         
         Examples:
-            csv_to_table                    - Convert with comma delimiter
-            csv_to_table tab header         - Convert tab-delimited with header
-            csv_to_table ";" 15 50          - Semicolon-delimited, max 15 cols, width 50
-            csv_to_table pipe noheader      - Pipe-delimited, no header treatment
-            csv_to_table space 5 20         - Space-delimited, limited display
+            csv_to_table                    - Convert with comma delimiter.
+            csv_to_table tab header         - Convert tab-delimited with header.
+            csv_to_table ";" 15 50          - Semicolon-delimited, max 15 cols, width 50.
+            csv_to_table pipe noheader      - Pipe-delimited, no header treatment.
+            csv_to_table space 5 20         - Space-delimited, limited display.
         
         Notes:
-            - The conversion is for display only - doesn't modify the actual data
-            - Very wide tables will be truncated for readability
+            - The conversion is for display only - doesn't modify the actual data.
+            - Very wide tables will be truncated for readability.
+            - Useful for quickly viewing CSV data in a readable format.
         """
         help_text = (
             f"{self.COLOR_HEADER}\nConvert CSV/delimited text to a formatted table display.{self.COLOR_RESET}\n\n"
@@ -5268,20 +6185,20 @@ class TextTool(cmd2.Cmd):
             f"  {self.COLOR_EXAMPLE}csv_to_table [delimiter] [header] [max_cols] [max_width]{self.COLOR_RESET}\n\n"
             f"{self.COLOR_COMMAND}Arguments:{self.COLOR_RESET}\n"
             f"  {self.COLOR_EXAMPLE}delimiter{self.COLOR_RESET} - Field delimiter (default: \",\")\n"
-            f"  {self.COLOR_EXAMPLE}header{self.COLOR_RESET}    - Treat first line as header (add \"noheader\" to disable)\n"
-            f"  {self.COLOR_EXAMPLE}max_cols{self.COLOR_RESET}  - Maximum number of columns to display (default: 10)\n"
-            f"  {self.COLOR_EXAMPLE}max_width{self.COLOR_RESET} - Maximum column width (default: 30)\n\n"
+            f"               Use \"tab\", \"space\", \"pipe\", \"semicolon\", or specific character.\n"
+            f"  {self.COLOR_EXAMPLE}header{self.COLOR_RESET}    - Treat first line as header (add \"noheader\" to disable).\n"
+            f"  {self.COLOR_EXAMPLE}max_cols{self.COLOR_RESET}  - Maximum number of columns to display (default: 10).\n"
+            f"  {self.COLOR_EXAMPLE}max_width{self.COLOR_RESET} - Maximum column width (default: 30).\n\n"
             f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
-            f"  {self.COLOR_EXAMPLE}csv_to_table{self.COLOR_RESET}                    - Convert with comma delimiter\n"
-            f"  {self.COLOR_EXAMPLE}csv_to_table tab header{self.COLOR_RESET}         - Convert tab-delimited with header\n"
-            f"  {self.COLOR_EXAMPLE}csv_to_table \";\" 15 50{self.COLOR_RESET}          - Semicolon-delimited, max 15 cols, width 50\n"
-            f"  {self.COLOR_EXAMPLE}csv_to_table pipe noheader{self.COLOR_RESET}      - Pipe-delimited, no header treatment\n"
-            f"  {self.COLOR_EXAMPLE}csv_to_table space 5 20{self.COLOR_RESET}         - Space-delimited, limited display\n\n"
+            f"  {self.COLOR_EXAMPLE}csv_to_table{self.COLOR_RESET}                    - Convert with comma delimiter.\n"
+            f"  {self.COLOR_EXAMPLE}csv_to_table tab header{self.COLOR_RESET}         - Convert tab-delimited with header.\n"
+            f"  {self.COLOR_EXAMPLE}csv_to_table \";\" 15 50{self.COLOR_RESET}          - Semicolon-delimited, max 15 cols, width 50.\n"
+            f"  {self.COLOR_EXAMPLE}csv_to_table pipe noheader{self.COLOR_RESET}      - Pipe-delimited, no header treatment.\n\n"
             f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
-            f"  - The conversion is for display only - doesn't modify the actual data\n"
-            f"  - Very wide tables will be truncated for readability\n"
+            f"  - The conversion is for display only - doesn't modify the actual data.\n"
+            f"  - Very wide tables will be truncated for readability.\n"
+            f"  - Useful for quickly viewing CSV data in a readable format.\n"
         )
-        
         if arg.strip() == "?":
             self.poutput(help_text)
             return

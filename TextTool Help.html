@@ -1,0 +1,1056 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>TextTool - Advanced Text Manipulation Tool.md</title><style>@charset "UTF-8";@import 'https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.9.0-alpha2/katex.min.css';code{color:#c7254e;background-color:#f9f2f4;border-radius:4px}code,kbd{padding:2px 4px}kbd{color:#fff;background-color:#333;border-radius:3px;box-shadow:inset 0 -1px 0 rgba(0,0,0,.25)}kbd kbd{padding:0;font-size:100%;box-shadow:none}pre{display:block;margin:0 0 10px;word-break:break-all;word-wrap:break-word;color:#333;background-color:#f5f5f5;border:1px solid #ccc;border-radius:4px}pre code{padding:0;font-size:inherit;color:inherit;white-space:pre-wrap;background-color:transparent;border-radius:0}.pre-scrollable{max-height:340px;overflow-y:scroll}table{background-color:transparent}th{text-align:left}.table{width:100%;max-width:100%;margin-bottom:20px}.table>thead>tr>th{padding:8px;line-height:1.4285714;border-top:1px solid #ddd}.table>thead>tr>td,.table>tbody>tr>th,.table>tbody>tr>td,.table>tfoot>tr>th,.table>tfoot>tr>td{padding:8px;line-height:1.4285714;vertical-align:top;border-top:1px solid #ddd}.table>thead>tr>th{vertical-align:bottom;border-bottom:2px solid #ddd}.table>caption+thead>tr:first-child>th,.table>caption+thead>tr:first-child>td,.table>colgroup+thead>tr:first-child>th,.table>colgroup+thead>tr:first-child>td,.table>thead:first-child>tr:first-child>th,.table>thead:first-child>tr:first-child>td{border-top:0}.table>tbody+tbody{border-top:2px solid #ddd}.table .table{background-color:#fff}.table-condensed>thead>tr>th,.table-condensed>thead>tr>td,.table-condensed>tbody>tr>th,.table-condensed>tbody>tr>td,.table-condensed>tfoot>tr>th,.table-condensed>tfoot>tr>td{padding:5px}.table-bordered,.table-bordered>thead>tr>th,.table-bordered>thead>tr>td,.table-bordered>tbody>tr>th,.table-bordered>tbody>tr>td,.table-bordered>tfoot>tr>th,.table-bordered>tfoot>tr>td{border:1px solid #ddd}.table-bordered>thead>tr>th,.table-bordered>thead>tr>td{border-bottom-width:2px}.table-striped>tbody>tr:nth-child(odd)>td,.table-striped>tbody>tr:nth-child(odd)>th{background-color:#f9f9f9}.table-hover>tbody>tr:hover>td,.table-hover>tbody>tr:hover>th{background-color:#f5f5f5}table col[class*="col-"]{position:static;float:none;display:table-column}table td[class*="col-"],table th[class*="col-"]{position:static;float:none;display:table-cell}.table>thead>tr>td.active,.table>thead>tr>th.active,.table>thead>tr.active>td,.table>thead>tr.active>th,.table>tbody>tr>td.active,.table>tbody>tr>th.active,.table>tbody>tr.active>td,.table>tbody>tr.active>th,.table>tfoot>tr>td.active,.table>tfoot>tr>th.active,.table>tfoot>tr.active>td,.table>tfoot>tr.active>th{background-color:#f5f5f5}.table-hover>tbody>tr>td.active:hover,.table-hover>tbody>tr>th.active:hover,.table-hover>tbody>tr.active:hover>td,.table-hover>tbody>tr:hover>.active,.table-hover>tbody>tr.active:hover>th{background-color:#e8e8e8}.table>thead>tr>td.success,.table>thead>tr>th.success,.table>thead>tr.success>td,.table>thead>tr.success>th,.table>tbody>tr>td.success,.table>tbody>tr>th.success,.table>tbody>tr.success>td,.table>tbody>tr.success>th,.table>tfoot>tr>td.success,.table>tfoot>tr>th.success,.table>tfoot>tr.success>td,.table>tfoot>tr.success>th{background-color:#dff0d8}.table-hover>tbody>tr>td.success:hover,.table-hover>tbody>tr>th.success:hover,.table-hover>tbody>tr.success:hover>td,.table-hover>tbody>tr:hover>.success,.table-hover>tbody>tr.success:hover>th{background-color:#d0e9c6}.table>thead>tr>td.info,.table>thead>tr>th.info,.table>thead>tr.info>td,.table>thead>tr.info>th,.table>tbody>tr>td.info,.table>tbody>tr>th.info,.table>tbody>tr.info>td,.table>tbody>tr.info>th,.table>tfoot>tr>td.info,.table>tfoot>tr>th.info,.table>tfoot>tr.info>td,.table>tfoot>tr.info>th{background-color:#d9edf7}.table-hover>tbody>tr>td.info:hover,.table-hover>tbody>tr>th.info:hover,.table-hover>tbody>tr.info:hover>td,.table-hover>tbody>tr:hover>.info,.table-hover>tbody>tr.info:hover>th{background-color:#c4e3f3}.table>thead>tr>td.warning,.table>thead>tr>th.warning,.table>thead>tr.warning>td,.table>thead>tr.warning>th,.table>tbody>tr>td.warning,.table>tbody>tr>th.warning,.table>tbody>tr.warning>td,.table>tbody>tr.warning>th,.table>tfoot>tr>td.warning,.table>tfoot>tr>th.warning,.table>tfoot>tr.warning>td,.table>tfoot>tr.warning>th{background-color:#fcf8e3}.table-hover>tbody>tr>td.warning:hover,.table-hover>tbody>tr>th.warning:hover,.table-hover>tbody>tr.warning:hover>td,.table-hover>tbody>tr:hover>.warning,.table-hover>tbody>tr.warning:hover>th{background-color:#faf2cc}.table>thead>tr>td.danger,.table>thead>tr>th.danger,.table>thead>tr.danger>td,.table>thead>tr.danger>th,.table>tbody>tr>td.danger,.table>tbody>tr>th.danger,.table>tbody>tr.danger>td,.table>tbody>tr.danger>th,.table>tfoot>tr>td.danger,.table>tfoot>tr>th.danger,.table>tfoot>tr.danger>td,.table>tfoot>tr.danger>th{background-color:#f2dede}.table-hover>tbody>tr>td.danger:hover,.table-hover>tbody>tr>th.danger:hover,.table-hover>tbody>tr.danger:hover>td,.table-hover>tbody>tr:hover>.danger,.table-hover>tbody>tr.danger:hover>th{background-color:#ebcccc}fieldset{border:0;min-width:0}legend{display:block;width:100%;margin-bottom:20px;font-size:21px;line-height:inherit;color:#333;border-bottom:1px solid #e5e5e5}label{display:inline-block;max-width:100%;margin-bottom:5px;font-weight:700}input[type="radio"],input[type="checkbox"]{margin:4px 0 0;margin-top:1px \9;line-height:normal}input[type="file"]{display:block}input[type="range"]{display:block;width:100%}select[multiple],select[size]{height:auto}input[type="file"]:focus,input[type="radio"]:focus,input[type="checkbox"]:focus{outline:thin dotted;outline:5px auto -webkit-focus-ring-color;outline-offset:-2px}output{padding-top:7px}output,.form-control{display:block;font-size:14px;line-height:1.4285714;color:#555}.form-control{width:100%;height:34px;padding:6px 12px;background-color:#fff;background-image:none;border:1px solid #ccc;border-radius:4px;box-shadow:inset 0 1px 1px rgba(0,0,0,.075);transition:border-color ease-in-out .15s,box-shadow ease-in-out .15s}.form-control:focus{border-color:#66afe9;outline:0;box-shadow:inset 0 1px 1px rgba(0,0,0,.075),0 0 8px rgba(102,175,233,.6)}.form-control::-moz-placeholder{color:#777;opacity:1}.form-control:-ms-input-placeholder{color:#777}.form-control::-webkit-input-placeholder{color:#777}.form-control[disabled],.form-control[readonly],fieldset[disabled] .form-control{cursor:not-allowed;background-color:#eee;opacity:1}textarea.form-control{height:auto}input[type="date"],input[type="time"],input[type="datetime-local"],input[type="month"]{line-height:34px;line-height:1.4285714 \0}input[type="date"].input-sm,.form-horizontal .form-group-sm input.form-control[type="date"],.input-group-sm>input.form-control[type="date"],.input-group-sm>input.input-group-addon[type="date"],.input-group-sm>.input-group-btn>input.btn[type="date"],input[type="time"].input-sm,.form-horizontal .form-group-sm input.form-control[type="time"],.input-group-sm>input.form-control[type="time"],.input-group-sm>input.input-group-addon[type="time"],.input-group-sm>.input-group-btn>input.btn[type="time"],input[type="datetime-local"].input-sm,.form-horizontal .form-group-sm input.form-control[type="datetime-local"],.input-group-sm>input.form-control[type="datetime-local"],.input-group-sm>input.input-group-addon[type="datetime-local"],.input-group-sm>.input-group-btn>input.btn[type="datetime-local"],input[type="month"].input-sm,.form-horizontal .form-group-sm input.form-control[type="month"],.input-group-sm>input.form-control[type="month"],.input-group-sm>input.input-group-addon[type="month"],.input-group-sm>.input-group-btn>input.btn[type="month"]{line-height:30px}input[type="date"].input-lg,.form-horizontal .form-group-lg input.form-control[type="date"],.input-group-lg>input.form-control[type="date"],.input-group-lg>input.input-group-addon[type="date"],.input-group-lg>.input-group-btn>input.btn[type="date"],input[type="time"].input-lg,.form-horizontal .form-group-lg input.form-control[type="time"],.input-group-lg>input.form-control[type="time"],.input-group-lg>input.input-group-addon[type="time"],.input-group-lg>.input-group-btn>input.btn[type="time"],input[type="datetime-local"].input-lg,.form-horizontal .form-group-lg input.form-control[type="datetime-local"],.input-group-lg>input.form-control[type="datetime-local"],.input-group-lg>input.input-group-addon[type="datetime-local"],.input-group-lg>.input-group-btn>input.btn[type="datetime-local"],input[type="month"].input-lg,.form-horizontal .form-group-lg input.form-control[type="month"],.input-group-lg>input.form-control[type="month"],.input-group-lg>input.input-group-addon[type="month"],.input-group-lg>.input-group-btn>input.btn[type="month"]{line-height:46px}.form-group{margin-bottom:15px}.radio,.checkbox{position:relative;display:block;min-height:20px;margin-top:10px;margin-bottom:10px}.radio label,.checkbox label{padding-left:20px;margin-bottom:0;font-weight:400;cursor:pointer}.radio input[type="radio"],.radio-inline input[type="radio"],.checkbox input[type="checkbox"],.checkbox-inline input[type="checkbox"]{position:absolute;margin-left:-20px;margin-top:4px \9}.radio+.radio,.checkbox+.checkbox{margin-top:-5px}.radio-inline,.checkbox-inline{display:inline-block;padding-left:20px;margin-bottom:0;vertical-align:middle;font-weight:400;cursor:pointer}.radio-inline+.radio-inline,.checkbox-inline+.checkbox-inline{margin-top:0;margin-left:10px}input[type="radio"][disabled],input[type="radio"].disabled,fieldset[disabled] input[type="radio"],input[type="checkbox"][disabled],input[type="checkbox"].disabled,fieldset[disabled] input[type="checkbox"],.radio-inline.disabled,fieldset[disabled] .radio-inline,.checkbox-inline.disabled,fieldset[disabled] .checkbox-inline,.radio.disabled label,fieldset[disabled] .radio label,.checkbox.disabled label,fieldset[disabled] .checkbox label{cursor:not-allowed}.form-control-static{padding-top:7px;padding-bottom:7px;margin-bottom:0}.form-control-static.input-lg,.form-horizontal .form-group-lg .form-control-static.form-control,.input-group-lg>.form-control-static.form-control,.input-group-lg>.form-control-static.input-group-addon,.input-group-lg>.input-group-btn>.form-control-static.btn,.form-control-static.input-sm,.form-horizontal .form-group-sm .form-control-static.form-control,.input-group-sm>.form-control-static.form-control,.input-group-sm>.form-control-static.input-group-addon,.input-group-sm>.input-group-btn>.form-control-static.btn{padding-left:0;padding-right:0}.input-sm,.form-horizontal .form-group-sm .form-control,.input-group-sm>.form-control{height:30px;padding:5px 10px;font-size:12px;line-height:1.5;border-radius:3px}.input-group-sm>.input-group-addon{height:30px;line-height:1.5}.input-group-sm>.input-group-btn>.btn{height:30px;padding:5px 10px;font-size:12px;line-height:1.5;border-radius:3px}select.input-sm,.form-horizontal .form-group-sm select.form-control,.input-group-sm>select.form-control,.input-group-sm>select.input-group-addon,.input-group-sm>.input-group-btn>select.btn{height:30px;line-height:30px}textarea.input-sm,.form-horizontal .form-group-sm textarea.form-control,.input-group-sm>textarea.form-control,.input-group-sm>textarea.input-group-addon,.input-group-sm>.input-group-btn>textarea.btn,select[multiple].input-sm,.form-horizontal .form-group-sm select.form-control[multiple],.input-group-sm>select.form-control[multiple],.input-group-sm>select.input-group-addon[multiple],.input-group-sm>.input-group-btn>select.btn[multiple]{height:auto}.input-lg,.form-horizontal .form-group-lg .form-control,.input-group-lg>.form-control{height:46px;padding:10px 16px;font-size:18px;line-height:1.33;border-radius:6px}.input-group-lg>.input-group-addon{height:46px;line-height:1.33}.input-group-lg>.input-group-btn>.btn{height:46px;padding:10px 16px;font-size:18px;line-height:1.33;border-radius:6px}select.input-lg,.form-horizontal .form-group-lg select.form-control,.input-group-lg>select.form-control,.input-group-lg>select.input-group-addon,.input-group-lg>.input-group-btn>select.btn{height:46px;line-height:46px}textarea.input-lg,.form-horizontal .form-group-lg textarea.form-control,.input-group-lg>textarea.form-control,.input-group-lg>textarea.input-group-addon,.input-group-lg>.input-group-btn>textarea.btn,select[multiple].input-lg,.form-horizontal .form-group-lg select.form-control[multiple],.input-group-lg>select.form-control[multiple],.input-group-lg>select.input-group-addon[multiple],.input-group-lg>.input-group-btn>select.btn[multiple]{height:auto}.has-feedback{position:relative}.has-feedback .form-control{padding-right:42.5px}.form-control-feedback{position:absolute;top:25px;right:0;z-index:2;display:block;width:34px;height:34px;line-height:34px;text-align:center}.input-lg+.form-control-feedback,.form-horizontal .form-group-lg .form-control+.form-control-feedback,.input-group-lg>.form-control+.form-control-feedback,.input-group-lg>.input-group-addon+.form-control-feedback,.input-group-lg>.input-group-btn>.btn+.form-control-feedback{width:46px;height:46px;line-height:46px}.input-sm+.form-control-feedback,.form-horizontal .form-group-sm .form-control+.form-control-feedback,.input-group-sm>.form-control+.form-control-feedback,.input-group-sm>.input-group-addon+.form-control-feedback,.input-group-sm>.input-group-btn>.btn+.form-control-feedback{width:30px;height:30px;line-height:30px}.has-success .help-block,.has-success .control-label,.has-success .radio,.has-success .checkbox,.has-success .radio-inline,.has-success .checkbox-inline{color:#3c763d}.has-success .form-control{border-color:#3c763d;box-shadow:inset 0 1px 1px rgba(0,0,0,.075)}.has-success .form-control:focus{border-color:#2b542c;box-shadow:inset 0 1px 1px rgba(0,0,0,.075),0 0 6px #67b168}.has-success .input-group-addon{color:#3c763d;border-color:#3c763d;background-color:#dff0d8}.has-success .form-control-feedback{color:#3c763d}.has-warning .help-block,.has-warning .control-label,.has-warning .radio,.has-warning .checkbox,.has-warning .radio-inline,.has-warning .checkbox-inline{color:#8a6d3b}.has-warning .form-control{border-color:#8a6d3b;box-shadow:inset 0 1px 1px rgba(0,0,0,.075)}.has-warning .form-control:focus{border-color:#66512c;box-shadow:inset 0 1px 1px rgba(0,0,0,.075),0 0 6px #c0a16b}.has-warning .input-group-addon{color:#8a6d3b;border-color:#8a6d3b;background-color:#fcf8e3}.has-warning .form-control-feedback{color:#8a6d3b}.has-error .help-block,.has-error .control-label,.has-error .radio,.has-error .checkbox,.has-error .radio-inline,.has-error .checkbox-inline{color:#a94442}.has-error .form-control{border-color:#a94442;box-shadow:inset 0 1px 1px rgba(0,0,0,.075)}.has-error .form-control:focus{border-color:#843534;box-shadow:inset 0 1px 1px rgba(0,0,0,.075),0 0 6px #ce8483}.has-error .input-group-addon{color:#a94442;border-color:#a94442;background-color:#f2dede}.has-error .form-control-feedback{color:#a94442}.has-feedback label.sr-only~.form-control-feedback{top:0}.help-block{display:block;margin-top:5px;margin-bottom:10px;color:#737373}.form-horizontal .radio,.form-horizontal .checkbox,.form-horizontal .radio-inline,.form-horizontal .checkbox-inline{margin-top:0;margin-bottom:0;padding-top:7px}.form-horizontal .radio,.form-horizontal .checkbox{min-height:27px}.form-horizontal .form-group{margin-left:-15px;margin-right:-15px}.form-horizontal .form-group:before{content:" ";display:table}.form-horizontal .form-group:after{content:" ";display:table;clear:both}.form-horizontal .has-feedback .form-control-feedback{top:0;right:15px}.btn{display:inline-block;vertical-align:middle;cursor:pointer;background-image:none;border:1px solid transparent;white-space:nowrap;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}.btn:focus,.btn:active:focus,.btn.active:focus{outline:thin dotted;outline:5px auto -webkit-focus-ring-color;outline-offset:-2px}.btn:hover,.btn:focus{color:#333;text-decoration:none}.btn:active,.btn.active{outline:0;background-image:none;box-shadow:inset 0 3px 5px rgba(0,0,0,.125)}.btn.disabled,.btn[disabled],fieldset[disabled] .btn{cursor:not-allowed;pointer-events:none;opacity:.65;filter:alpha(opacity=65);box-shadow:none}.btn-default{color:#333;background-color:#fff;border-color:#ccc}.btn-default:hover,.btn-default:focus,.btn-default:active,.btn-default.active,.open>.btn-default.dropdown-toggle{color:#333;background-color:#e6e6e6;border-color:#adadad}.btn-default:active,.btn-default.active,.open>.btn-default.dropdown-toggle{background-image:none}.btn-default.disabled,.btn-default.disabled:hover,.btn-default.disabled:focus,.btn-default.disabled:active,.btn-default.disabled.active,.btn-default[disabled],.btn-default[disabled]:hover,.btn-default[disabled]:focus,.btn-default[disabled]:active,.btn-default[disabled].active,fieldset[disabled] .btn-default,fieldset[disabled] .btn-default:hover,fieldset[disabled] .btn-default:focus,fieldset[disabled] .btn-default:active,fieldset[disabled] .btn-default.active{background-color:#fff;border-color:#ccc}.btn-default .badge{color:#fff;background-color:#333}.btn-primary{color:#fff;background-color:#428bca;border-color:#357ebd}.btn-primary:hover,.btn-primary:focus,.btn-primary:active,.btn-primary.active,.open>.btn-primary.dropdown-toggle{color:#fff;background-color:#3071a9;border-color:#285e8e}.btn-primary:active,.btn-primary.active,.open>.btn-primary.dropdown-toggle{background-image:none}.btn-primary.disabled,.btn-primary.disabled:hover,.btn-primary.disabled:focus,.btn-primary.disabled:active,.btn-primary.disabled.active,.btn-primary[disabled],.btn-primary[disabled]:hover,.btn-primary[disabled]:focus,.btn-primary[disabled]:active,.btn-primary[disabled].active,fieldset[disabled] .btn-primary,fieldset[disabled] .btn-primary:hover,fieldset[disabled] .btn-primary:focus,fieldset[disabled] .btn-primary:active,fieldset[disabled] .btn-primary.active{background-color:#428bca;border-color:#357ebd}.btn-primary .badge{color:#428bca;background-color:#fff}.btn-success{color:#fff;background-color:#5cb85c;border-color:#4cae4c}.btn-success:hover,.btn-success:focus,.btn-success:active,.btn-success.active,.open>.btn-success.dropdown-toggle{color:#fff;background-color:#449d44;border-color:#398439}.btn-success:active,.btn-success.active,.open>.btn-success.dropdown-toggle{background-image:none}.btn-success.disabled,.btn-success.disabled:hover,.btn-success.disabled:focus,.btn-success.disabled:active,.btn-success.disabled.active,.btn-success[disabled],.btn-success[disabled]:hover,.btn-success[disabled]:focus,.btn-success[disabled]:active,.btn-success[disabled].active,fieldset[disabled] .btn-success,fieldset[disabled] .btn-success:hover,fieldset[disabled] .btn-success:focus,fieldset[disabled] .btn-success:active,fieldset[disabled] .btn-success.active{background-color:#5cb85c;border-color:#4cae4c}.btn-success .badge{color:#5cb85c;background-color:#fff}.btn-info{color:#fff;background-color:#5bc0de;border-color:#46b8da}.btn-info:hover,.btn-info:focus,.btn-info:active,.btn-info.active,.open>.btn-info.dropdown-toggle{color:#fff;background-color:#31b0d5;border-color:#269abc}.btn-info:active,.btn-info.active,.open>.btn-info.dropdown-toggle{background-image:none}.btn-info.disabled,.btn-info.disabled:hover,.btn-info.disabled:focus,.btn-info.disabled:active,.btn-info.disabled.active,.btn-info[disabled],.btn-info[disabled]:hover,.btn-info[disabled]:focus,.btn-info[disabled]:active,.btn-info[disabled].active,fieldset[disabled] .btn-info,fieldset[disabled] .btn-info:hover,fieldset[disabled] .btn-info:focus,fieldset[disabled] .btn-info:active,fieldset[disabled] .btn-info.active{background-color:#5bc0de;border-color:#46b8da}.btn-info .badge{color:#5bc0de;background-color:#fff}.btn-warning{color:#fff;background-color:#f0ad4e;border-color:#eea236}.btn-warning:hover,.btn-warning:focus,.btn-warning:active,.btn-warning.active,.open>.btn-warning.dropdown-toggle{color:#fff;background-color:#ec971f;border-color:#d58512}.btn-warning:active,.btn-warning.active,.open>.btn-warning.dropdown-toggle{background-image:none}.btn-warning.disabled,.btn-warning.disabled:hover,.btn-warning.disabled:focus,.btn-warning.disabled:active,.btn-warning.disabled.active,.btn-warning[disabled],.btn-warning[disabled]:hover,.btn-warning[disabled]:focus,.btn-warning[disabled]:active,.btn-warning[disabled].active,fieldset[disabled] .btn-warning,fieldset[disabled] .btn-warning:hover,fieldset[disabled] .btn-warning:focus,fieldset[disabled] .btn-warning:active,fieldset[disabled] .btn-warning.active{background-color:#f0ad4e;border-color:#eea236}.btn-warning .badge{color:#f0ad4e;background-color:#fff}.btn-danger{color:#fff;background-color:#d9534f;border-color:#d43f3a}.btn-danger:hover,.btn-danger:focus,.btn-danger:active,.btn-danger.active,.open>.btn-danger.dropdown-toggle{color:#fff;background-color:#c9302c;border-color:#ac2925}.btn-danger:active,.btn-danger.active,.open>.btn-danger.dropdown-toggle{background-image:none}.btn-danger.disabled,.btn-danger.disabled:hover,.btn-danger.disabled:focus,.btn-danger.disabled:active,.btn-danger.disabled.active,.btn-danger[disabled],.btn-danger[disabled]:hover,.btn-danger[disabled]:focus,.btn-danger[disabled]:active,.btn-danger[disabled].active,fieldset[disabled] .btn-danger,fieldset[disabled] .btn-danger:hover,fieldset[disabled] .btn-danger:focus,fieldset[disabled] .btn-danger:active,fieldset[disabled] .btn-danger.active{background-color:#d9534f;border-color:#d43f3a}.btn-danger .badge{color:#d9534f;background-color:#fff}.btn-link{color:#428bca;font-weight:400;cursor:pointer;border-radius:0}.btn-link,.btn-link:active,.btn-link[disabled],fieldset[disabled] .btn-link{background-color:transparent;box-shadow:none}.btn-link,.btn-link:hover,.btn-link:focus,.btn-link:active{border-color:transparent}.btn-link:hover,.btn-link:focus{color:#2a6496;text-decoration:underline;background-color:transparent}.btn-link[disabled]:hover,.btn-link[disabled]:focus,fieldset[disabled] .btn-link:hover,fieldset[disabled] .btn-link:focus{color:#777;text-decoration:none}.btn-lg{padding:10px 16px;font-size:18px;line-height:1.33;border-radius:6px}.btn-sm{padding:5px 10px}.btn-sm,.btn-xs{font-size:12px;line-height:1.5;border-radius:3px}.btn-xs{padding:1px 5px}.btn-block{display:block;width:100%}.btn-block+.btn-block{margin-top:5px}input[type="submit"].btn-block,input[type="reset"].btn-block,input[type="button"].btn-block{width:100%}.fade{opacity:0;transition:opacity .15s linear}.fade.in{opacity:1}.collapse{display:none}.collapse.in{display:block}tr.collapse.in{display:table-row}tbody.collapse.in{display:table-row-group}.collapsing{position:relative;height:0;overflow:hidden;transition:height .35s ease}.input-group{position:relative;display:table;border-collapse:separate}.input-group[class*="col-"]{float:none;padding-left:0;padding-right:0}.input-group .form-control{position:relative;z-index:2;float:left;width:100%;margin-bottom:0}.input-group-addon,.input-group-btn,.input-group .form-control{display:table-cell}.input-group-addon:not(:first-child):not(:last-child),.input-group-btn:not(:first-child):not(:last-child),.input-group .form-control:not(:first-child):not(:last-child){border-radius:0}.input-group-addon{white-space:nowrap}.input-group-addon,.input-group-btn{width:1%;vertical-align:middle}.input-group-addon{padding:6px 12px;font-size:14px;font-weight:400;line-height:1;color:#555;text-align:center;background-color:#eee;border:1px solid #ccc;border-radius:4px}.input-group-addon.input-sm,.form-horizontal .form-group-sm .input-group-addon.form-control,.input-group-sm>.input-group-addon,.input-group-sm>.input-group-btn>.input-group-addon.btn{padding:5px 10px;font-size:12px;border-radius:3px}.input-group-addon.input-lg,.form-horizontal .form-group-lg .input-group-addon.form-control,.input-group-lg>.input-group-addon,.input-group-lg>.input-group-btn>.input-group-addon.btn{padding:10px 16px;font-size:18px;border-radius:6px}.input-group-addon input[type="radio"],.input-group-addon input[type="checkbox"]{margin-top:0}.input-group .form-control:first-child,.input-group-addon:first-child,.input-group-btn:first-child>.btn,.input-group-btn:first-child>.btn-group>.btn,.input-group-btn:first-child>.dropdown-toggle,.input-group-btn:last-child>.btn:not(:last-child):not(.dropdown-toggle),.input-group-btn:last-child>.btn-group:not(:last-child)>.btn{border-bottom-right-radius:0;border-top-right-radius:0}.input-group-addon:first-child{border-right:0}.input-group .form-control:last-child,.input-group-addon:last-child,.input-group-btn:last-child>.btn,.input-group-btn:last-child>.btn-group>.btn,.input-group-btn:last-child>.dropdown-toggle,.input-group-btn:first-child>.btn:not(:first-child),.input-group-btn:first-child>.btn-group:not(:first-child)>.btn{border-bottom-left-radius:0;border-top-left-radius:0}.input-group-addon:last-child{border-left:0}.input-group-btn{font-size:0;white-space:nowrap}.input-group-btn,.input-group-btn>.btn{position:relative}.input-group-btn>.btn+.btn{margin-left:-1px}.input-group-btn>.btn:hover,.input-group-btn>.btn:focus,.input-group-btn>.btn:active{z-index:2}.input-group-btn:first-child>.btn,.input-group-btn:first-child>.btn-group{margin-right:-1px}.input-group-btn:last-child>.btn,.input-group-btn:last-child>.btn-group{margin-left:-1px}.pagination{display:inline-block;padding-left:0;margin:20px 0;border-radius:4px}.pagination>li{display:inline}.pagination>li>a,.pagination>li>span{position:relative;float:left;padding:6px 12px;line-height:1.4285714;text-decoration:none;color:#428bca;background-color:#fff;border:1px solid #ddd;margin-left:-1px}.pagination>li:first-child>a,.pagination>li:first-child>span{margin-left:0;border-bottom-left-radius:4px;border-top-left-radius:4px}.pagination>li:last-child>a,.pagination>li:last-child>span{border-bottom-right-radius:4px;border-top-right-radius:4px}.pagination>li>a:hover,.pagination>li>a:focus,.pagination>li>span:hover,.pagination>li>span:focus{color:#2a6496;background-color:#eee;border-color:#ddd}.pagination>.active>a,.pagination>.active>a:hover,.pagination>.active>a:focus,.pagination>.active>span,.pagination>.active>span:hover,.pagination>.active>span:focus{z-index:2;color:#fff;background-color:#428bca;border-color:#428bca;cursor:default}.pagination>.disabled>span,.pagination>.disabled>span:hover,.pagination>.disabled>span:focus,.pagination>.disabled>a,.pagination>.disabled>a:hover,.pagination>.disabled>a:focus{color:#777;background-color:#fff;border-color:#ddd;cursor:not-allowed}.pagination-lg>li>a,.pagination-lg>li>span{padding:10px 16px;font-size:18px}.pagination-lg>li:first-child>a,.pagination-lg>li:first-child>span{border-bottom-left-radius:6px;border-top-left-radius:6px}.pagination-lg>li:last-child>a,.pagination-lg>li:last-child>span{border-bottom-right-radius:6px;border-top-right-radius:6px}.pagination-sm>li>a,.pagination-sm>li>span{padding:5px 10px;font-size:12px}.pagination-sm>li:first-child>a,.pagination-sm>li:first-child>span{border-bottom-left-radius:3px;border-top-left-radius:3px}.pagination-sm>li:last-child>a,.pagination-sm>li:last-child>span{border-bottom-right-radius:3px;border-top-right-radius:3px}.close{float:right;font-size:21px;font-weight:700;line-height:1;color:#000;text-shadow:0 1px 0 #fff;opacity:.2;filter:alpha(opacity=20)}.close:hover,.close:focus{color:#000;text-decoration:none;cursor:pointer;opacity:.5;filter:alpha(opacity=50)}button.close{padding:0;cursor:pointer;background:0 0;border:0;-webkit-appearance:none}.modal-open,.modal{overflow:hidden}.modal{display:none;position:fixed;top:0;right:0;bottom:0;left:0;z-index:1050;-webkit-overflow-scrolling:touch;outline:0}.modal.fade .modal-dialog{transform:translate3d(0,-25%,0);transition:transform .3s ease-out}.modal.in .modal-dialog{transform:translate3d(0,0,0)}.modal-open .modal{overflow-x:hidden;overflow-y:auto}.modal-dialog{position:relative;width:auto;margin:10px}.modal-content{position:relative;background-color:#fff;border:1px solid #999;border:1px solid rgba(0,0,0,.2);border-radius:6px;box-shadow:0 3px 9px rgba(0,0,0,.5);background-clip:padding-box;outline:0}.modal-backdrop{position:fixed;top:0;right:0;bottom:0;left:0;z-index:1040;background-color:#000}.modal-backdrop.fade{opacity:0;filter:alpha(opacity=0)}.modal-backdrop.in{opacity:.5;filter:alpha(opacity=50)}.modal-header{padding:15px;border-bottom:1px solid #e5e5e5;min-height:16.4285714px}.modal-header .close{margin-top:-2px}.modal-title{margin:0;line-height:1.4285714}.modal-body{position:relative;padding:15px}.modal-footer{padding:15px;text-align:right;border-top:1px solid #e5e5e5}.modal-footer:before,.modal-footer:after{content:" ";display:table}.modal-footer:after{clear:both}.modal-footer .btn+.btn{margin-left:5px;margin-bottom:0}.modal-footer .btn-group .btn+.btn{margin-left:-1px}.modal-footer .btn-block+.btn-block{margin-left:0}.modal-scrollbar-measure{position:absolute;top:-9999px;width:50px;height:50px;overflow:scroll}.clearfix:before,.clearfix:after{content:" ";display:table}.clearfix:after{clear:both}.center-block{display:block;margin-left:auto;margin-right:auto}.pull-right{float:right!important}.pull-left{float:left!important}.hide{display:none!important}.show{display:block!important}.invisible{visibility:hidden}.text-hide{font:0/0 a;color:transparent;text-shadow:none;background-color:transparent;border:0}.hidden{display:none!important;visibility:hidden!important}.affix{position:fixed;transform:translate3d(0,0,0)}.hljs{display:block;overflow-x:auto;padding:.5em;background:#002b36;color:#839496;-webkit-text-size-adjust:none}.hljs-comment,.hljs-template_comment,.diff .hljs-header,.hljs-doctype,.hljs-pi,.lisp .hljs-string,.hljs-javadoc{color:#586e75}.hljs-keyword,.hljs-winutils,.method,.hljs-addition,.css .hljs-tag,.hljs-request,.hljs-status,.nginx .hljs-title{color:#859900}.hljs-number,.hljs-command,.hljs-string,.hljs-tag .hljs-value,.hljs-rules .hljs-value,.hljs-phpdoc,.hljs-dartdoc,.tex .hljs-formula,.hljs-regexp,.hljs-hexcolor,.hljs-link_url{color:#2aa198}.hljs-title,.hljs-localvars,.hljs-chunk,.hljs-decorator,.hljs-built_in,.hljs-identifier,.vhdl .hljs-literal,.hljs-id,.css .hljs-function{color:#268bd2}.hljs-attribute,.hljs-variable,.lisp .hljs-body,.smalltalk .hljs-number,.hljs-constant,.hljs-class .hljs-title,.hljs-parent,.hljs-type,.hljs-link_reference{color:#b58900}.hljs-preprocessor,.hljs-preprocessor .hljs-keyword,.hljs-pragma,.hljs-shebang,.hljs-symbol,.hljs-symbol .hljs-string,.diff .hljs-change,.hljs-special,.hljs-attr_selector,.hljs-subst,.hljs-cdata,.css .hljs-pseudo,.hljs-header{color:#cb4b16}.hljs-deletion,.hljs-important{color:#dc322f}.hljs-link_label{color:#6c71c4}.tex .hljs-formula{background:#073642}*,*:before,*:after{box-sizing:border-box}html{-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}article,aside,details,figcaption,figure,footer,header,hgroup,main,nav,section,summary{display:block}audio,canvas,progress,video{display:inline-block;vertical-align:baseline}audio:not([controls]){display:none;height:0}[hidden],template{display:none}a{background:0 0}a:active,a:hover{outline:0}abbr[title]{border-bottom:1px dotted}b,strong{font-weight:700}dfn{font-style:italic}h1{margin:.67em 0}mark{background:#ff0;color:#000}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sup{top:-.5em}sub{bottom:-.25em}images{border:0}svg:not(:root){overflow:hidden}figure{margin:1em 40px}hr{box-sizing:content-box;height:0}pre{overflow:auto}code,kbd{font-size:1em}code,kbd,pre,samp{font-family:monospace,monospace}samp{font-size:1em}button,input,optgroup,select,textarea{color:inherit;font:inherit;margin:0}button{overflow:visible}button,select{text-transform:none}button,html input[type="button"],input[type="reset"],input[type="submit"]{-webkit-appearance:button;cursor:pointer}button[disabled],html input[disabled]{cursor:default}button::-moz-focus-inner,input::-moz-focus-inner{border:0;padding:0}input{line-height:normal}input[type="checkbox"],input[type="radio"]{box-sizing:border-box;padding:0;margin-right:5px}input[type="number"]::-webkit-inner-spin-button,input[type="number"]::-webkit-outer-spin-button{height:auto}input[type="search"]{-webkit-appearance:textfield;box-sizing:content-box}input[type="search"]::-webkit-search-cancel-button,input[type="search"]::-webkit-search-decoration{-webkit-appearance:none}fieldset{border:1px solid silver;margin:0 2px;padding:.35em .625em .75em}legend{border:0;padding:0}textarea{overflow:auto}optgroup{font-weight:700}table{border-collapse:collapse;border-spacing:0}.debug{background-color:#ffc0cb!important}.ellipsis{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ir{background-color:transparent;border:0;overflow:hidden}.ir::before{content:'';display:block;height:150%;width:0}html{font-size:.875em;background:#fff;color:#373D49}html,body{font-family:Georgia,Cambria,serif;height:100%}body{font-size:1rem;font-weight:400;line-height:2rem}ul,ol{margin-bottom:.83999rem;padding-top:.16001rem}li{font-feature-settings:'kern' 1,'onum' 1,'liga' 1;margin-left:1rem}li>ul,li>ol{margin-bottom:0}p{padding-top:.66001rem;font-feature-settings:'kern' 1,'onum' 1,'liga' 1;margin-top:0}p,pre{margin-bottom:1.33999rem}pre{font-size:1rem;padding:.66001rem 9.5px 9.5px;line-height:2rem;background:linear-gradient(to bottom,#fff 0,#fff .75rem,#f5f7fa .75rem,#f5f7fa 2.75rem,#fff 2.75rem,#fff 4rem);background-size:100% 4rem;border-color:#D3DAEA}blockquote{margin:0}blockquote p{font-size:1rem;margin-bottom:.33999rem;font-style:italic;padding:.66001rem 1rem 1rem;border-left:3px solid #A0AABF}th,td{padding:12px}h1,h2,h3,h4,h5,h6{font-family:"Source Sans Pro","Helvetica Neue",Helvetica,Arial,sans-serif;font-feature-settings:'dlig' 1,'liga' 1,'lnum' 1,'kern' 1;font-style:normal;font-weight:600;margin-top:0}h1{line-height:3rem;font-size:2.0571429rem;margin-bottom:.21999rem;padding-top:.78001rem}h2{font-size:1.953125rem;margin-bottom:.1835837rem;padding-top:.8164163rem}h2,h3{line-height:3rem}h3{font-size:1.6457143rem;margin-bottom:.07599rem;padding-top:.92401rem}h4{font-size:1.5625rem;margin-bottom:.546865rem;padding-top:.453135rem}h5{font-size:1.25rem;margin-bottom:-.56251rem;padding-top:.56251rem}h6{font-size:1rem;margin-bottom:-.65001rem;padding-top:.65001rem}a{cursor:pointer;color:#35D7BB;text-decoration:none}a:hover,a:focus{border-bottom-color:#35D7BB;color:#dff9f4}img{height:auto;max-width:100%}dt{font-style:italic;font-weight:600}.g{display:block}.g:after{clear:both;content:'';display:table}.g-b{float:left;margin:0;width:100%}.g{margin-left:-16px;margin-right:-16px}.g-b{padding-left:16px;padding-right:16px}.g-b--center{display:block;float:none;margin:0 auto}.g-b--right{float:right}.g-b--1of1{width:100%}.g-b--1of2,.g-b--2of4,.g-b--3of6,.g-b--4of8,.g-b--5of10,.g-b--6of12{width:50%}.g-b--1of3,.g-b--2of6,.g-b--4of12{width:33.333%}.g-b--2of3,.g-b--4of6,.g-b--8of12{width:66.666%}.g-b--1of4,.g-b--2of8,.g-b--3of12{width:25%}.g-b--3of4,.g-b--6of8,.g-b--9of12{width:75%}.g-b--1of5,.g-b--2of10{width:20%}.g-b--2of5,.g-b--4of10{width:40%}.g-b--3of5,.g-b--6of10{width:60%}.g-b--4of5,.g-b--8of10{width:80%}.g-b--1of6,.g-b--2of12{width:16.666%}.g-b--5of6,.g-b--10of12{width:83.333%}.g-b--1of8{width:12.5%}.g-b--3of8{width:37.5%}.g-b--5of8{width:62.5%}.g-b--7of8{width:87.5%}.g-b--1of10{width:10%}.g-b--3of10{width:30%}.g-b--7of10{width:70%}.g-b--9of10{width:90%}.g-b--1of12{width:8.333%}.g-b--5of12{width:41.666%}.g-b--7of12{width:58.333%}.g-b--11of12{width:91.666%}.g-b--push--1of1{margin-left:100%}.g-b--push--1of2,.g-b--push--2of4,.g-b--push--3of6,.g-b--push--4of8,.g-b--push--5of10,.g-b--push--6of12{margin-left:50%}.g-b--push--1of3,.g-b--push--2of6,.g-b--push--4of12{margin-left:33.333%}.g-b--push--2of3,.g-b--push--4of6,.g-b--push--8of12{margin-left:66.666%}.g-b--push--1of4,.g-b--push--2of8,.g-b--push--3of12{margin-left:25%}.g-b--push--3of4,.g-b--push--6of8,.g-b--push--9of12{margin-left:75%}.g-b--push--1of5,.g-b--push--2of10{margin-left:20%}.g-b--push--2of5,.g-b--push--4of10{margin-left:40%}.g-b--push--3of5,.g-b--push--6of10{margin-left:60%}.g-b--push--4of5,.g-b--push--8of10{margin-left:80%}.g-b--push--1of6,.g-b--push--2of12{margin-left:16.666%}.g-b--push--5of6,.g-b--push--10of12{margin-left:83.333%}.g-b--push--1of8{margin-left:12.5%}.g-b--push--3of8{margin-left:37.5%}.g-b--push--5of8{margin-left:62.5%}.g-b--push--7of8{margin-left:87.5%}.g-b--push--1of10{margin-left:10%}.g-b--push--3of10{margin-left:30%}.g-b--push--7of10{margin-left:70%}.g-b--push--9of10{margin-left:90%}.g-b--push--1of12{margin-left:8.333%}.g-b--push--5of12{margin-left:41.666%}.g-b--push--7of12{margin-left:58.333%}.g-b--push--11of12{margin-left:91.666%}.g-b--pull--1of1{margin-right:100%}.g-b--pull--1of2,.g-b--pull--2of4,.g-b--pull--3of6,.g-b--pull--4of8,.g-b--pull--5of10,.g-b--pull--6of12{margin-right:50%}.g-b--pull--1of3,.g-b--pull--2of6,.g-b--pull--4of12{margin-right:33.333%}.g-b--pull--2of3,.g-b--pull--4of6,.g-b--pull--8of12{margin-right:66.666%}.g-b--pull--1of4,.g-b--pull--2of8,.g-b--pull--3of12{margin-right:25%}.g-b--pull--3of4,.g-b--pull--6of8,.g-b--pull--9of12{margin-right:75%}.g-b--pull--1of5,.g-b--pull--2of10{margin-right:20%}.g-b--pull--2of5,.g-b--pull--4of10{margin-right:40%}.g-b--pull--3of5,.g-b--pull--6of10{margin-right:60%}.g-b--pull--4of5,.g-b--pull--8of10{margin-right:80%}.g-b--pull--1of6,.g-b--pull--2of12{margin-right:16.666%}.g-b--pull--5of6,.g-b--pull--10of12{margin-right:83.333%}.g-b--pull--1of8{margin-right:12.5%}.g-b--pull--3of8{margin-right:37.5%}.g-b--pull--5of8{margin-right:62.5%}.g-b--pull--7of8{margin-right:87.5%}.g-b--pull--1of10{margin-right:10%}.g-b--pull--3of10{margin-right:30%}.g-b--pull--7of10{margin-right:70%}.g-b--pull--9of10{margin-right:90%}.g-b--pull--1of12{margin-right:8.333%}.g-b--pull--5of12{margin-right:41.666%}.g-b--pull--7of12{margin-right:58.333%}.g-b--pull--11of12{margin-right:91.666%}.splashscreen{position:fixed;top:0;left:0;width:100%;height:100%;background-color:#373D49;z-index:22}.splashscreen-dillinger{width:260px;height:auto;display:block;margin:0 auto;padding-bottom:3rem}.splashscreen p{font-size:1.25rem;padding-top:.56251rem;font-family:"Source Sans Pro","Helvetica Neue",Helvetica,Arial,sans-serif;font-weight:400;text-align:center;max-width:500px;margin:0 auto;color:#FFF}.sp-center{position:relative;transform:translateY(-50%);top:50%}.open-menu>.wrapper{overflow-x:hidden}.page{margin:0 auto;position:relative;top:0;left:0;width:100%;height:100%;z-index:2;transition:all .25s ease-in-out;background-color:#fff;padding-top:51px;will-change:left}.open-menu .page{left:270px}.title{line-height:1rem;font-size:.8rem;margin-bottom:.77999rem;padding-top:.22001rem;font-weight:500;color:#A0AABF;letter-spacing:1px;text-transform:uppercase;padding-left:16px;padding-right:16px;margin-top:1rem}.split-preview .title{padding-left:0}.title-document{line-height:1rem;font-size:1.25rem;margin-bottom:.89999rem;padding-top:.10001rem;font-weight:400;font-family:"Ubuntu Mono",Monaco;color:#373D49;padding-left:16px;padding-right:16px;width:80%;min-width:300px;outline:0;border:none}.icon{display:block;margin:0 auto;width:36px;height:36px;border-radius:3px;text-align:center}.icon svg{display:inline-block;margin-left:auto;margin-right:auto}.icon-preview{background-color:#373D49;line-height:40px}.icon-preview svg{width:19px;height:12px}.icon-settings{background-color:#373D49;line-height:44px}.icon-settings svg{width:18px;height:18px}.icon-link{width:16px;height:16px;line-height:1;margin-right:24px;text-align:right}.navbar{background-color:#373D49;height:51px;width:100%;position:fixed;top:0;left:0;z-index:6;transition:all .25s ease-in-out;will-change:left}.navbar:after{content:"";display:table;clear:both}.open-menu .navbar{left:270px}.navbar-brand{float:left;margin:0 0 0 24px;padding:0;line-height:42px}.navbar-brand svg{width:85px;height:11px}.nav-left{float:left}.nav-right{float:right}.nav-sidebar{width:100%}.menu{list-style:none;margin:0;padding:0}.menu a{border:0;color:#A0AABF;font-family:"Source Sans Pro","Helvetica Neue",Helvetica,Arial,sans-serif;outline:none;text-transform:uppercase}.menu a:hover{color:#35D7BB}.menu .menu-item{border:0;display:none;float:left;margin:0;position:relative}.menu .menu-item>a{display:block;font-size:12px;height:51px;letter-spacing:1px;line-height:51px;padding:0 24px}.menu .menu-item--settings,.menu .menu-item--preview,.menu .menu-item--save-to.in-sidebar,.menu .menu-item--import-from.in-sidebar,.menu .menu-item--link-unlink.in-sidebar,.menu .menu-item--documents.in-sidebar{display:block}.menu .menu-item--documents{padding-bottom:1rem}.menu .menu-item.open>a{background-color:#1D212A}.menu .menu-item-icon>a{height:auto;padding:0}.menu .menu-item-icon:hover>a{background-color:transparent}.menu .menu-link.open i{background-color:#1D212A}.menu .menu-link.open g{fill:#35D7BB}.menu .menu-link-preview,.menu .menu-link-settings{margin-top:8px;width:51px}.menu-sidebar{width:100%}.menu-sidebar .menu-item{float:none;margin-bottom:1px;width:100%}.menu-sidebar .menu-item.open>a{background-color:#373D49}.menu-sidebar .open .caret{transform:rotate(180deg)}.menu-sidebar>.menu-item:hover .dropdown a,.menu-sidebar>.menu-item:hover .settings a{background-color:transparent}.menu-sidebar .menu-link{background-color:#373D49;font-weight:600}.menu-sidebar .menu-link:after{content:"";display:table;clear:both}.menu-sidebar .menu-link>span{float:left}.menu-sidebar .menu-link>.caret{float:right;text-align:right;top:22px}.menu-sidebar .dropdown,.menu-sidebar .settings{background-color:transparent;position:static;width:100%}.dropdown{position:absolute;right:0;top:51px;width:188px}.dropdown,.settings{display:none;background-color:#1D212A}.dropdown{padding:0}.dropdown,.settings,.sidebar-list{list-style:none;margin:0}.sidebar-list{padding:0}.dropdown li{margin:32px 0;padding:0 0 0 32px}.dropdown li,.settings li{line-height:1}.sidebar-list li{line-height:1;margin:32px 0;padding:0 0 0 32px}.dropdown a{color:#D0D6E2}.dropdown a,.settings a,.sidebar-list a{display:block;text-transform:none}.sidebar-list a{color:#D0D6E2}.dropdown a:after,.settings a:after,.sidebar-list a:after{content:"";display:table;clear:both}.dropdown .icon,.settings .icon,.sidebar-list .icon{float:right}.open .dropdown,.open .settings,.open .sidebar-list{display:block}.open .dropdown.collapse,.open .collapse.settings,.open .sidebar-list.collapse{display:none}.open .dropdown.collapse.in,.open .collapse.in.settings,.open .sidebar-list.collapse.in{display:block}.dropdown .unlinked .icon,.settings .unlinked .icon,.sidebar-list .unlinked .icon{opacity:.3}.dropdown.documents li,.documents.settings li,.sidebar-list.documents li{background-image:url("../img/icons/file.svg");background-position:240px center;background-repeat:no-repeat;background-size:14px 16px;padding:3px 32px}.dropdown.documents li.octocat,.documents.settings li.octocat,.sidebar-list.documents li.octocat{background-image:url("../img/icons/octocat.svg");background-position:234px center;background-size:24px 24px}.dropdown.documents li:last-child,.documents.settings li:last-child,.sidebar-list.documents li:last-child{margin-bottom:1rem}.dropdown.documents li.active a,.documents.settings li.active a,.sidebar-list.documents li.active a{color:#35D7BB}.settings{position:fixed;top:67px;right:16px;border-radius:3px;width:288px;background-color:#373D49;padding:16px;z-index:7}.show-settings .settings{display:block}.settings .has-checkbox{float:left}.settings form{display:-ms-flexbox;display:flex;-ms-flex-direction:row;flex-direction:row;-ms-flex-pack:justify;justify-content:space-between}.settings input{width:20%}.settings a{font-size:1.25rem;font-family:"Source Sans Pro","Helvetica Neue",Helvetica,Arial,sans-serif;font-weight:400;-webkit-font-smoothing:antialiased;line-height:28px;color:#D0D6E2}.settings a:after{content:"";display:table;clear:both}.settings a:hover{color:#35D7BB}.settings li{border-bottom:1px solid #4F535B;margin:0;padding:16px 0}.settings li:last-child{border-bottom:none}.brand{border:none;display:block}.brand:hover g{fill:#35D7BB}.toggle{display:block;float:left;height:16px;padding:25px 16px 26px;width:40px}.toggle span:after,.toggle span:before{content:'';left:0;position:absolute;top:-6px}.toggle span:after{top:6px}.toggle span{display:block;position:relative}.toggle span,.toggle span:after,.toggle span:before{-webkit-backface-visibility:hidden;backface-visibility:hidden;background-color:#D3DAEA;height:2px;transition:all .3s;width:20px}.open-menu .toggle span{background-color:transparent}.open-menu .toggle span:before{transform:rotate(45deg) translate(3px,3px)}.open-menu .toggle span:after{transform:rotate(-45deg) translate(5px,-6px)}.caret{display:inline-block;width:0;height:0;margin-left:6px;vertical-align:middle;position:relative;top:-1px;border-top:4px solid;border-right:4px solid transparent;border-left:4px solid transparent}.sidebar{overflow:auto;height:100%;padding-right:15px;padding-bottom:15px;width:285px}.sidebar-wrapper{-webkit-overflow-scrolling:touch;background-color:#2B2F36;left:0;height:100%;overflow-y:hidden;position:fixed;top:0;width:285px;z-index:1}.sidebar-branding{width:160px;padding:0;margin:16px auto}.header{border-bottom:1px solid #E8E8E8;position:relative}.words,.characters{line-height:1rem;font-size:.8rem;margin-bottom:.77999rem;padding-top:.22001rem;font-weight:500;font-family:"Source Sans Pro","Helvetica Neue",Helvetica,Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;z-index:5;position:absolute;right:16px;top:0}.words span,.characters span{color:#A0AABF}.words .counter,.characters .counter{color:#000}.words+.characters{top:22px}.mr10{margin-right:10px}.btn{text-align:center;display:inline-block;width:100%;text-transform:uppercase;font-weight:600;font-family:"Source Sans Pro","Helvetica Neue",Helvetica,Arial,sans-serif;font-size:14px;text-shadow:0 1px 0 #1b8b77;padding:16px 24px;background-color:#35D7BB;border-radius:3px;margin:0 auto 16px;line-height:1;color:#fff;transition:all .15s linear;-webkit-font-smoothing:antialiased}.btn--new,.btn--save{display:block;width:238px}.btn--new:hover,.btn--new:focus,.btn--save:hover,.btn--save:focus{color:#fff;border-bottom-color:transparent;box-shadow:0 1px 3px #24b59c;text-shadow:0 1px 0 #24b59c}.btn--save{background-color:#4A5261;text-shadow:0 1px 1px #1e2127}.btn--save:hover,.btn--save:focus{color:#fff;border-bottom-color:transparent;box-shadow:0 1px 5px #08090a;text-shadow:none}.btn--delete{display:block;width:238px;background-color:transparent;font-size:12px;text-shadow:none}.btn--delete:hover,.btn--delete:focus{color:#fff;border-bottom-color:transparent;text-shadow:0 1px 0 #08090a;opacity:.8}.btn--delete-modal,.btn--ok,.btn--close{border-top:0;background-color:#4A5261;text-shadow:0 1px 0 #08090a;margin:0}.btn--delete-modal:hover,.btn--delete-modal:focus,.btn--ok:hover,.btn--ok:focus,.btn--close:hover,.btn--close:focus{color:#fff;background-color:#292d36;text-shadow:none}.btn--delete-modal{display:inline;width:auto}.overlay{position:absolute;top:0;left:0;width:100%;height:100%;background-color:rgba(55,61,73,.8);transition:all .25s ease-in-out;transition-timing-function:ease-out;will-change:left,opacity,visibility;z-index:5;opacity:0;visibility:hidden}.show-settings .overlay{visibility:visible;opacity:1}.switch{float:right;line-height:1}.switch input{display:none}.switch small{display:inline-block;cursor:pointer;padding:0 24px 0 0;transition:all ease .2s;background-color:#2B2F36;border-color:#2B2F36}.switch small,.switch small:before{border-radius:30px;box-shadow:inset 0 0 2px 0 #14171F}.switch small:before{display:block;content:'';width:28px;height:28px;background:#fff}.switch.checked small{padding-right:0;padding-left:24px;background-color:#35D7BB;box-shadow:none}.modal--dillinger.about .modal-dialog{font-size:1.25rem;max-width:500px}.modal--dillinger.scope .modal-dialog{max-width:300px;margin:5rem auto}.modal--dillinger .modal-dialog{max-width:600px;width:auto;margin:5rem auto}.modal--dillinger .modal-content{background:#373D49;border-radius:3px;box-shadow:0 2px 5px 0 #2C3B59;color:#fff;font-family:"Source Sans Pro","Helvetica Neue",Helvetica,Arial,sans-serif;font-weight:400;padding:2rem}.modal--dillinger ul{list-style-type:disc;margin:1rem 0;padding:0 0 0 1rem}.modal--dillinger li{padding:0;margin:0}.modal--dillinger .modal-header{border:0;padding:0}.modal--dillinger .modal-body{padding:0}.modal--dillinger .modal-footer{border:0;padding:0}.modal--dillinger .close{color:#fff;opacity:1}.modal-backdrop{background-color:#373D49}.pagination--dillinger{padding:0!important;margin:1.5rem 0!important;display:-ms-flexbox;display:flex;-ms-flex-pack:justify;justify-content:space-between;-ms-flex-direction:row;flex-direction:row;-ms-flex-align:center;align-items:center;-ms-flex-line-pack:stretch;align-content:stretch}.pagination--dillinger li{display:-ms-flexbox;display:flex;-ms-flex-positive:1;flex-grow:1;text-align:center}.pagination--dillinger li:first-child>a,.pagination--dillinger li.disabled>a,.pagination--dillinger li.disabled>a:hover,.pagination--dillinger li.disabled>a:focus,.pagination--dillinger li>a{background-color:transparent;border-color:#4F535B;border-right-color:transparent}.pagination--dillinger li.active>a,.pagination--dillinger li.active>a:hover,.pagination--dillinger li.active>a:focus{border-color:#4A5261;background-color:#4A5261;color:#fff}.pagination--dillinger li>a{float:none;color:#fff;width:100%;display:block;text-align:center;margin:0;border-right-color:transparent;padding:6px}.pagination--dillinger li>a:hover,.pagination--dillinger li>a:focus{border-color:#35D7BB;background-color:#35D7BB;color:#fff}.pagination--dillinger li:last-child a{border-color:#4F535B}.pagination--dillinger li:first-child a{border-right-color:transparent}.diNotify{position:absolute;z-index:9999;left:0;right:0;top:0;margin:0 auto;max-width:400px;text-align:center;transition:top .5s ease-in-out,opacity .5s ease-in-out;visibility:hidden}.diNotify-body{-webkit-font-smoothing:antialiased;background-color:#35D7BB;background:#666E7F;border-radius:3px;color:#fff;font-family:"Source Sans Pro","Helvetica Neue",Helvetica,Arial,sans-serif;font-weight:400;overflow:hidden;padding:1rem 2rem .5rem;display:-ms-flexbox;display:flex;-ms-flex-align:baseline;align-items:baseline;-ms-flex-pack:center;justify-content:center}.diNotify-icon{display:block;width:16px;height:16px;line-height:16px;position:relative;top:3px}.diNotify-message{padding-left:1rem}.zen-wrapper{position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;z-index:10;background-color:#FFF;opacity:0;transition:opacity .25s ease-in-out}.zen-wrapper.on{opacity:1}.enter-zen-mode{background-image:url("../img/icons/enter-zen.svg");right:.5rem;top:.313rem;display:none}.enter-zen-mode,.close-zen-mode{font:0/0 a;color:transparent;text-shadow:none;background-color:transparent;border:0;background-repeat:no-repeat;width:32px;height:32px;display:block;position:absolute}.close-zen-mode{background-image:url("../img/icons/exit-zen.svg");right:1rem;top:1rem}.zen-page{position:relative;top:0;bottom:0;z-index:11;height:100%;width:100%}#zen{font-size:1.25rem;width:300px;height:80%;margin:0 auto;position:relative;top:10%}#zen:before,#zen:after{content:"";position:absolute;height:10%;width:100%;z-index:12;pointer-events:none}#preview .table{width:auto}.ui-resizable{position:relative}.ui-resizable-handle{position:absolute;font-size:.1px;z-index:99999;display:block}.ui-resizable-e{background-color:#666;border-right:8px solid #e8e8e8;border-left:1px solid #222;width:10px;z-index:88!important;position:relative}.ui-resizable-e:after{content:"-";display:block;position:absolute;top:calc(50% - 16px);left:0;height:25px;width:2px;background-color:rgba(0,0,0,.4);margin:3px}#editor{cursor:ew-resize;position:relative;z-index:auto}.profile-pic{float:left;width:250px}#_default_ a::before{color:#A0AABF}#_default_ img{display:none}#_default_ #_default_{display:block;float:left;max-width:38%;word-wrap:break-word}#_default_ .default-ad{display:none}#_default_ ._default_{display:block}#_default_ a{color:#35d7bb;text-decoration:none}#_default_ a:hover{color:#8ae8d8}#_default_ .default-image{display:none}#_default_ .default-title:after{content:" — "}#_default_ .default-title,#_default_ .default-text,#_default_ .default-description{display:inline}#_default_ .default-title{position:relative;font-weight:600;display:none}#_default_ a:before{position:relative;top:0;padding:5px;color:#a0aabf;content:"Ad";text-transform:uppercase;font-size:8px;font-family:Verdana,sans-serif}#_default_{display:block;float:left;max-width:38%;word-wrap:break-word}#_default_ ._default_{display:block;font-size:.75rem;height:51px;letter-spacing:1px;line-height:1rem;padding:18px 24px}body{max-width:1024px;margin:0 auto;overflow:auto;padding:2%}.split{overflow:scroll;padding:0!important;-webkit-overflow-scrolling:touch}.split-editor{padding-left:0;padding-right:0;position:relative;z-index:3}.show-preview .split-editor{display:none}.split-preview{background-color:#fff;display:none;top:0;position:relative;z-index:4}.show-preview .split-preview{display:block}#editor{font-size:1rem;font-family:"Ubuntu Mono",Monaco;font-weight:400;line-height:2rem;width:100%;height:100%}#editor .ace_gutter{-webkit-font-smoothing:antialiased}.editor-header{width:50%;float:left;border-bottom:1px solid #E8E8E8;position:relative}.editor-header--first{border-right:1px solid #E8E8E8}.editor-header .title{display:inline-block}.preview-html{padding:15px}.preview-html a{color:#A0AABF;text-decoration:underline}.preview-src{white-space:normal}.preview-mode-toggle-src{background-image:url("../img/icons/code.svg")}.preview-mode-toggle-src,.preview-mode-toggle-html{font:0/0 a;color:transparent;text-shadow:none;background-color:transparent;border:0;background-repeat:no-repeat;width:32px;height:32px;display:block;position:absolute;right:.5rem;top:.5rem;display:none}.preview-mode-toggle-html{background-image:url("../img/icons/eye.svg")}.sr-only{visibility:hidden;text-overflow:110%;overflow:hidden;top:-100px;position:absolute}.mnone{margin:0!important}@media screen and (min-width:27.5em){html{font-size:.875em}body{font-size:1rem}ul,ol{margin-bottom:.83999rem;padding-top:.16001rem}p{padding-top:.66001rem}p,pre{margin-bottom:1.33999rem}pre,blockquote p{font-size:1rem;padding-top:.66001rem}blockquote p{margin-bottom:.33999rem}h1{font-size:2.0571429rem;margin-bottom:.21999rem;padding-top:.78001rem}h2{font-size:1.953125rem;margin-bottom:.1835837rem;padding-top:.8164163rem}h3{font-size:1.6457143rem;margin-bottom:.07599rem;padding-top:.92401rem}h4{font-size:1.5625rem;margin-bottom:.546865rem;padding-top:.453135rem}h5{font-size:1.25rem;margin-bottom:-.56251rem;padding-top:.56251rem}h6{font-size:1rem;margin-bottom:-.65001rem;padding-top:.65001rem}.g{margin-left:-16px;margin-right:-16px}.g-b{padding-left:16px;padding-right:16px}.g-b--m1of1{width:100%}.g-b--m1of2,.g-b--m2of4,.g-b--m3of6,.g-b--m4of8,.g-b--m5of10,.g-b--m6of12{width:50%}.g-b--m1of3,.g-b--m2of6,.g-b--m4of12{width:33.333%}.g-b--m2of3,.g-b--m4of6,.g-b--m8of12{width:66.666%}.g-b--m1of4,.g-b--m2of8,.g-b--m3of12{width:25%}.g-b--m3of4,.g-b--m6of8,.g-b--m9of12{width:75%}.g-b--m1of5,.g-b--m2of10{width:20%}.g-b--m2of5,.g-b--m4of10{width:40%}.g-b--m3of5,.g-b--m6of10{width:60%}.g-b--m4of5,.g-b--m8of10{width:80%}.g-b--m1of6,.g-b--m2of12{width:16.666%}.g-b--m5of6,.g-b--m10of12{width:83.333%}.g-b--m1of8{width:12.5%}.g-b--m3of8{width:37.5%}.g-b--m5of8{width:62.5%}.g-b--m7of8{width:87.5%}.g-b--m1of10{width:10%}.g-b--m3of10{width:30%}.g-b--m7of10{width:70%}.g-b--m9of10{width:90%}.g-b--m1of12{width:8.333%}.g-b--m5of12{width:41.666%}.g-b--m7of12{width:58.333%}.g-b--m11of12{width:91.666%}.g-b--push--m1of1{margin-left:100%}.g-b--push--m1of2,.g-b--push--m2of4,.g-b--push--m3of6,.g-b--push--m4of8,.g-b--push--m5of10,.g-b--push--m6of12{margin-left:50%}.g-b--push--m1of3,.g-b--push--m2of6,.g-b--push--m4of12{margin-left:33.333%}.g-b--push--m2of3,.g-b--push--m4of6,.g-b--push--m8of12{margin-left:66.666%}.g-b--push--m1of4,.g-b--push--m2of8,.g-b--push--m3of12{margin-left:25%}.g-b--push--m3of4,.g-b--push--m6of8,.g-b--push--m9of12{margin-left:75%}.g-b--push--m1of5,.g-b--push--m2of10{margin-left:20%}.g-b--push--m2of5,.g-b--push--m4of10{margin-left:40%}.g-b--push--m3of5,.g-b--push--m6of10{margin-left:60%}.g-b--push--m4of5,.g-b--push--m8of10{margin-left:80%}.g-b--push--m1of6,.g-b--push--m2of12{margin-left:16.666%}.g-b--push--m5of6,.g-b--push--m10of12{margin-left:83.333%}.g-b--push--m1of8{margin-left:12.5%}.g-b--push--m3of8{margin-left:37.5%}.g-b--push--m5of8{margin-left:62.5%}.g-b--push--m7of8{margin-left:87.5%}.g-b--push--m1of10{margin-left:10%}.g-b--push--m3of10{margin-left:30%}.g-b--push--m7of10{margin-left:70%}.g-b--push--m9of10{margin-left:90%}.g-b--push--m1of12{margin-left:8.333%}.g-b--push--m5of12{margin-left:41.666%}.g-b--push--m7of12{margin-left:58.333%}.g-b--push--m11of12{margin-left:91.666%}.g-b--pull--m1of1{margin-right:100%}.g-b--pull--m1of2,.g-b--pull--m2of4,.g-b--pull--m3of6,.g-b--pull--m4of8,.g-b--pull--m5of10,.g-b--pull--m6of12{margin-right:50%}.g-b--pull--m1of3,.g-b--pull--m2of6,.g-b--pull--m4of12{margin-right:33.333%}.g-b--pull--m2of3,.g-b--pull--m4of6,.g-b--pull--m8of12{margin-right:66.666%}.g-b--pull--m1of4,.g-b--pull--m2of8,.g-b--pull--m3of12{margin-right:25%}.g-b--pull--m3of4,.g-b--pull--m6of8,.g-b--pull--m9of12{margin-right:75%}.g-b--pull--m1of5,.g-b--pull--m2of10{margin-right:20%}.g-b--pull--m2of5,.g-b--pull--m4of10{margin-right:40%}.g-b--pull--m3of5,.g-b--pull--m6of10{margin-right:60%}.g-b--pull--m4of5,.g-b--pull--m8of10{margin-right:80%}.g-b--pull--m1of6,.g-b--pull--m2of12{margin-right:16.666%}.g-b--pull--m5of6,.g-b--pull--m10of12{margin-right:83.333%}.g-b--pull--m1of8{margin-right:12.5%}.g-b--pull--m3of8{margin-right:37.5%}.g-b--pull--m5of8{margin-right:62.5%}.g-b--pull--m7of8{margin-right:87.5%}.g-b--pull--m1of10{margin-right:10%}.g-b--pull--m3of10{margin-right:30%}.g-b--pull--m7of10{margin-right:70%}.g-b--pull--m9of10{margin-right:90%}.g-b--pull--m1of12{margin-right:8.333%}.g-b--pull--m5of12{margin-right:41.666%}.g-b--pull--m7of12{margin-right:58.333%}.g-b--pull--m11of12{margin-right:91.666%}.splashscreen p{font-size:1.25rem;margin-bottom:1.43749rem;padding-top:.56251rem}.title{font-size:.8rem;margin-bottom:.77999rem;padding-top:.22001rem}.title-document{margin-bottom:.89999rem;padding-top:.10001rem}.title-document,.settings a{font-size:1.25rem}.words,.characters{font-size:.8rem;margin-bottom:.77999rem;padding-top:.22001rem}.modal--dillinger.about .modal-dialog,#zen{font-size:1.25rem}#zen{width:400px}#editor{font-size:1rem}}@media screen and (min-width:46.25em){html{font-size:.875em}body{font-size:1rem}ul,ol{margin-bottom:.83999rem;padding-top:.16001rem}p{padding-top:.66001rem}p,pre{margin-bottom:1.33999rem}pre,blockquote p{font-size:1rem;padding-top:.66001rem}blockquote p{margin-bottom:.33999rem}h1{font-size:2.0571429rem;margin-bottom:.21999rem;padding-top:.78001rem}h2{font-size:1.953125rem;margin-bottom:.1835837rem;padding-top:.8164163rem}h3{font-size:1.6457143rem;margin-bottom:.07599rem;padding-top:.92401rem}h4{font-size:1.5625rem;margin-bottom:.546865rem;padding-top:.453135rem}h5{font-size:1.25rem;margin-bottom:-.56251rem;padding-top:.56251rem}h6{font-size:1rem;margin-bottom:-.65001rem;padding-top:.65001rem}.g{margin-left:-16px;margin-right:-16px}.g-b{padding-left:16px;padding-right:16px}.g-b--t1of1{width:100%}.g-b--t1of2,.g-b--t2of4,.g-b--t3of6,.g-b--t4of8,.g-b--t5of10,.g-b--t6of12{width:50%}.g-b--t1of3,.g-b--t2of6,.g-b--t4of12{width:33.333%}.g-b--t2of3,.g-b--t4of6,.g-b--t8of12{width:66.666%}.g-b--t1of4,.g-b--t2of8,.g-b--t3of12{width:25%}.g-b--t3of4,.g-b--t6of8,.g-b--t9of12{width:75%}.g-b--t1of5,.g-b--t2of10{width:20%}.g-b--t2of5,.g-b--t4of10{width:40%}.g-b--t3of5,.g-b--t6of10{width:60%}.g-b--t4of5,.g-b--t8of10{width:80%}.g-b--t1of6,.g-b--t2of12{width:16.666%}.g-b--t5of6,.g-b--t10of12{width:83.333%}.g-b--t1of8{width:12.5%}.g-b--t3of8{width:37.5%}.g-b--t5of8{width:62.5%}.g-b--t7of8{width:87.5%}.g-b--t1of10{width:10%}.g-b--t3of10{width:30%}.g-b--t7of10{width:70%}.g-b--t9of10{width:90%}.g-b--t1of12{width:8.333%}.g-b--t5of12{width:41.666%}.g-b--t7of12{width:58.333%}.g-b--t11of12{width:91.666%}.g-b--push--t1of1{margin-left:100%}.g-b--push--t1of2,.g-b--push--t2of4,.g-b--push--t3of6,.g-b--push--t4of8,.g-b--push--t5of10,.g-b--push--t6of12{margin-left:50%}.g-b--push--t1of3,.g-b--push--t2of6,.g-b--push--t4of12{margin-left:33.333%}.g-b--push--t2of3,.g-b--push--t4of6,.g-b--push--t8of12{margin-left:66.666%}.g-b--push--t1of4,.g-b--push--t2of8,.g-b--push--t3of12{margin-left:25%}.g-b--push--t3of4,.g-b--push--t6of8,.g-b--push--t9of12{margin-left:75%}.g-b--push--t1of5,.g-b--push--t2of10{margin-left:20%}.g-b--push--t2of5,.g-b--push--t4of10{margin-left:40%}.g-b--push--t3of5,.g-b--push--t6of10{margin-left:60%}.g-b--push--t4of5,.g-b--push--t8of10{margin-left:80%}.g-b--push--t1of6,.g-b--push--t2of12{margin-left:16.666%}.g-b--push--t5of6,.g-b--push--t10of12{margin-left:83.333%}.g-b--push--t1of8{margin-left:12.5%}.g-b--push--t3of8{margin-left:37.5%}.g-b--push--t5of8{margin-left:62.5%}.g-b--push--t7of8{margin-left:87.5%}.g-b--push--t1of10{margin-left:10%}.g-b--push--t3of10{margin-left:30%}.g-b--push--t7of10{margin-left:70%}.g-b--push--t9of10{margin-left:90%}.g-b--push--t1of12{margin-left:8.333%}.g-b--push--t5of12{margin-left:41.666%}.g-b--push--t7of12{margin-left:58.333%}.g-b--push--t11of12{margin-left:91.666%}.g-b--pull--t1of1{margin-right:100%}.g-b--pull--t1of2,.g-b--pull--t2of4,.g-b--pull--t3of6,.g-b--pull--t4of8,.g-b--pull--t5of10,.g-b--pull--t6of12{margin-right:50%}.g-b--pull--t1of3,.g-b--pull--t2of6,.g-b--pull--t4of12{margin-right:33.333%}.g-b--pull--t2of3,.g-b--pull--t4of6,.g-b--pull--t8of12{margin-right:66.666%}.g-b--pull--t1of4,.g-b--pull--t2of8,.g-b--pull--t3of12{margin-right:25%}.g-b--pull--t3of4,.g-b--pull--t6of8,.g-b--pull--t9of12{margin-right:75%}.g-b--pull--t1of5,.g-b--pull--t2of10{margin-right:20%}.g-b--pull--t2of5,.g-b--pull--t4of10{margin-right:40%}.g-b--pull--t3of5,.g-b--pull--t6of10{margin-right:60%}.g-b--pull--t4of5,.g-b--pull--t8of10{margin-right:80%}.g-b--pull--t1of6,.g-b--pull--t2of12{margin-right:16.666%}.g-b--pull--t5of6,.g-b--pull--t10of12{margin-right:83.333%}.g-b--pull--t1of8{margin-right:12.5%}.g-b--pull--t3of8{margin-right:37.5%}.g-b--pull--t5of8{margin-right:62.5%}.g-b--pull--t7of8{margin-right:87.5%}.g-b--pull--t1of10{margin-right:10%}.g-b--pull--t3of10{margin-right:30%}.g-b--pull--t7of10{margin-right:70%}.g-b--pull--t9of10{margin-right:90%}.g-b--pull--t1of12{margin-right:8.333%}.g-b--pull--t5of12{margin-right:41.666%}.g-b--pull--t7of12{margin-right:58.333%}.g-b--pull--t11of12{margin-right:91.666%}.splashscreen-dillinger{width:500px}.splashscreen p{font-size:1.25rem;margin-bottom:1.43749rem;padding-top:.56251rem}.title{font-size:.8rem;margin-bottom:.77999rem;padding-top:.22001rem}.title-document{font-size:1.25rem;margin-bottom:.89999rem;padding-top:.10001rem}.menu .menu-item--save-to,.menu .menu-item--import-from{display:block}.menu .menu-item--preview,.menu .menu-item--save-to.in-sidebar,.menu .menu-item--import-from.in-sidebar{display:none}.settings a{font-size:1.25rem}.words,.characters{font-size:.8rem;margin-bottom:.77999rem;padding-top:.22001rem}.modal--dillinger.about .modal-dialog{font-size:1.25rem}.enter-zen-mode{display:block}.close-zen-mode{right:3rem;top:3rem}#zen{font-size:1.25rem;width:500px}.split-editor{border-right:1px solid #E8E8E8;float:left;padding-right:16px;width:50%}.show-preview .split-editor{display:block}.split-preview{display:block;float:right;position:relative;top:0;width:50%}#editor{font-size:1rem}.preview-mode-toggle-src,.preview-mode-toggle-html{display:block}}@media screen and (min-width:62.5em){html{font-size:.875em}body{font-size:1rem}ul,ol{margin-bottom:.83999rem;padding-top:.16001rem}p{padding-top:.66001rem}p,pre{margin-bottom:1.33999rem}pre,blockquote p{font-size:1rem;padding-top:.66001rem}blockquote p{margin-bottom:.33999rem}h1{font-size:2.0571429rem;margin-bottom:.21999rem;padding-top:.78001rem}h2{font-size:1.953125rem;margin-bottom:.1835837rem;padding-top:.8164163rem}h3{font-size:1.6457143rem;margin-bottom:.07599rem;padding-top:.92401rem}h4{font-size:1.5625rem;margin-bottom:.546865rem;padding-top:.453135rem}h5{font-size:1.25rem;margin-bottom:-.56251rem;padding-top:.56251rem}h6{font-size:1rem;margin-bottom:-.65001rem;padding-top:.65001rem}.g{margin-left:-16px;margin-right:-16px}.g-b{padding-left:16px;padding-right:16px}.g-b--d1of1{width:100%}.g-b--d1of2,.g-b--d2of4,.g-b--d3of6,.g-b--d4of8,.g-b--d5of10,.g-b--d6of12{width:50%}.g-b--d1of3,.g-b--d2of6,.g-b--d4of12{width:33.333%}.g-b--d2of3,.g-b--d4of6,.g-b--d8of12{width:66.666%}.g-b--d1of4,.g-b--d2of8,.g-b--d3of12{width:25%}.g-b--d3of4,.g-b--d6of8,.g-b--d9of12{width:75%}.g-b--d1of5,.g-b--d2of10{width:20%}.g-b--d2of5,.g-b--d4of10{width:40%}.g-b--d3of5,.g-b--d6of10{width:60%}.g-b--d4of5,.g-b--d8of10{width:80%}.g-b--d1of6,.g-b--d2of12{width:16.666%}.g-b--d5of6,.g-b--d10of12{width:83.333%}.g-b--d1of8{width:12.5%}.g-b--d3of8{width:37.5%}.g-b--d5of8{width:62.5%}.g-b--d7of8{width:87.5%}.g-b--d1of10{width:10%}.g-b--d3of10{width:30%}.g-b--d7of10{width:70%}.g-b--d9of10{width:90%}.g-b--d1of12{width:8.333%}.g-b--d5of12{width:41.666%}.g-b--d7of12{width:58.333%}.g-b--d11of12{width:91.666%}.g-b--push--d1of1{margin-left:100%}.g-b--push--d1of2,.g-b--push--d2of4,.g-b--push--d3of6,.g-b--push--d4of8,.g-b--push--d5of10,.g-b--push--d6of12{margin-left:50%}.g-b--push--d1of3,.g-b--push--d2of6,.g-b--push--d4of12{margin-left:33.333%}.g-b--push--d2of3,.g-b--push--d4of6,.g-b--push--d8of12{margin-left:66.666%}.g-b--push--d1of4,.g-b--push--d2of8,.g-b--push--d3of12{margin-left:25%}.g-b--push--d3of4,.g-b--push--d6of8,.g-b--push--d9of12{margin-left:75%}.g-b--push--d1of5,.g-b--push--d2of10{margin-left:20%}.g-b--push--d2of5,.g-b--push--d4of10{margin-left:40%}.g-b--push--d3of5,.g-b--push--d6of10{margin-left:60%}.g-b--push--d4of5,.g-b--push--d8of10{margin-left:80%}.g-b--push--d1of6,.g-b--push--d2of12{margin-left:16.666%}.g-b--push--d5of6,.g-b--push--d10of12{margin-left:83.333%}.g-b--push--d1of8{margin-left:12.5%}.g-b--push--d3of8{margin-left:37.5%}.g-b--push--d5of8{margin-left:62.5%}.g-b--push--d7of8{margin-left:87.5%}.g-b--push--d1of10{margin-left:10%}.g-b--push--d3of10{margin-left:30%}.g-b--push--d7of10{margin-left:70%}.g-b--push--d9of10{margin-left:90%}.g-b--push--d1of12{margin-left:8.333%}.g-b--push--d5of12{margin-left:41.666%}.g-b--push--d7of12{margin-left:58.333%}.g-b--push--d11of12{margin-left:91.666%}.g-b--pull--d1of1{margin-right:100%}.g-b--pull--d1of2,.g-b--pull--d2of4,.g-b--pull--d3of6,.g-b--pull--d4of8,.g-b--pull--d5of10,.g-b--pull--d6of12{margin-right:50%}.g-b--pull--d1of3,.g-b--pull--d2of6,.g-b--pull--d4of12{margin-right:33.333%}.g-b--pull--d2of3,.g-b--pull--d4of6,.g-b--pull--d8of12{margin-right:66.666%}.g-b--pull--d1of4,.g-b--pull--d2of8,.g-b--pull--d3of12{margin-right:25%}.g-b--pull--d3of4,.g-b--pull--d6of8,.g-b--pull--d9of12{margin-right:75%}.g-b--pull--d1of5,.g-b--pull--d2of10{margin-right:20%}.g-b--pull--d2of5,.g-b--pull--d4of10{margin-right:40%}.g-b--pull--d3of5,.g-b--pull--d6of10{margin-right:60%}.g-b--pull--d4of5,.g-b--pull--d8of10{margin-right:80%}.g-b--pull--d1of6,.g-b--pull--d2of12{margin-right:16.666%}.g-b--pull--d5of6,.g-b--pull--d10of12{margin-right:83.333%}.g-b--pull--d1of8{margin-right:12.5%}.g-b--pull--d3of8{margin-right:37.5%}.g-b--pull--d5of8{margin-right:62.5%}.g-b--pull--d7of8{margin-right:87.5%}.g-b--pull--d1of10{margin-right:10%}.g-b--pull--d3of10{margin-right:30%}.g-b--pull--d7of10{margin-right:70%}.g-b--pull--d9of10{margin-right:90%}.g-b--pull--d1of12{margin-right:8.333%}.g-b--pull--d5of12{margin-right:41.666%}.g-b--pull--d7of12{margin-right:58.333%}.g-b--pull--d11of12{margin-right:91.666%}.splashscreen-dillinger{width:700px}.splashscreen p{font-size:1.25rem;margin-bottom:1.43749rem;padding-top:.56251rem}.title{font-size:.8rem;margin-bottom:.77999rem;padding-top:.22001rem}.title-document{font-size:1.25rem;margin-bottom:.89999rem;padding-top:.10001rem}.menu .menu-item--export-as{display:block}.menu .menu-item--preview{display:none}.settings a{font-size:1.25rem}.words,.characters{font-size:.8rem;margin-bottom:.77999rem;padding-top:.22001rem}.modal--dillinger.about .modal-dialog,#zen{font-size:1.25rem}#zen{width:700px}#editor{font-size:1rem}}@media screen and (min-width:87.5em){html{font-size:.875em}body{font-size:1rem}ul,ol{margin-bottom:.83999rem;padding-top:.16001rem}p{padding-top:.66001rem}p,pre{margin-bottom:1.33999rem}pre,blockquote p{font-size:1rem;padding-top:.66001rem}blockquote p{margin-bottom:.33999rem}h1{font-size:2.0571429rem;margin-bottom:.21999rem;padding-top:.78001rem}h2{font-size:1.953125rem;margin-bottom:.1835837rem;padding-top:.8164163rem}h3{font-size:1.6457143rem;margin-bottom:.07599rem;padding-top:.92401rem}h4{font-size:1.5625rem;margin-bottom:.546865rem;padding-top:.453135rem}h5{font-size:1.25rem;margin-bottom:-.56251rem;padding-top:.56251rem}h6{font-size:1rem;margin-bottom:-.65001rem;padding-top:.65001rem}.splashscreen-dillinger{width:800px}.splashscreen p{font-size:1.25rem;margin-bottom:1.43749rem;padding-top:.56251rem}.title{font-size:.8rem;margin-bottom:.77999rem;padding-top:.22001rem}.title-document{margin-bottom:.89999rem;padding-top:.10001rem}.title-document,.settings a{font-size:1.25rem}.words,.characters{font-size:.8rem;margin-bottom:.77999rem;padding-top:.22001rem}.modal--dillinger.about .modal-dialog,#zen{font-size:1.25rem}#editor{font-size:1rem}}@media (min-width:768px){.form-inline .form-group{display:inline-block;margin-bottom:0;vertical-align:middle}.form-inline .form-control{display:inline-block;width:auto;vertical-align:middle}.form-inline .input-group{display:inline-table;vertical-align:middle}.form-inline .input-group .input-group-addon,.form-inline .input-group .input-group-btn,.form-inline .input-group .form-control{width:auto}.form-inline .input-group>.form-control{width:100%}.form-inline .control-label{margin-bottom:0;vertical-align:middle}.form-inline .radio,.form-inline .checkbox{display:inline-block;margin-top:0;margin-bottom:0;vertical-align:middle}.form-inline .radio label,.form-inline .checkbox label{padding-left:0}.form-inline .radio input[type="radio"],.form-inline .checkbox input[type="checkbox"]{position:relative;margin-left:0}.form-inline .has-feedback .form-control-feedback{top:0}.form-horizontal .control-label{text-align:right;margin-bottom:0;padding-top:7px}.form-horizontal .form-group-lg .control-label{padding-top:14.3px}.form-horizontal .form-group-sm .control-label{padding-top:6px}.modal-dialog{width:600px;margin:30px auto}.modal-content{box-shadow:0 5px 15px rgba(0,0,0,.5)}.modal-sm{width:300px}}@media (min-width:992px){.modal-lg{width:900px}}@media screen and (max-width:1200px){#_default_{max-width:30%}#_default_ ._default_{font-size:.825rem;line-height:.875rem;padding:12px 12px 6px 24px;text-align:justify}}@media screen and (max-width:1100px){#_default_{max-width:27%}#_default_ ._default_{font-size:.8rem;line-height:.85rem;padding:12px 6px 6px 24px;text-align:justify}}@media screen and (max-width:1000px){#_default_{max-width:24%}#_default_ ._default_{font-size:.775rem;line-height:.8rem;padding:12px 6px 6px 24px;text-align:justify}}@media screen and (max-width:900px){#_default_{max-width:30%}}@media screen and (max-width:767px){.table-responsive{width:100%;margin-bottom:15px;overflow-y:hidden;overflow-x:auto;-ms-overflow-style:-ms-autohiding-scrollbar;border:1px solid #ddd;-webkit-overflow-scrolling:touch}.table-responsive>.table{margin-bottom:0}.table-responsive>.table>thead>tr>th,.table-responsive>.table>thead>tr>td,.table-responsive>.table>tbody>tr>th,.table-responsive>.table>tbody>tr>td,.table-responsive>.table>tfoot>tr>th,.table-responsive>.table>tfoot>tr>td{white-space:nowrap}.table-responsive>.table-bordered{border:0}.table-responsive>.table-bordered>thead>tr>th:first-child,.table-responsive>.table-bordered>thead>tr>td:first-child,.table-responsive>.table-bordered>tbody>tr>th:first-child,.table-responsive>.table-bordered>tbody>tr>td:first-child,.table-responsive>.table-bordered>tfoot>tr>th:first-child,.table-responsive>.table-bordered>tfoot>tr>td:first-child{border-left:0}.table-responsive>.table-bordered>thead>tr>th:last-child,.table-responsive>.table-bordered>thead>tr>td:last-child,.table-responsive>.table-bordered>tbody>tr>th:last-child,.table-responsive>.table-bordered>tbody>tr>td:last-child,.table-responsive>.table-bordered>tfoot>tr>th:last-child,.table-responsive>.table-bordered>tfoot>tr>td:last-child{border-right:0}.table-responsive>.table-bordered>tbody>tr:last-child>th,.table-responsive>.table-bordered>tbody>tr:last-child>td,.table-responsive>.table-bordered>tfoot>tr:last-child>th,.table-responsive>.table-bordered>tfoot>tr:last-child>td{border-bottom:0}}@media screen and (max-width:720px){#_default_{max-width:60%}#_default_ ._default_{font-size:.75rem;line-height:1rem;padding:12px 24px}}@media screen and (max-width:620px){#_default_{max-width:50%}#_default_ ._default_{font-size:.66rem;letter-spacing:1px;line-height:1rem;padding:10px 24px}}@media screen and (max-width:520px){#_default_ ._default_{font-size:.4rem;line-height:.875rem;padding:6px 12px 6px 24px;text-align:justify}}@media screen and (max-width:460px){#_default_{display:none}}@media screen and (max-width:46.1875em){.editor-header{display:none}.editor-header--first{display:block;width:100%}}</style></head><body id="preview">
+<h1 class="code-line" data-line-start=0 data-line-end=1 ><a id="TextTool__Complete_Mastery_Guide_0"></a>TextTool - Complete Mastery Guide</h1>
+<p class="has-line-data" data-line-start="1" data-line-end="2"><em>Advanced Text Manipulation Tool - Comprehensive Documentation</em></p>
+<h2 class="code-line" data-line-start=3 data-line-end=4 ><a id="Table_of_Contents_3"></a>Table of Contents</h2>
+<ol>
+<li class="has-line-data" data-line-start="4" data-line-end="5"><a href="#1-introduction--philosophy">Introduction &amp; Philosophy</a></li>
+<li class="has-line-data" data-line-start="5" data-line-end="6"><a href="#2-installation--first-run">Installation &amp; First Run</a></li>
+<li class="has-line-data" data-line-start="6" data-line-end="7"><a href="#3-core-concepts--architecture">Core Concepts &amp; Architecture</a></li>
+<li class="has-line-data" data-line-start="7" data-line-end="8"><a href="#4-complete-command-reference">Complete Command Reference</a></li>
+<li class="has-line-data" data-line-start="8" data-line-end="9"><a href="#5-live-view-deep-dive">Live View Deep Dive</a></li>
+<li class="has-line-data" data-line-start="9" data-line-end="10"><a href="#6-advanced-pattern-matching">Advanced Pattern Matching</a></li>
+<li class="has-line-data" data-line-start="10" data-line-end="11"><a href="#7-real-world-workflows">Real-World Workflows</a></li>
+<li class="has-line-data" data-line-start="11" data-line-end="12"><a href="#8-performance--optimization">Performance &amp; Optimization</a></li>
+<li class="has-line-data" data-line-start="12" data-line-end="13"><a href="#9-troubleshooting-master-guide">Troubleshooting Master Guide</a></li>
+<li class="has-line-data" data-line-start="13" data-line-end="15"><a href="#10-api--extension-guide">API &amp; Extension Guide</a></li>
+</ol>
+<hr>
+<h2 class="code-line" data-line-start=17 data-line-end=18 ><a id="1_Introduction__Philosophy_17"></a>1. Introduction &amp; Philosophy</h2>
+<h3 class="code-line" data-line-start=19 data-line-end=20 ><a id="11_What_is_TextTool_19"></a>1.1 What is TextTool?</h3>
+<p class="has-line-data" data-line-start="20" data-line-end="21">TextTool is a <strong>hybrid text processing environment</strong> that bridges the gap between command-line efficiency and visual editing. It’s designed for professionals who work with text data but need both the precision of scripting and the intuition of visual feedback.</p>
+<h3 class="code-line" data-line-start=22 data-line-end=23 ><a id="12_Design_Principles_22"></a>1.2 Design Principles</h3>
+<ul>
+<li class="has-line-data" data-line-start="23" data-line-end="24"><strong>Dual-Mode Operation</strong>: Every change is available via both CLI and GUI</li>
+<li class="has-line-data" data-line-start="24" data-line-end="25"><strong>Non-Destructive Workflow</strong>: Full revert capability at every step</li>
+<li class="has-line-data" data-line-start="25" data-line-end="26"><strong>Progressive Disclosure</strong>: Basic functions first, advanced features on demand</li>
+<li class="has-line-data" data-line-start="26" data-line-end="27"><strong>Context Awareness</strong>: Live View understands your current operation state</li>
+<li class="has-line-data" data-line-start="27" data-line-end="29"><strong>Extensibility</strong>: Plugin architecture for custom operations</li>
+</ul>
+<h3 class="code-line" data-line-start=29 data-line-end=30 ><a id="13_Target_Users_29"></a>1.3 Target Users</h3>
+<ul>
+<li class="has-line-data" data-line-start="30" data-line-end="31"><strong>Developers</strong>: Code refactoring, log analysis, data transformation</li>
+<li class="has-line-data" data-line-start="31" data-line-end="32"><strong>Data Analysts</strong>: Data cleaning, format conversion, pattern extraction</li>
+<li class="has-line-data" data-line-start="32" data-line-end="33"><strong>System Administrators</strong>: Log processing, configuration management</li>
+<li class="has-line-data" data-line-start="33" data-line-end="34"><strong>Content Editors</strong>: Bulk text manipulation, template processing</li>
+<li class="has-line-data" data-line-start="34" data-line-end="36"><strong>Researchers</strong>: Text mining, data extraction, pattern analysis</li>
+</ul>
+<h3 class="code-line" data-line-start=36 data-line-end=37 ><a id="14_Key_Differentiators_36"></a>1.4 Key Differentiators</h3>
+<ul>
+<li class="has-line-data" data-line-start="37" data-line-end="38"><strong>Real-time Sync</strong>: CLI commands instantly reflect in Live View and vice versa</li>
+<li class="has-line-data" data-line-start="38" data-line-end="39"><strong>Intelligent Selection</strong>: Context-aware selection with visual feedback</li>
+<li class="has-line-data" data-line-start="39" data-line-end="40"><strong>Multi-format Support</strong>: Text files, Excel, clipboard, and direct input</li>
+<li class="has-line-data" data-line-start="40" data-line-end="41"><strong>Session Persistence</strong>: Command history and state preserved across sessions</li>
+<li class="has-line-data" data-line-start="41" data-line-end="43"><strong>Professional Regex</strong>: Full PCRE-compatible regex with special placeholders</li>
+</ul>
+<hr>
+<h2 class="code-line" data-line-start=45 data-line-end=46 ><a id="2_Installation__First_Run_45"></a>2. Installation &amp; First Run</h2>
+<h3 class="code-line" data-line-start=47 data-line-end=48 ><a id="21_System_Requirements_47"></a>2.1 System Requirements</h3>
+<p class="has-line-data" data-line-start="48" data-line-end="49"><strong>Minimum:</strong></p>
+<ul>
+<li class="has-line-data" data-line-start="49" data-line-end="50">Windows 7+ (for clipboard integration) or Linux/macOS (basic functionality)</li>
+<li class="has-line-data" data-line-start="50" data-line-end="51">Python 3.6+</li>
+<li class="has-line-data" data-line-start="51" data-line-end="52">4GB RAM</li>
+<li class="has-line-data" data-line-start="52" data-line-end="54">100MB disk space</li>
+</ul>
+<p class="has-line-data" data-line-start="54" data-line-end="55"><strong>Recommended:</strong></p>
+<ul>
+<li class="has-line-data" data-line-start="55" data-line-end="56">Windows 10/11</li>
+<li class="has-line-data" data-line-start="56" data-line-end="57">Python 3.8+</li>
+<li class="has-line-data" data-line-start="57" data-line-end="58">8GB RAM</li>
+<li class="has-line-data" data-line-start="58" data-line-end="60">SSD storage</li>
+</ul>
+<h3 class="code-line" data-line-start=60 data-line-end=61 ><a id="22_Installation_Methods_60"></a>2.2 Installation Methods</h3>
+<h4 class="code-line" data-line-start=62 data-line-end=63 ><a id="Method_1_Direct_Python_Script_62"></a>Method 1: Direct Python Script</h4>
+<pre><code class="has-line-data" data-line-start="64" data-line-end="68" class="language-bash"><span class="hljs-comment"># Clone or download TextTool.py</span>
+python TextTool.py
+<span class="hljs-comment"># The script auto-installs dependencies on first run</span>
+</code></pre>
+<h4 class="code-line" data-line-start=69 data-line-end=70 ><a id="Method_2_Virtual_Environment_Recommended_69"></a>Method 2: Virtual Environment (Recommended)</h4>
+<pre><code class="has-line-data" data-line-start="71" data-line-end="79" class="language-bash"><span class="hljs-comment"># Create isolated environment</span>
+python -m venv texttool_env
+texttool_env\Scripts\activate  <span class="hljs-comment"># Windows</span>
+<span class="hljs-built_in">source</span> texttool_env/bin/activate  <span class="hljs-comment"># Linux/macOS</span>
+
+<span class="hljs-comment"># Run TextTool</span>
+python TextTool.py
+</code></pre>
+<h4 class="code-line" data-line-start=80 data-line-end=81 ><a id="Method_3_System_Integration_80"></a>Method 3: System Integration</h4>
+<pre><code class="has-line-data" data-line-start="82" data-line-end="88" class="language-bash"><span class="hljs-comment"># Make executable (Linux/macOS)</span>
+chmod +x TextTool.py
+
+<span class="hljs-comment"># Create desktop shortcut (Windows)</span>
+<span class="hljs-comment"># Create shortcut to TextTool.py with Python association</span>
+</code></pre>
+<h3 class="code-line" data-line-start=89 data-line-end=90 ><a id="23_First_Run_Configuration_89"></a>2.3 First Run Configuration</h3>
+<h4 class="code-line" data-line-start=91 data-line-end=92 ><a id="AutoInstallation_Process_91"></a>Auto-Installation Process</h4>
+<p class="has-line-data" data-line-start="92" data-line-end="93">On first execution, TextTool automatically:</p>
+<ol>
+<li class="has-line-data" data-line-start="93" data-line-end="94">Checks for required packages (<code>cmd2</code>, <code>regex</code>, <code>pandas</code>, <code>win32clipboard</code>)</li>
+<li class="has-line-data" data-line-start="94" data-line-end="95">Installs missing packages via pip</li>
+<li class="has-line-data" data-line-start="95" data-line-end="96">Creates configuration directory</li>
+<li class="has-line-data" data-line-start="96" data-line-end="98">Initializes command history file (<code>.text_tool_history.txt</code>)</li>
+</ol>
+<h4 class="code-line" data-line-start=98 data-line-end=99 ><a id="Manual_Dependency_Installation_98"></a>Manual Dependency Installation</h4>
+<pre><code class="has-line-data" data-line-start="100" data-line-end="102" class="language-bash">pip install cmd2 regex pandas pywin32
+</code></pre>
+<h3 class="code-line" data-line-start=103 data-line-end=104 ><a id="24_Startup_Options_103"></a>2.4 Startup Options</h3>
+<h4 class="code-line" data-line-start=105 data-line-end=106 ><a id="Command_Line_Arguments_105"></a>Command Line Arguments</h4>
+<pre><code class="has-line-data" data-line-start="107" data-line-end="116" class="language-bash"><span class="hljs-comment"># Load file directly</span>
+python TextTool.py <span class="hljs-string">"C:\data\file.txt"</span>
+
+<span class="hljs-comment"># Load from clipboard (if file path in clipboard)</span>
+python TextTool.py
+
+<span class="hljs-comment"># With specific encoding</span>
+python TextTool.py <span class="hljs-string">"file.txt"</span> --encoding utf-<span class="hljs-number">8</span>
+</code></pre>
+<h4 class="code-line" data-line-start=117 data-line-end=118 ><a id="Initialization_Sequence_117"></a>Initialization Sequence</h4>
+<ol>
+<li class="has-line-data" data-line-start="118" data-line-end="119"><strong>Dependency Check</strong>: Validate and install required packages</li>
+<li class="has-line-data" data-line-start="119" data-line-end="120"><strong>UI Setup</strong>: Initialize both CLI and Live View interfaces</li>
+<li class="has-line-data" data-line-start="120" data-line-end="121"><strong>File Loading</strong>: Process command-line file argument if provided</li>
+<li class="has-line-data" data-line-start="121" data-line-end="122"><strong>Session Restoration</strong>: Load command history and previous state</li>
+<li class="has-line-data" data-line-start="122" data-line-end="124"><strong>Ready State</strong>: Display welcome message and prompt</li>
+</ol>
+<hr>
+<h2 class="code-line" data-line-start=126 data-line-end=127 ><a id="3_Core_Concepts__Architecture_126"></a>3. Core Concepts &amp; Architecture</h2>
+<h3 class="code-line" data-line-start=128 data-line-end=129 ><a id="31_Dual_Interface_Architecture_128"></a>3.1 Dual Interface Architecture</h3>
+<h4 class="code-line" data-line-start=130 data-line-end=131 ><a id="Command_Line_Interface_CLI_130"></a>Command Line Interface (CLI)</h4>
+<ul>
+<li class="has-line-data" data-line-start="131" data-line-end="132"><strong>Foundation</strong>: Built on <code>cmd2</code> framework for robust CLI experience</li>
+<li class="has-line-data" data-line-start="132" data-line-end="133"><strong>Persistent History</strong>: All commands saved in <code>.text_tool_history.txt</code></li>
+<li class="has-line-data" data-line-start="133" data-line-end="134"><strong>Tab Completion</strong>: Intelligent auto-completion for commands and file paths</li>
+<li class="has-line-data" data-line-start="134" data-line-end="136"><strong>Help System</strong>: Integrated <code>?</code> help for every command</li>
+</ul>
+<h4 class="code-line" data-line-start=136 data-line-end=137 ><a id="Live_View_Interface_136"></a>Live View Interface</h4>
+<ul>
+<li class="has-line-data" data-line-start="137" data-line-end="138"><strong>Real-time Display</strong>: Tkinter-based graphical text display</li>
+<li class="has-line-data" data-line-start="138" data-line-end="139"><strong>Bidirectional Sync</strong>: Changes in CLI update Live View, edits in Live View sync to CLI</li>
+<li class="has-line-data" data-line-start="139" data-line-end="140"><strong>Visual Tools</strong>: Search, replace, selection tools with highlighting</li>
+<li class="has-line-data" data-line-start="140" data-line-end="142"><strong>Context Awareness</strong>: Understands current operation state and selection</li>
+</ul>
+<h3 class="code-line" data-line-start=142 data-line-end=143 ><a id="32_Data_Flow_Model_142"></a>3.2 Data Flow Model</h3>
+<pre><code class="has-line-data" data-line-start="145" data-line-end="153">[Input Sources]
+    ↓
+[Text Buffer] ←→ [Live View Display]
+    ↓
+[Command Processor]
+    ↓
+[Output Targets]
+</code></pre>
+<h4 class="code-line" data-line-start=154 data-line-end=155 ><a id="Text_Buffer_States_154"></a>Text Buffer States</h4>
+<ul>
+<li class="has-line-data" data-line-start="155" data-line-end="156"><strong>original_full_text</strong>: Initial loaded content for full restoration</li>
+<li class="has-line-data" data-line-start="156" data-line-end="157"><strong>current_lines</strong>: Active working text (list of lines)</li>
+<li class="has-line-data" data-line-start="157" data-line-end="158"><strong>previous_lines</strong>: Previous state for revert operation</li>
+<li class="has-line-data" data-line-start="158" data-line-end="160"><strong>selected_indices</strong>: Track selected lines for unselect functionality</li>
+</ul>
+<h3 class="code-line" data-line-start=160 data-line-end=161 ><a id="33_Memory_Management_160"></a>3.3 Memory Management</h3>
+<h4 class="code-line" data-line-start=162 data-line-end=163 ><a id="Large_File_Handling_162"></a>Large File Handling</h4>
+<pre><code class="has-line-data" data-line-start="164" data-line-end="167" class="language-python"><span class="hljs-comment"># TextTool uses line-based processing for memory efficiency</span>
+self.current_lines = [line1, line2, ...]  <span class="hljs-comment"># List of strings</span>
+</code></pre>
+<h4 class="code-line" data-line-start=168 data-line-end=169 ><a id="Optimization_Strategies_168"></a>Optimization Strategies</h4>
+<ul>
+<li class="has-line-data" data-line-start="169" data-line-end="170"><strong>Lazy Loading</strong>: File content loaded on demand</li>
+<li class="has-line-data" data-line-start="170" data-line-end="171"><strong>Incremental Processing</strong>: Operations applied line-by-line</li>
+<li class="has-line-data" data-line-start="171" data-line-end="172"><strong>Garbage Collection</strong>: Automatic cleanup of previous states</li>
+<li class="has-line-data" data-line-start="172" data-line-end="174"><strong>Highlight Control</strong>: <code>highlight_toggle</code> for large files</li>
+</ul>
+<h3 class="code-line" data-line-start=174 data-line-end=175 ><a id="34_Session_Management_174"></a>3.4 Session Management</h3>
+<h4 class="code-line" data-line-start=176 data-line-end=177 ><a id="Persistent_State_176"></a>Persistent State</h4>
+<ul>
+<li class="has-line-data" data-line-start="177" data-line-end="178"><strong>Command History</strong>: All executed commands saved automatically</li>
+<li class="has-line-data" data-line-start="178" data-line-end="179"><strong>File Path Memory</strong>: Original file path remembered for save operations</li>
+<li class="has-line-data" data-line-start="179" data-line-end="180"><strong>UI State</strong>: Window position and size preserved</li>
+<li class="has-line-data" data-line-start="180" data-line-end="182"><strong>Mode Settings</strong>: Advanced/Standard mode persistence</li>
+</ul>
+<hr>
+<h2 class="code-line" data-line-start=184 data-line-end=185 ><a id="4_Complete_Command_Reference_184"></a>4. Complete Command Reference</h2>
+<h3 class="code-line" data-line-start=186 data-line-end=187 ><a id="41_Core_Operations_186"></a>4.1 Core Operations</h3>
+<h4 class="code-line" data-line-start=188 data-line-end=189 ><a id="load__Content_Loading_188"></a><code>load</code> - Content Loading</h4>
+<p class="has-line-data" data-line-start="189" data-line-end="190"><strong>Purpose</strong>: Import text from various sources</p>
+<p class="has-line-data" data-line-start="191" data-line-end="192"><strong>Full Syntax:</strong></p>
+<pre><code class="has-line-data" data-line-start="193" data-line-end="195" class="language-bash">load [file_path] [--encoding ENCODING]
+</code></pre>
+<p class="has-line-data" data-line-start="196" data-line-end="197"><strong>Parameters:</strong></p>
+<ul>
+<li class="has-line-data" data-line-start="197" data-line-end="198"><code>file_path</code>: Path to text file (optional)</li>
+<li class="has-line-data" data-line-start="198" data-line-end="200"><code>--encoding</code>: Force specific encoding (utf-8, latin-1, etc.)</li>
+</ul>
+<p class="has-line-data" data-line-start="200" data-line-end="201"><strong>Behavior:</strong></p>
+<ul>
+<li class="has-line-data" data-line-start="201" data-line-end="202"><strong>No arguments</strong>: Load from system clipboard</li>
+<li class="has-line-data" data-line-start="202" data-line-end="203"><strong>File path</strong>: Load specified file with auto-encoding detection</li>
+<li class="has-line-data" data-line-start="203" data-line-end="205"><strong>Clipboard fallback</strong>: If clipboard empty, check for file paths in clipboard</li>
+</ul>
+<p class="has-line-data" data-line-start="205" data-line-end="206"><strong>Examples:</strong></p>
+<pre><code class="has-line-data" data-line-start="207" data-line-end="220" class="language-bash"><span class="hljs-comment"># Basic file loading</span>
+load <span class="hljs-string">"C:\data\logs\app.log"</span>
+load <span class="hljs-string">"../relative/path/file.txt"</span>
+load <span class="hljs-string">"file with spaces.txt"</span>
+
+<span class="hljs-comment"># Clipboard operations</span>
+load  <span class="hljs-comment"># Load text from clipboard</span>
+load  <span class="hljs-comment"># If text selected in file explorer, load that file</span>
+
+<span class="hljs-comment"># Encoding specification</span>
+load <span class="hljs-string">"file.txt"</span> --encoding utf-<span class="hljs-number">8</span>
+load <span class="hljs-string">"legacy_file.txt"</span> --encoding latin-<span class="hljs-number">1</span>
+</code></pre>
+<p class="has-line-data" data-line-start="221" data-line-end="222"><strong>Technical Details:</strong></p>
+<ul>
+<li class="has-line-data" data-line-start="222" data-line-end="223">Encoding detection: UTF-8 → Latin-1 fallback</li>
+<li class="has-line-data" data-line-start="223" data-line-end="224">Line ending normalization: <code>\r\n</code> → <code>\n</code></li>
+<li class="has-line-data" data-line-start="224" data-line-end="225">Memory mapping for large files</li>
+<li class="has-line-data" data-line-start="225" data-line-end="227">Automatic directory creation for save paths</li>
+</ul>
+<h4 class="code-line" data-line-start=227 data-line-end=228 ><a id="show__Content_Display_227"></a><code>show</code> - Content Display</h4>
+<p class="has-line-data" data-line-start="228" data-line-end="229"><strong>Purpose</strong>: Filter and display text with various criteria</p>
+<p class="has-line-data" data-line-start="230" data-line-end="231"><strong>Full Syntax:</strong></p>
+<pre><code class="has-line-data" data-line-start="232" data-line-end="234" class="language-bash">show [pattern] [&gt; output_target]
+</code></pre>
+<p class="has-line-data" data-line-start="235" data-line-end="236"><strong>Parameters:</strong></p>
+<ul>
+<li class="has-line-data" data-line-start="236" data-line-end="237"><code>pattern</code>: String or regex pattern to filter lines</li>
+<li class="has-line-data" data-line-start="237" data-line-end="239"><code>&gt; output_target</code>: Redirect output to file or clipboard</li>
+</ul>
+<p class="has-line-data" data-line-start="239" data-line-end="240"><strong>Pattern Types:</strong></p>
+<ul>
+<li class="has-line-data" data-line-start="240" data-line-end="241"><strong>Simple string</strong>: <code>show &quot;error&quot;</code></li>
+<li class="has-line-data" data-line-start="241" data-line-end="242"><strong>Regex pattern</strong>: <code>show &quot;^ERROR.*FAILED$&quot;</code></li>
+<li class="has-line-data" data-line-start="242" data-line-end="243"><strong>Multiple patterns</strong>: <code>show &quot;error OR warning OR critical&quot;</code></li>
+<li class="has-line-data" data-line-start="243" data-line-end="245"><strong>Negation</strong>: <code>show &quot;!debug&quot;</code> (must use with other patterns)</li>
+</ul>
+<p class="has-line-data" data-line-start="245" data-line-end="246"><strong>Output Redirection:</strong></p>
+<pre><code class="has-line-data" data-line-start="247" data-line-end="251" class="language-bash">show <span class="hljs-string">"error"</span> &gt; <span class="hljs-string">"errors.txt"</span>    <span class="hljs-comment"># Save to file</span>
+show <span class="hljs-string">"warning"</span> &gt;              <span class="hljs-comment"># Copy to clipboard</span>
+show &gt; <span class="hljs-string">"all_content.txt"</span>      <span class="hljs-comment"># Save all content</span>
+</code></pre>
+<p class="has-line-data" data-line-start="252" data-line-end="253"><strong>Advanced Examples:</strong></p>
+<pre><code class="has-line-data" data-line-start="254" data-line-end="262" class="language-bash"><span class="hljs-comment"># Complex pattern matching</span>
+show <span class="hljs-string">"error.*database OR warning.*memory"</span>
+show <span class="hljs-string">"(ERROR|FATAL).*[0-9]{4}"</span>
+show <span class="hljs-string">"!DEBUG.*!TEST"</span>  <span class="hljs-comment"># Exclude debug and test lines</span>
+
+<span class="hljs-comment"># Combined operations</span>
+show <span class="hljs-string">"error"</span> &gt; | select <span class="hljs-string">"2023"</span> | show <span class="hljs-string">"database"</span>
+</code></pre>
+<h4 class="code-line" data-line-start=263 data-line-end=264 ><a id="select__Line_Filtering_263"></a><code>select</code> - Line Filtering</h4>
+<p class="has-line-data" data-line-start="264" data-line-end="265"><strong>Purpose</strong>: Permanently filter lines based on criteria</p>
+<p class="has-line-data" data-line-start="266" data-line-end="267"><strong>Full Syntax:</strong></p>
+<pre><code class="has-line-data" data-line-start="268" data-line-end="270" class="language-bash">select &lt;pattern&gt; [<span class="hljs-keyword">case</span>_sensitive] [inverse]
+</code></pre>
+<p class="has-line-data" data-line-start="271" data-line-end="272"><strong>Special Placeholders:</strong></p>
+<ul>
+<li class="has-line-data" data-line-start="272" data-line-end="273"><code>[pipe]</code> = <code>|</code></li>
+<li class="has-line-data" data-line-start="273" data-line-end="274"><code>[doublequote]</code> = <code>&quot;</code></li>
+<li class="has-line-data" data-line-start="274" data-line-end="275"><code>[quote]</code> = <code>'</code></li>
+<li class="has-line-data" data-line-start="275" data-line-end="276"><code>[tab]</code> = tab character</li>
+<li class="has-line-data" data-line-start="276" data-line-end="278"><code>[spaces]</code> = one or more whitespace characters</li>
+</ul>
+<p class="has-line-data" data-line-start="278" data-line-end="279"><strong>Examples:</strong></p>
+<pre><code class="has-line-data" data-line-start="280" data-line-end="298" class="language-bash"><span class="hljs-comment"># Basic selection</span>
+select <span class="hljs-string">"error"</span>
+select <span class="hljs-string">"error OR warning"</span>
+select <span class="hljs-string">"!debug"</span>  <span class="hljs-comment"># Exclude debug lines</span>
+
+<span class="hljs-comment"># Case handling</span>
+select <span class="hljs-string">"Error"</span> <span class="hljs-keyword">case</span>_sensitive
+select <span class="hljs-string">"ERROR"</span>  <span class="hljs-comment"># case insensitive by default</span>
+
+<span class="hljs-comment"># Complex patterns with placeholders</span>
+select <span class="hljs-string">"config[spaces]=[spaces]"</span>
+select <span class="hljs-string">"name[doublequote]"</span>
+select <span class="hljs-string">"column[tab]value"</span>
+
+<span class="hljs-comment"># Regex patterns</span>
+select <span class="hljs-string">"^[A-Z].*[.!]$"</span>  <span class="hljs-comment"># Complete sentences</span>
+select <span class="hljs-string">"\d{3}-\d{2}-\d{4}"</span>  <span class="hljs-comment"># Social security numbers</span>
+</code></pre>
+<h4 class="code-line" data-line-start=299 data-line-end=300 ><a id="replace__Text_Transformation_299"></a><code>replace</code> - Text Transformation</h4>
+<p class="has-line-data" data-line-start="300" data-line-end="301"><strong>Purpose</strong>: Find and replace text with regex support</p>
+<p class="has-line-data" data-line-start="302" data-line-end="303"><strong>Full Syntax:</strong></p>
+<pre><code class="has-line-data" data-line-start="304" data-line-end="306" class="language-bash">replace <span class="hljs-string">"search_pattern"</span> <span class="hljs-string">"replacement"</span> [<span class="hljs-keyword">case</span>_sensitive] [regex_flags]
+</code></pre>
+<p class="has-line-data" data-line-start="307" data-line-end="308"><strong>Replacement Special Sequences:</strong></p>
+<ul>
+<li class="has-line-data" data-line-start="308" data-line-end="309"><code>\1</code>, <code>\2</code>, … - Capture group references</li>
+<li class="has-line-data" data-line-start="309" data-line-end="310"><code>\0</code> - Entire matched text</li>
+<li class="has-line-data" data-line-start="310" data-line-end="311"><code>\n</code> - Newline in replacement</li>
+<li class="has-line-data" data-line-start="311" data-line-end="313"><code>\t</code> - Tab in replacement</li>
+</ul>
+<p class="has-line-data" data-line-start="313" data-line-end="314"><strong>Examples:</strong></p>
+<pre><code class="has-line-data" data-line-start="315" data-line-end="332" class="language-bash"><span class="hljs-comment"># Simple replacement</span>
+replace <span class="hljs-string">"cat"</span> <span class="hljs-string">"dog"</span>
+replace <span class="hljs-string">"colour"</span> <span class="hljs-string">"color"</span>
+
+<span class="hljs-comment"># Regex with capture groups</span>
+replace <span class="hljs-string">"(\d{2})-(\d{2})-(\d{4})"</span> <span class="hljs-string">"\3/\2/\1"</span>
+replace <span class="hljs-string">"Mr\. (\w+)"</span> <span class="hljs-string">"Dear \1"</span>
+replace <span class="hljs-string">"(\w+)=(\w+)"</span> <span class="hljs-string">"setting:\1 value:\2"</span>
+
+<span class="hljs-comment"># Complex transformations</span>
+replace <span class="hljs-string">".*(error|warning).*"</span> <span class="hljs-string">"ALERT: \1"</span>
+replace <span class="hljs-string">"(\d+),(\d+)"</span> <span class="hljs-string">"\1.\2"</span>  <span class="hljs-comment"># Comma to decimal</span>
+
+<span class="hljs-comment"># Using \0 for wrapping</span>
+replace <span class="hljs-string">"error"</span> <span class="hljs-string">"[ERROR: \0]"</span>
+replace <span class="hljs-string">"\d+"</span> <span class="hljs-string">"NUMBER(\0)"</span>
+</code></pre>
+<h3 class="code-line" data-line-start=333 data-line-end=334 ><a id="42_File_Operations_333"></a>4.2 File Operations</h3>
+<h4 class="code-line" data-line-start=335 data-line-end=336 ><a id="save__Content_Persistence_335"></a><code>save</code> - Content Persistence</h4>
+<p class="has-line-data" data-line-start="336" data-line-end="337"><strong>Purpose</strong>: Save current text to file system</p>
+<p class="has-line-data" data-line-start="338" data-line-end="339"><strong>Full Syntax:</strong></p>
+<pre><code class="has-line-data" data-line-start="340" data-line-end="342" class="language-bash">save [file_path] [--backup] [--append]
+</code></pre>
+<p class="has-line-data" data-line-start="343" data-line-end="344"><strong>Behavior:</strong></p>
+<ul>
+<li class="has-line-data" data-line-start="344" data-line-end="345"><strong>No arguments</strong>: Overwrite original loaded file</li>
+<li class="has-line-data" data-line-start="345" data-line-end="346"><strong>With path</strong>: Save to new location</li>
+<li class="has-line-data" data-line-start="346" data-line-end="348"><strong>Auto-directory</strong>: Creates parent directories if needed</li>
+</ul>
+<p class="has-line-data" data-line-start="348" data-line-end="349"><strong>Examples:</strong></p>
+<pre><code class="has-line-data" data-line-start="350" data-line-end="359" class="language-bash"><span class="hljs-comment"># Basic save operations</span>
+save                    <span class="hljs-comment"># Overwrite original</span>
+save <span class="hljs-string">"output.txt"</span>       <span class="hljs-comment"># Save to new file</span>
+save <span class="hljs-string">"../backup/data.log"</span>  <span class="hljs-comment"># Save with path</span>
+
+<span class="hljs-comment"># Advanced options</span>
+save <span class="hljs-string">"output.txt"</span> --backup  <span class="hljs-comment"># Create backup of original</span>
+save <span class="hljs-string">"log.txt"</span> --append     <span class="hljs-comment"># Append to existing file</span>
+</code></pre>
+<h3 class="code-line" data-line-start=360 data-line-end=361 ><a id="43_History__State_Management_360"></a>4.3 History &amp; State Management</h3>
+<h4 class="code-line" data-line-start=362 data-line-end=363 ><a id="revert__Undo_Operation_362"></a><code>revert</code> - Undo Operation</h4>
+<p class="has-line-data" data-line-start="363" data-line-end="364"><strong>Purpose</strong>: Restore previous state</p>
+<p class="has-line-data" data-line-start="365" data-line-end="366"><strong>Behavior:</strong></p>
+<ul>
+<li class="has-line-data" data-line-start="366" data-line-end="367">Single-level undo for most operations</li>
+<li class="has-line-data" data-line-start="367" data-line-end="368">Preserves all changes before last operation</li>
+<li class="has-line-data" data-line-start="368" data-line-end="370">Works with: <code>replace</code>, <code>select</code>, <code>delete</code>, <code>sort</code>, <code>unique</code></li>
+</ul>
+<p class="has-line-data" data-line-start="370" data-line-end="371"><strong>Usage:</strong></p>
+<pre><code class="has-line-data" data-line-start="372" data-line-end="377" class="language-bash"><span class="hljs-comment"># After making changes</span>
+replace <span class="hljs-string">"old"</span> <span class="hljs-string">"new"</span>
+show  <span class="hljs-comment"># Verify changes</span>
+revert  <span class="hljs-comment"># Undo the replacement</span>
+</code></pre>
+<h4 class="code-line" data-line-start=378 data-line-end=379 ><a id="unselect__Selection_Reversion_378"></a><code>unselect</code> - Selection Reversion</h4>
+<p class="has-line-data" data-line-start="379" data-line-end="380"><strong>Purpose</strong>: Restore full text while keeping modifications to selected lines</p>
+<p class="has-line-data" data-line-start="381" data-line-end="382"><strong>Technical Details:</strong></p>
+<ul>
+<li class="has-line-data" data-line-start="382" data-line-end="383">Maintains <code>selected_indices</code> tracking</li>
+<li class="has-line-data" data-line-start="383" data-line-end="384">Reapplies modifications to original full text</li>
+<li class="has-line-data" data-line-start="384" data-line-end="386">Different from <code>revert</code> - preserves changes but restores context</li>
+</ul>
+<p class="has-line-data" data-line-start="386" data-line-end="387"><strong>Usage:</strong></p>
+<pre><code class="has-line-data" data-line-start="388" data-line-end="392" class="language-bash">select <span class="hljs-string">"error"</span>
+replace <span class="hljs-string">"error"</span> <span class="hljs-string">"RESOLVED"</span>
+unselect  <span class="hljs-comment"># Show all lines with errors marked as RESOLVED</span>
+</code></pre>
+<h3 class="code-line" data-line-start=393 data-line-end=394 ><a id="44_Advanced_Operations_Enable_with_advanced_393"></a>4.4 Advanced Operations (Enable with <code>advanced</code>)</h3>
+<h4 class="code-line" data-line-start=395 data-line-end=396 ><a id="bulk_replace__Batch_Processing_395"></a><code>bulk_replace</code> - Batch Processing</h4>
+<p class="has-line-data" data-line-start="396" data-line-end="397"><strong>Purpose</strong>: Multiple replacements from mapping file</p>
+<p class="has-line-data" data-line-start="398" data-line-end="399"><strong>Supported Formats:</strong></p>
+<ul>
+<li class="has-line-data" data-line-start="399" data-line-end="400"><strong>Text files</strong>: Tab, space, or custom separated</li>
+<li class="has-line-data" data-line-start="400" data-line-end="401"><strong>Excel files</strong>: First two columns (search→replace)</li>
+<li class="has-line-data" data-line-start="401" data-line-end="403"><strong>Clipboard</strong>: Space-separated key-value pairs</li>
+</ul>
+<p class="has-line-data" data-line-start="403" data-line-end="404"><strong>Examples:</strong></p>
+<pre><code class="has-line-data" data-line-start="405" data-line-end="417" class="language-bash"><span class="hljs-comment"># Text file with tab separation</span>
+bulk_replace <span class="hljs-string">"replacements.txt"</span> tab
+
+<span class="hljs-comment"># Excel file mapping</span>
+bulk_replace <span class="hljs-string">"mapping.xlsx"</span>
+
+<span class="hljs-comment"># Clipboard content (format: "old1 new1 old2 new2")</span>
+bulk_replace
+
+<span class="hljs-comment"># With case sensitivity</span>
+bulk_replace <span class="hljs-string">"mapping.txt"</span> space <span class="hljs-keyword">case</span>_sensitive
+</code></pre>
+<p class="has-line-data" data-line-start="418" data-line-end="419"><strong>Mapping File Formats:</strong></p>
+<pre><code class="has-line-data" data-line-start="420" data-line-end="430"># replacements.txt (tab separated)
+old_text1    new_text1
+old_text2    new_text2
+&quot;quoted text&quot;    &quot;replacement&quot;
+
+# Excel file (columns A and B)
+A           B
+&quot;find1&quot;     &quot;replace1&quot;
+&quot;find2&quot;     &quot;replace2&quot;
+</code></pre>
+<h4 class="code-line" data-line-start=431 data-line-end=432 ><a id="extract_between__Delimited_Extraction_431"></a><code>extract_between</code> - Delimited Extraction</h4>
+<p class="has-line-data" data-line-start="432" data-line-end="433"><strong>Purpose</strong>: Extract text between start and end patterns</p>
+<p class="has-line-data" data-line-start="434" data-line-end="435"><strong>Full Syntax:</strong></p>
+<pre><code class="has-line-data" data-line-start="436" data-line-end="438" class="language-bash">extract_between <span class="hljs-string">"start_pattern"</span> <span class="hljs-string">"end_pattern"</span> [<span class="hljs-keyword">case</span>_sensitive] [inclusive]
+</code></pre>
+<p class="has-line-data" data-line-start="439" data-line-end="440"><strong>Examples:</strong></p>
+<pre><code class="has-line-data" data-line-start="441" data-line-end="455" class="language-bash"><span class="hljs-comment"># HTML/XML extraction</span>
+extract_between <span class="hljs-string">"&lt;div&gt;"</span> <span class="hljs-string">"&lt;/div&gt;"</span>
+extract_between <span class="hljs-string">"&lt;!--"</span> <span class="hljs-string">"--&gt;"</span>
+extract_between <span class="hljs-string">"&lt;![CDATA["</span> <span class="hljs-string">"]]&gt;"</span>
+
+<span class="hljs-comment"># Code block extraction</span>
+extract_between <span class="hljs-string">"function "</span> <span class="hljs-string">"end"</span>
+extract_between <span class="hljs-string">"if "</span> <span class="hljs-string">"fi"</span>
+extract_between <span class="hljs-string">"{"</span> <span class="hljs-string">"}"</span>
+
+<span class="hljs-comment"># Log section extraction</span>
+extract_between <span class="hljs-string">"=== START ==="</span> <span class="hljs-string">"=== END ==="</span>
+extract_between <span class="hljs-string">"BEGIN_TRANSACTION"</span> <span class="hljs-string">"END_TRANSACTION"</span>
+</code></pre>
+<h4 class="code-line" data-line-start=456 data-line-end=457 ><a id="conditional_replace__ContextAware_Replacement_456"></a><code>conditional_replace</code> - Context-Aware Replacement</h4>
+<p class="has-line-data" data-line-start="457" data-line-end="458"><strong>Purpose</strong>: Replace only in lines matching specific criteria</p>
+<p class="has-line-data" data-line-start="459" data-line-end="460"><strong>Full Syntax:</strong></p>
+<pre><code class="has-line-data" data-line-start="461" data-line-end="463" class="language-bash">conditional_replace <span class="hljs-string">"search"</span> <span class="hljs-string">"replace"</span> <span class="hljs-string">"target_pattern"</span> [<span class="hljs-keyword">case</span>_sensitive]
+</code></pre>
+<p class="has-line-data" data-line-start="464" data-line-end="465"><strong>Examples:</strong></p>
+<pre><code class="has-line-data" data-line-start="466" data-line-end="475" class="language-bash"><span class="hljs-comment"># Only replace in error lines</span>
+conditional_replace <span class="hljs-string">"database"</span> <span class="hljs-string">"DATABASE"</span> <span class="hljs-string">"ERROR"</span>
+
+<span class="hljs-comment"># Case-sensitive conditional replacement</span>
+conditional_replace <span class="hljs-string">"config"</span> <span class="hljs-string">"CONFIG"</span> <span class="hljs-string">"\[settings\]"</span> <span class="hljs-keyword">case</span>_sensitive
+
+<span class="hljs-comment"># Multiple conditions</span>
+conditional_replace <span class="hljs-string">"temp"</span> <span class="hljs-string">"temporary"</span> <span class="hljs-string">"error|warning"</span>
+</code></pre>
+<h3 class="code-line" data-line-start=476 data-line-end=477 ><a id="45_Analysis__Inspection_476"></a>4.5 Analysis &amp; Inspection</h3>
+<h4 class="code-line" data-line-start=478 data-line-end=479 ><a id="count__Pattern_Counting_478"></a><code>count</code> - Pattern Counting</h4>
+<p class="has-line-data" data-line-start="479" data-line-end="480"><strong>Purpose</strong>: Count lines matching patterns</p>
+<p class="has-line-data" data-line-start="481" data-line-end="482"><strong>Examples:</strong></p>
+<pre><code class="has-line-data" data-line-start="483" data-line-end="488" class="language-bash">count <span class="hljs-string">"error"</span>
+count <span class="hljs-string">"^[A-Z]"</span>
+count <span class="hljs-string">"\d+"</span>
+count <span class="hljs-string">"!^$"</span>  <span class="hljs-comment"># Count non-empty lines</span>
+</code></pre>
+<h4 class="code-line" data-line-start=489 data-line-end=490 ><a id="find_duplicates__Duplicate_Detection_489"></a><code>find_duplicates</code> - Duplicate Detection</h4>
+<p class="has-line-data" data-line-start="490" data-line-end="491"><strong>Purpose</strong>: Find and analyze duplicate lines</p>
+<p class="has-line-data" data-line-start="492" data-line-end="493"><strong>Output:</strong></p>
+<ul>
+<li class="has-line-data" data-line-start="493" data-line-end="494">Lists duplicate lines with occurrence counts</li>
+<li class="has-line-data" data-line-start="494" data-line-end="496">Option to remove or keep duplicates</li>
+</ul>
+<p class="has-line-data" data-line-start="496" data-line-end="497"><strong>Usage:</strong></p>
+<pre><code class="has-line-data" data-line-start="498" data-line-end="502" class="language-bash">find_duplicates
+find_duplicates --keep-first
+find_duplicates --min-count <span class="hljs-number">2</span>
+</code></pre>
+<h3 class="code-line" data-line-start=503 data-line-end=504 ><a id="46_Text_Transformation_503"></a>4.6 Text Transformation</h3>
+<h4 class="code-line" data-line-start=505 data-line-end=506 ><a id="convert_case__Case_Conversion_505"></a><code>convert_case</code> - Case Conversion</h4>
+<p class="has-line-data" data-line-start="506" data-line-end="507"><strong>Purpose</strong>: Change text casing</p>
+<p class="has-line-data" data-line-start="508" data-line-end="509"><strong>Options:</strong></p>
+<ul>
+<li class="has-line-data" data-line-start="509" data-line-end="510"><code>upper</code>: Convert to UPPERCASE</li>
+<li class="has-line-data" data-line-start="510" data-line-end="511"><code>lower</code>: Convert to lowercase</li>
+<li class="has-line-data" data-line-start="511" data-line-end="512"><code>title</code>: Convert to Title Case</li>
+<li class="has-line-data" data-line-start="512" data-line-end="514"><code>sentence</code>: Convert to Sentence case</li>
+</ul>
+<p class="has-line-data" data-line-start="514" data-line-end="515"><strong>Examples:</strong></p>
+<pre><code class="has-line-data" data-line-start="516" data-line-end="520" class="language-bash">convert_<span class="hljs-keyword">case</span> upper
+convert_<span class="hljs-keyword">case</span> lower
+convert_<span class="hljs-keyword">case</span> title
+</code></pre>
+<h4 class="code-line" data-line-start=521 data-line-end=522 ><a id="sort__unique__Organization_521"></a><code>sort</code> / <code>unique</code> - Organization</h4>
+<p class="has-line-data" data-line-start="522" data-line-end="523"><strong>Purpose</strong>: Sort lines and remove duplicates</p>
+<p class="has-line-data" data-line-start="524" data-line-end="525"><strong>Usage:</strong></p>
+<pre><code class="has-line-data" data-line-start="526" data-line-end="530" class="language-bash">sort
+unique
+sort | unique  <span class="hljs-comment"># Combination</span>
+</code></pre>
+<h4 class="code-line" data-line-start=531 data-line-end=532 ><a id="trim_whitespace__Cleanup_531"></a><code>trim_whitespace</code> - Cleanup</h4>
+<p class="has-line-data" data-line-start="532" data-line-end="533"><strong>Purpose</strong>: Remove leading/trailing whitespace</p>
+<p class="has-line-data" data-line-start="534" data-line-end="535"><strong>Affects:</strong> Spaces, tabs, and other whitespace characters</p>
+<hr>
+<h2 class="code-line" data-line-start=538 data-line-end=539 ><a id="5_Live_View_Deep_Dive_538"></a>5. Live View Deep Dive</h2>
+<h3 class="code-line" data-line-start=540 data-line-end=541 ><a id="51_Interface_Components_540"></a>5.1 Interface Components</h3>
+<h4 class="code-line" data-line-start=542 data-line-end=543 ><a id="Main_Text_Area_542"></a>Main Text Area</h4>
+<ul>
+<li class="has-line-data" data-line-start="543" data-line-end="544"><strong>Syntax-aware editing</strong>: Basic text editing with syntax awareness</li>
+<li class="has-line-data" data-line-start="544" data-line-end="545"><strong>Line numbers</strong>: Visual line reference</li>
+<li class="has-line-data" data-line-start="545" data-line-end="546"><strong>Selection highlighting</strong>: Visual feedback for selected text</li>
+<li class="has-line-data" data-line-start="546" data-line-end="548"><strong>Search highlighting</strong>: Matches highlighted in yellow/orange</li>
+</ul>
+<h4 class="code-line" data-line-start=548 data-line-end=549 ><a id="Toolbar_Components_548"></a>Toolbar Components</h4>
+<ul>
+<li class="has-line-data" data-line-start="549" data-line-end="550"><strong>File Operations</strong>: Load, Save, Save As buttons</li>
+<li class="has-line-data" data-line-start="550" data-line-end="551"><strong>Search Frame</strong>: Find with regex and case options</li>
+<li class="has-line-data" data-line-start="551" data-line-end="552"><strong>Command Palette</strong>: Access to all commands</li>
+<li class="has-line-data" data-line-start="552" data-line-end="554"><strong>Replacement Dialog</strong>: Smart replace interface</li>
+</ul>
+<h4 class="code-line" data-line-start=554 data-line-end=555 ><a id="Status_Bar_554"></a>Status Bar</h4>
+<ul>
+<li class="has-line-data" data-line-start="555" data-line-end="556"><strong>Line/Column</strong>: Current cursor position</li>
+<li class="has-line-data" data-line-start="556" data-line-end="557"><strong>File Path</strong>: Current file location</li>
+<li class="has-line-data" data-line-start="557" data-line-end="558"><strong>Match Counter</strong>: Search results count</li>
+<li class="has-line-data" data-line-start="558" data-line-end="560"><strong>Status Messages</strong>: Operation feedback</li>
+</ul>
+<h3 class="code-line" data-line-start=560 data-line-end=561 ><a id="52_Interactive_Features_560"></a>5.2 Interactive Features</h3>
+<h4 class="code-line" data-line-start=562 data-line-end=563 ><a id="Context_Menu_RightClick_562"></a>Context Menu (Right-Click)</h4>
+<pre><code class="has-line-data" data-line-start="564" data-line-end="575" class="language-python"><span class="hljs-comment"># Available options based on selection state</span>
+- Copy Selection
+- Paste at Cursor  
+- Select Indented
+- Clone Selection...
+- Replace <span class="hljs-keyword">in</span> Selection...
+- Remove Empty Lines <span class="hljs-keyword">in</span> Selection
+- Trim Whitespace <span class="hljs-keyword">in</span> Selection
+- Find...
+- Select All
+</code></pre>
+<h4 class="code-line" data-line-start=576 data-line-end=577 ><a id="Search__Navigation_576"></a>Search &amp; Navigation</h4>
+<ul>
+<li class="has-line-data" data-line-start="577" data-line-end="578"><strong>Ctrl+F</strong>: Toggle search bar</li>
+<li class="has-line-data" data-line-start="578" data-line-end="579"><strong>F3/Shift+F3</strong>: Next/previous match</li>
+<li class="has-line-data" data-line-start="579" data-line-end="580"><strong>Whole Word</strong>: Exact word matching</li>
+<li class="has-line-data" data-line-start="580" data-line-end="581"><strong>Regex Search</strong>: Pattern-based finding</li>
+<li class="has-line-data" data-line-start="581" data-line-end="583"><strong>Case Sensitivity</strong>: Toggle case matching</li>
+</ul>
+<h4 class="code-line" data-line-start=583 data-line-end=584 ><a id="Smart_Replacement_Dialog_583"></a>Smart Replacement Dialog</h4>
+<p class="has-line-data" data-line-start="584" data-line-end="585"><strong>Access</strong>: Click “🔧 Replace…” button or Ctrl+R</p>
+<p class="has-line-data" data-line-start="586" data-line-end="587"><strong>Replacement Types:</strong></p>
+<ol>
+<li class="has-line-data" data-line-start="587" data-line-end="588"><strong>Simple Replace</strong>: Basic find/replace</li>
+<li class="has-line-data" data-line-start="588" data-line-end="589"><strong>Replace in Matching Lines</strong>: Conditional replacement</li>
+<li class="has-line-data" data-line-start="589" data-line-end="590"><strong>Right Replace</strong>: Replace text after pattern (or append)</li>
+<li class="has-line-data" data-line-start="590" data-line-end="592"><strong>Left Replace</strong>: Replace text before pattern (or prepend)</li>
+</ol>
+<p class="has-line-data" data-line-start="592" data-line-end="593"><strong>Features:</strong></p>
+<ul>
+<li class="has-line-data" data-line-start="593" data-line-end="594">Real-time preview</li>
+<li class="has-line-data" data-line-start="594" data-line-end="595">Case sensitivity toggle</li>
+<li class="has-line-data" data-line-start="595" data-line-end="596">Parameter validation</li>
+<li class="has-line-data" data-line-start="596" data-line-end="598">Error handling with user feedback</li>
+</ul>
+<h3 class="code-line" data-line-start=598 data-line-end=599 ><a id="53_Advanced_Live_View_Operations_598"></a>5.3 Advanced Live View Operations</h3>
+<h4 class="code-line" data-line-start=600 data-line-end=601 ><a id="SelectionBased_Operations_600"></a>Selection-Based Operations</h4>
+<p class="has-line-data" data-line-start="601" data-line-end="604"><strong>Line Range Selection</strong>: Click and drag in line number area<br>
+<strong>Text Selection</strong>: Standard text selection with mouse<br>
+<strong>Column Selection</strong>: Alt+drag for column selection</p>
+<h4 class="code-line" data-line-start=605 data-line-end=606 ><a id="Clone_Selection_605"></a>Clone Selection</h4>
+<p class="has-line-data" data-line-start="606" data-line-end="609"><strong>Purpose</strong>: Duplicate selected lines multiple times<br>
+<strong>Access</strong>: Right-click → “Clone Selection…”<br>
+<strong>Use Cases</strong>: Template generation, test data creation</p>
+<h4 class="code-line" data-line-start=610 data-line-end=611 ><a id="InSelection_Operations_610"></a>In-Selection Operations</h4>
+<p class="has-line-data" data-line-start="611" data-line-end="614"><strong>Replace in Selection</strong>: Apply replacements only to selected text<br>
+<strong>Trim in Selection</strong>: Clean whitespace in selection only<br>
+<strong>Remove Empty Lines</strong>: Delete blank lines within selection</p>
+<h3 class="code-line" data-line-start=615 data-line-end=616 ><a id="54_Live_View_Configuration_615"></a>5.4 Live View Configuration</h3>
+<h4 class="code-line" data-line-start=617 data-line-end=618 ><a id="Highlight_Control_617"></a>Highlight Control</h4>
+<pre><code class="has-line-data" data-line-start="619" data-line-end="624" class="language-bash"><span class="hljs-comment"># Toggle line highlighting</span>
+highlight_toggle on
+highlight_toggle off
+highlight_toggle  <span class="hljs-comment"># Toggle current state</span>
+</code></pre>
+<h4 class="code-line" data-line-start=625 data-line-end=626 ><a id="Performance_Settings_625"></a>Performance Settings</h4>
+<p class="has-line-data" data-line-start="626" data-line-end="629"><strong>Large File Mode</strong>: Auto-disables highlighting for files &gt;10,000 lines<br>
+<strong>Memory Management</strong>: Progressive loading for very large files<br>
+<strong>Update Throttling</strong>: Batch updates to prevent UI lag</p>
+<hr>
+<h2 class="code-line" data-line-start=632 data-line-end=633 ><a id="6_Advanced_Pattern_Matching_632"></a>6. Advanced Pattern Matching</h2>
+<h3 class="code-line" data-line-start=634 data-line-end=635 ><a id="61_Regular_Expressions_Mastery_634"></a>6.1 Regular Expressions Mastery</h3>
+<h4 class="code-line" data-line-start=636 data-line-end=637 ><a id="Character_Classes_636"></a>Character Classes</h4>
+<pre><code class="has-line-data" data-line-start="638" data-line-end="655" class="language-regex"># Basic classes
+[aeiou]          # Any vowel
+[^aeiou]         # Any non-vowel
+[a-z]            # Any lowercase letter
+[A-Z]            # Any uppercase letter  
+[0-9]            # Any digit
+[a-zA-Z]         # Any letter
+[0-9a-fA-F]      # Hexadecimal digit
+
+# Predefined classes
+\d               # Digit [0-9]
+\D               # Non-digit [^0-9]
+\w               # Word character [a-zA-Z0-9_]
+\W               # Non-word character [^a-zA-Z0-9_]
+\s               # Whitespace [ \t\r\n\f]
+\S               # Non-whitespace [^ \t\r\n\f]
+</code></pre>
+<h4 class="code-line" data-line-start=656 data-line-end=657 ><a id="Quantifiers__Repetition_656"></a>Quantifiers &amp; Repetition</h4>
+<pre><code class="has-line-data" data-line-start="658" data-line-end="671" class="language-regex"># Greedy quantifiers
+a*               # Zero or more (as many as possible)
+a+               # One or more (as many as possible)  
+a?               # Zero or one
+a{3}             # Exactly 3
+a{3,}            # 3 or more
+a{3,5}           # 3 to 5
+
+# Lazy quantifiers
+a*?              # Zero or more (as few as possible)
+a+?              # One or more (as few as possible)
+a??              # Zero or one (prefer zero)
+</code></pre>
+<h4 class="code-line" data-line-start=672 data-line-end=673 ><a id="Anchors__Boundaries_672"></a>Anchors &amp; Boundaries</h4>
+<pre><code class="has-line-data" data-line-start="674" data-line-end="681" class="language-regex">^                # Start of line
+$                # End of line
+\A               # Start of string
+\Z               # End of string
+\b               # Word boundary
+\B               # Non-word boundary
+</code></pre>
+<h4 class="code-line" data-line-start=682 data-line-end=683 ><a id="Groups__Capturing_682"></a>Groups &amp; Capturing</h4>
+<pre><code class="has-line-data" data-line-start="684" data-line-end="689" class="language-regex">(expression)     # Capturing group
+(?:expression)   # Non-capturing group
+(?&lt;name&gt;exp)     # Named capturing group
+\1, \2, ...      # Backreferences to groups
+</code></pre>
+<h3 class="code-line" data-line-start=690 data-line-end=691 ><a id="62_Practical_Regex_Patterns_690"></a>6.2 Practical Regex Patterns</h3>
+<h4 class="code-line" data-line-start=692 data-line-end=693 ><a id="Email_Addresses_692"></a>Email Addresses</h4>
+<pre><code class="has-line-data" data-line-start="694" data-line-end="700" class="language-regex"># Basic email
+\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b
+
+# With Unicode support
+\b[\w.%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b
+</code></pre>
+<h4 class="code-line" data-line-start=701 data-line-end=702 ><a id="URLs_701"></a>URLs</h4>
+<pre><code class="has-line-data" data-line-start="703" data-line-end="709" class="language-regex"># HTTP/HTTPS URLs
+https?://[^\s]+
+
+# With domain validation
+https?://(?:[-\w.]+)+(?:/[^\s]*)?
+</code></pre>
+<h4 class="code-line" data-line-start=710 data-line-end=711 ><a id="Dates_710"></a>Dates</h4>
+<pre><code class="has-line-data" data-line-start="712" data-line-end="716" class="language-regex"># Various date formats
+\d{1,2}[/-]\d{1,2}[/-]\d{2,4}
+\d{4}[/-]\d{1,2}[/-]\d{1,2}
+</code></pre>
+<h4 class="code-line" data-line-start=717 data-line-end=718 ><a id="Phone_Numbers_717"></a>Phone Numbers</h4>
+<pre><code class="has-line-data" data-line-start="719" data-line-end="725" class="language-regex"># US format
+\b\d{3}[-.]?\d{3}[-.]?\d{4}\b
+
+# International
+\+\d{1,3}[-.\s]?\(?\d{1,4}\)?[-.\s]?\d{1,4}[-.\s]?\d{1,9}
+</code></pre>
+<h3 class="code-line" data-line-start=726 data-line-end=727 ><a id="63_TextToolSpecific_Patterns_726"></a>6.3 TextTool-Specific Patterns</h3>
+<h4 class="code-line" data-line-start=728 data-line-end=729 ><a id="Using_Placeholders_728"></a>Using Placeholders</h4>
+<pre><code class="has-line-data" data-line-start="730" data-line-end="735" class="language-bash"><span class="hljs-comment"># Instead of problematic characters</span>
+select <span class="hljs-string">"config[spaces]=[spaces]value"</span>
+replace <span class="hljs-string">"name[doublequote]"</span> <span class="hljs-string">"name[quote]"</span>
+select <span class="hljs-string">"column[tab]data"</span>
+</code></pre>
+<h4 class="code-line" data-line-start=736 data-line-end=737 ><a id="Multiline_Patterns_736"></a>Multi-line Patterns</h4>
+<pre><code class="has-line-data" data-line-start="738" data-line-end="744" class="language-regex"># Match across lines
+start_pattern.*?end_pattern
+
+# With specific line breaks
+start_pattern[\s\S]*?end_pattern
+</code></pre>
+<h4 class="code-line" data-line-start=745 data-line-end=746 ><a id="Complex_Replacements_745"></a>Complex Replacements</h4>
+<pre><code class="has-line-data" data-line-start="747" data-line-end="756" class="language-bash"><span class="hljs-comment"># Reordering with groups</span>
+replace <span class="hljs-string">"(\w+), (\w+)"</span> <span class="hljs-string">"\2 \1"</span>
+
+<span class="hljs-comment"># Conditional replacement</span>
+replace <span class="hljs-string">"(error|warning): (.*)"</span> <span class="hljs-string">"[\1] \2"</span>
+
+<span class="hljs-comment"># Format transformation</span>
+replace <span class="hljs-string">"(\d{4})-(\d{2})-(\d{2})"</span> <span class="hljs-string">"\3/\2/\1"</span>
+</code></pre>
+<hr>
+<h2 class="code-line" data-line-start=759 data-line-end=760 ><a id="7_RealWorld_Workflows_759"></a>7. Real-World Workflows</h2>
+<h3 class="code-line" data-line-start=761 data-line-end=762 ><a id="71_Log_File_Analysis_761"></a>7.1 Log File Analysis</h3>
+<h4 class="code-line" data-line-start=763 data-line-end=764 ><a id="Error_Extraction_Pipeline_763"></a>Error Extraction Pipeline</h4>
+<pre><code class="has-line-data" data-line-start="765" data-line-end="782" class="language-bash"><span class="hljs-comment"># 1. Load log file</span>
+load <span class="hljs-string">"application.log"</span>
+
+<span class="hljs-comment"># 2. Extract error sections</span>
+extract_between <span class="hljs-string">"ERROR"</span> <span class="hljs-string">"INFO"</span>
+
+<span class="hljs-comment"># 3. Filter specific errors</span>
+select <span class="hljs-string">"database OR timeout OR connection"</span>
+
+<span class="hljs-comment"># 4. Clean and format</span>
+replace <span class="hljs-string">".*ERROR.* - "</span> <span class="hljs-string">""</span>  <span class="hljs-comment"># Remove prefix</span>
+trim_whitespace
+
+<span class="hljs-comment"># 5. Count and analyze</span>
+count
+show &gt; <span class="hljs-string">"critical_errors.txt"</span>
+</code></pre>
+<h4 class="code-line" data-line-start=783 data-line-end=784 ><a id="Performance_Monitoring_783"></a>Performance Monitoring</h4>
+<pre><code class="has-line-data" data-line-start="785" data-line-end="794" class="language-bash"><span class="hljs-comment"># Find slow operations</span>
+select <span class="hljs-string">"duration.*[1-9][0-9]{3,}ms"</span>  <span class="hljs-comment"># Operations &gt;1000ms</span>
+
+<span class="hljs-comment"># Extract timing data</span>
+replace <span class="hljs-string">".*duration=(\d+).*"</span> <span class="hljs-string">"\1"</span> | sort -n
+
+<span class="hljs-comment"># Create performance report</span>
+select <span class="hljs-string">"duration"</span> | replace <span class="hljs-string">".*(\d+)ms.*"</span> <span class="hljs-string">"\1"</span> &gt; <span class="hljs-string">"timings.txt"</span>
+</code></pre>
+<h3 class="code-line" data-line-start=795 data-line-end=796 ><a id="72_Data_Cleaning__Transformation_795"></a>7.2 Data Cleaning &amp; Transformation</h3>
+<h4 class="code-line" data-line-start=797 data-line-end=798 ><a id="CSV_Processing_797"></a>CSV Processing</h4>
+<pre><code class="has-line-data" data-line-start="799" data-line-end="815" class="language-bash"><span class="hljs-comment"># 1. Load messy CSV</span>
+load <span class="hljs-string">"data.csv"</span>
+
+<span class="hljs-comment"># 2. Fix common issues</span>
+replace <span class="hljs-string">'","'</span> <span class="hljs-string">'|'</span>  <span class="hljs-comment"># Change delimiter</span>
+replace <span class="hljs-string">'"'</span> <span class="hljs-string">''</span>     <span class="hljs-comment"># Remove quotes</span>
+trim_whitespace
+
+<span class="hljs-comment"># 3. Handle empty values</span>
+replace <span class="hljs-string">'^,|,$'</span> <span class="hljs-string">''</span>  <span class="hljs-comment"># Remove leading/trailing commas</span>
+replace <span class="hljs-string">',,'</span> <span class="hljs-string">',,'</span>   <span class="hljs-comment"># Mark empty fields</span>
+
+<span class="hljs-comment"># 4. Extract specific columns</span>
+split_lines <span class="hljs-string">","</span>
+select_lines <span class="hljs-number">1</span>,<span class="hljs-number">3</span>,<span class="hljs-number">5</span>  <span class="hljs-comment"># Keep columns 1,3,5</span>
+</code></pre>
+<h4 class="code-line" data-line-start=816 data-line-end=817 ><a id="Database_Export_Processing_816"></a>Database Export Processing</h4>
+<pre><code class="has-line-data" data-line-start="818" data-line-end="825" class="language-bash"><span class="hljs-comment"># Convert SQL dump to CSV</span>
+select <span class="hljs-string">"INSERT INTO"</span>  <span class="hljs-comment"># Keep only insert statements</span>
+replace <span class="hljs-string">"INSERT INTO \w+ VALUES \('"</span> <span class="hljs-string">""</span>  <span class="hljs-comment"># Remove prefix</span>
+replace <span class="hljs-string">"'\);?"</span> <span class="hljs-string">""</span>    <span class="hljs-comment"># Remove suffix</span>
+replace <span class="hljs-string">"','"</span> <span class="hljs-string">","</span>     <span class="hljs-comment"># Convert to CSV</span>
+replace <span class="hljs-string">"'"</span> <span class="hljs-string">""</span>        <span class="hljs-comment"># Remove remaining quotes</span>
+</code></pre>
+<h3 class="code-line" data-line-start=826 data-line-end=827 ><a id="73_Code_Refactoring_826"></a>7.3 Code Refactoring</h3>
+<h4 class="code-line" data-line-start=828 data-line-end=829 ><a id="Variable_Renaming_828"></a>Variable Renaming</h4>
+<pre><code class="has-line-data" data-line-start="830" data-line-end="842" class="language-bash"><span class="hljs-comment"># 1. Create mapping file (renames.txt)</span>
+old_variable    new_variable
+old_<span class="hljs-keyword">function</span>    new_<span class="hljs-keyword">function</span>
+deprecated_class    updated_class
+
+<span class="hljs-comment"># 2. Apply bulk replacement</span>
+bulk_replace <span class="hljs-string">"renames.txt"</span> space
+
+<span class="hljs-comment"># 3. Verify changes</span>
+show <span class="hljs-string">"old_variable"</span>  <span class="hljs-comment"># Should find none</span>
+show <span class="hljs-string">"new_variable"</span>  <span class="hljs-comment"># Should find all replacements</span>
+</code></pre>
+<h4 class="code-line" data-line-start=843 data-line-end=844 ><a id="Code_Style_Enforcement_843"></a>Code Style Enforcement</h4>
+<pre><code class="has-line-data" data-line-start="845" data-line-end="855" class="language-bash"><span class="hljs-comment"># Convert to snake_case</span>
+replace <span class="hljs-string">"([a-z])([A-Z])"</span> <span class="hljs-string">"\1_\2"</span> | convert_<span class="hljs-keyword">case</span> lower
+
+<span class="hljs-comment"># Fix indentation</span>
+replace <span class="hljs-string">"^    "</span> <span class="hljs-string">"\t"</span>  <span class="hljs-comment"># Spaces to tabs</span>
+replace <span class="hljs-string">"^\t"</span> <span class="hljs-string">"    "</span>  <span class="hljs-comment"># Tabs to spaces</span>
+
+<span class="hljs-comment"># Add missing braces</span>
+replace <span class="hljs-string">"if (.*)\n"</span> <span class="hljs-string">"if \1 {\n"</span>
+</code></pre>
+<h3 class="code-line" data-line-start=856 data-line-end=857 ><a id="74_Content_Management_856"></a>7.4 Content Management</h3>
+<h4 class="code-line" data-line-start=858 data-line-end=859 ><a id="Document_Processing_858"></a>Document Processing</h4>
+<pre><code class="has-line-data" data-line-start="860" data-line-end="872" class="language-bash"><span class="hljs-comment"># Extract all links</span>
+extract_urls &gt; <span class="hljs-string">"links.txt"</span>
+
+<span class="hljs-comment"># Remove sensitive information</span>
+replace <span class="hljs-string">"\d{3}-\d{2}-\d{4}"</span> <span class="hljs-string">"[REDACTED-SSN]"</span>
+replace <span class="hljs-string">"\b\d{16}\b"</span> <span class="hljs-string">"[REDACTED-CC]"</span>
+
+<span class="hljs-comment"># Standardize formatting</span>
+replace <span class="hljs-string">"\n{3,}"</span> <span class="hljs-string">"\n\n"</span>  <span class="hljs-comment"># Max 2 consecutive newlines</span>
+trim_whitespace
+convert_<span class="hljs-keyword">case</span> sentence
+</code></pre>
+<h4 class="code-line" data-line-start=873 data-line-end=874 ><a id="Template_Generation_873"></a>Template Generation</h4>
+<pre><code class="has-line-data" data-line-start="875" data-line-end="884" class="language-bash"><span class="hljs-comment"># Create multiple similar sections</span>
+select <span class="hljs-string">"template_section"</span>
+<span class="hljs-built_in">clone</span>_selection <span class="hljs-number">10</span>  <span class="hljs-comment"># Create 10 copies</span>
+
+<span class="hljs-comment"># Replace placeholders</span>
+replace <span class="hljs-string">"{{name}}"</span> <span class="hljs-string">"Customer"</span>
+replace <span class="hljs-string">"{{date}}"</span> <span class="hljs-string">"2024-01-01"</span>
+replace <span class="hljs-string">"{{id}}"</span> <span class="hljs-string">"12345"</span>
+</code></pre>
+<hr>
+<h2 class="code-line" data-line-start=887 data-line-end=888 ><a id="8_Performance__Optimization_887"></a>8. Performance &amp; Optimization</h2>
+<h3 class="code-line" data-line-start=889 data-line-end=890 ><a id="81_Large_File_Handling_889"></a>8.1 Large File Handling</h3>
+<h4 class="code-line" data-line-start=891 data-line-end=892 ><a id="Memory_Management_Strategies_891"></a>Memory Management Strategies</h4>
+<pre><code class="has-line-data" data-line-start="893" data-line-end="904" class="language-bash"><span class="hljs-comment"># For files &gt;100MB</span>
+highlight_toggle off  <span class="hljs-comment"># Disable Live View highlighting</span>
+
+<span class="hljs-comment"># Process in chunks</span>
+select <span class="hljs-string">"1-10000"</span>      <span class="hljs-comment"># Work with first 10k lines</span>
+<span class="hljs-comment"># ... process ...</span>
+unselect              <span class="hljs-comment"># Restore full context</span>
+
+<span class="hljs-comment"># Use streaming operations</span>
+bulk_replace <span class="hljs-string">"mapping.txt"</span>  <span class="hljs-comment"># More efficient than multiple replace calls</span>
+</code></pre>
+<h4 class="code-line" data-line-start=905 data-line-end=906 ><a id="Performance_Tips_905"></a>Performance Tips</h4>
+<ul>
+<li class="has-line-data" data-line-start="906" data-line-end="907"><strong>Use <code>select</code> first</strong>: Filter data before complex operations</li>
+<li class="has-line-data" data-line-start="907" data-line-end="908"><strong>Batch operations</strong>: Combine multiple replacements into <code>bulk_replace</code></li>
+<li class="has-line-data" data-line-start="908" data-line-end="909"><strong>Avoid real-time highlighting</strong>: Disable for files &gt;50,000 lines</li>
+<li class="has-line-data" data-line-start="909" data-line-end="911"><strong>Use efficient patterns</strong>: Specific regex vs. broad patterns</li>
+</ul>
+<h3 class="code-line" data-line-start=911 data-line-end=912 ><a id="82_Optimization_Techniques_911"></a>8.2 Optimization Techniques</h3>
+<h4 class="code-line" data-line-start=913 data-line-end=914 ><a id="Efficient_Pattern_Design_913"></a>Efficient Pattern Design</h4>
+<pre><code class="has-line-data" data-line-start="915" data-line-end="923" class="language-regex"># Instead of broad patterns
+.*error.*          # Slow - scans entire lines
+error              # Fast - stops at first match
+
+# Use anchors when possible
+^error             # Only check line start
+error$             # Only check line end
+</code></pre>
+<h4 class="code-line" data-line-start=924 data-line-end=925 ><a id="Command_Chaining_924"></a>Command Chaining</h4>
+<pre><code class="has-line-data" data-line-start="926" data-line-end="934" class="language-bash"><span class="hljs-comment"># Instead of multiple commands</span>
+select <span class="hljs-string">"error"</span>
+replace <span class="hljs-string">"old"</span> <span class="hljs-string">"new"</span>
+show
+
+<span class="hljs-comment"># Chain operations</span>
+select <span class="hljs-string">"error"</span> | replace <span class="hljs-string">"old"</span> <span class="hljs-string">"new"</span> | show
+</code></pre>
+<h3 class="code-line" data-line-start=935 data-line-end=936 ><a id="83_Resource_Monitoring_935"></a>8.3 Resource Monitoring</h3>
+<h4 class="code-line" data-line-start=937 data-line-end=938 ><a id="Memory_Usage_Indicators_937"></a>Memory Usage Indicators</h4>
+<ul>
+<li class="has-line-data" data-line-start="938" data-line-end="939"><strong>Live View lag</strong>: UI updates slow indicates memory pressure</li>
+<li class="has-line-data" data-line-start="939" data-line-end="940"><strong>Command delay</strong>: Operations take longer than expected</li>
+<li class="has-line-data" data-line-start="940" data-line-end="942"><strong>High CPU</strong>: Python process using excessive CPU</li>
+</ul>
+<h4 class="code-line" data-line-start=942 data-line-end=943 ><a id="Mitigation_Strategies_942"></a>Mitigation Strategies</h4>
+<pre><code class="has-line-data" data-line-start="944" data-line-end="952" class="language-bash"><span class="hljs-comment"># Reduce memory footprint</span>
+highlight_toggle off
+select <span class="hljs-string">"1-5000"</span>  <span class="hljs-comment"># Work with subsets</span>
+
+<span class="hljs-comment"># Use file-based operations</span>
+save <span class="hljs-string">"temp.txt"</span>
+load <span class="hljs-string">"temp.txt"</span>  <span class="hljs-comment"># Clears undo history, frees memory</span>
+</code></pre>
+<hr>
+<h2 class="code-line" data-line-start=955 data-line-end=956 ><a id="9_Troubleshooting_Master_Guide_955"></a>9. Troubleshooting Master Guide</h2>
+<h3 class="code-line" data-line-start=957 data-line-end=958 ><a id="91_Common_Error_Messages_957"></a>9.1 Common Error Messages</h3>
+<h4 class="code-line" data-line-start=959 data-line-end=960 ><a id="Error_No_file_is_loaded_959"></a>“Error: No file is loaded”</h4>
+<p class="has-line-data" data-line-start="960" data-line-end="961"><strong>Causes:</strong></p>
+<ul>
+<li class="has-line-data" data-line-start="961" data-line-end="962">Forgot to use <code>load</code> command</li>
+<li class="has-line-data" data-line-start="962" data-line-end="963">File path incorrect</li>
+<li class="has-line-data" data-line-start="963" data-line-end="965">Clipboard empty when loading from clipboard</li>
+</ul>
+<p class="has-line-data" data-line-start="965" data-line-end="966"><strong>Solutions:</strong></p>
+<pre><code class="has-line-data" data-line-start="967" data-line-end="977" class="language-bash"><span class="hljs-comment"># Load from file</span>
+load <span class="hljs-string">"path/to/file.txt"</span>
+
+<span class="hljs-comment"># Load from clipboard</span>
+<span class="hljs-comment"># First copy text to clipboard, then:</span>
+load
+
+<span class="hljs-comment"># Verify file exists</span>
+load <span class="hljs-string">"existing_file.txt"</span>
+</code></pre>
+<h4 class="code-line" data-line-start=978 data-line-end=979 ><a id="Error_Invalid_regex_pattern_978"></a>“Error: Invalid regex pattern”</h4>
+<p class="has-line-data" data-line-start="979" data-line-end="980"><strong>Causes:</strong></p>
+<ul>
+<li class="has-line-data" data-line-start="980" data-line-end="981">Unescaped special characters</li>
+<li class="has-line-data" data-line-start="981" data-line-end="982">Unbalanced parentheses/brackets</li>
+<li class="has-line-data" data-line-start="982" data-line-end="984">Invalid quantifier usage</li>
+</ul>
+<p class="has-line-data" data-line-start="984" data-line-end="985"><strong>Solutions:</strong></p>
+<pre><code class="has-line-data" data-line-start="986" data-line-end="995" class="language-bash"><span class="hljs-comment"># Use cheat sheet for reference</span>
+cheat_sheet_regex
+
+<span class="hljs-comment"># Escape special characters</span>
+replace <span class="hljs-string">"file\.txt"</span> <span class="hljs-string">"document.txt"</span>
+
+<span class="hljs-comment"># Use placeholders for problematic chars</span>
+replace <span class="hljs-string">"text[doublequote]"</span> <span class="hljs-string">"text[quote]"</span>
+</code></pre>
+<h4 class="code-line" data-line-start=996 data-line-end=997 ><a id="Error_No_previous_state_to_revert_to_996"></a>“Error: No previous state to revert to”</h4>
+<p class="has-line-data" data-line-start="997" data-line-end="998"><strong>Causes:</strong></p>
+<ul>
+<li class="has-line-data" data-line-start="998" data-line-end="999">No operations performed yet</li>
+<li class="has-line-data" data-line-start="999" data-line-end="1000">Already at initial state</li>
+<li class="has-line-data" data-line-start="1000" data-line-end="1002">Memory cleared by certain operations</li>
+</ul>
+<p class="has-line-data" data-line-start="1002" data-line-end="1003"><strong>Solutions:</strong></p>
+<ul>
+<li class="has-line-data" data-line-start="1003" data-line-end="1004">Ensure at least one modification before revert</li>
+<li class="has-line-data" data-line-start="1004" data-line-end="1006">Use <code>save</code> before major changes as backup</li>
+</ul>
+<h3 class="code-line" data-line-start=1006 data-line-end=1007 ><a id="92_Performance_Issues_1006"></a>9.2 Performance Issues</h3>
+<h4 class="code-line" data-line-start=1008 data-line-end=1009 ><a id="Slow_Operations_with_Large_Files_1008"></a>Slow Operations with Large Files</h4>
+<p class="has-line-data" data-line-start="1009" data-line-end="1010"><strong>Symptoms:</strong></p>
+<ul>
+<li class="has-line-data" data-line-start="1010" data-line-end="1011">Commands take several seconds</li>
+<li class="has-line-data" data-line-start="1011" data-line-end="1012">Live View becomes unresponsive</li>
+<li class="has-line-data" data-line-start="1012" data-line-end="1014">High memory usage</li>
+</ul>
+<p class="has-line-data" data-line-start="1014" data-line-end="1015"><strong>Solutions:</strong></p>
+<pre><code class="has-line-data" data-line-start="1016" data-line-end="1027" class="language-bash"><span class="hljs-comment"># Disable highlighting</span>
+highlight_toggle off
+
+<span class="hljs-comment"># Process in chunks</span>
+select <span class="hljs-string">"1-10000"</span>
+<span class="hljs-comment"># ... work on chunk ...</span>
+unselect
+
+<span class="hljs-comment"># Use more specific patterns</span>
+select <span class="hljs-string">"specific_error"</span>  <span class="hljs-comment"># Instead of .*error.*</span>
+</code></pre>
+<h4 class="code-line" data-line-start=1028 data-line-end=1029 ><a id="Live_View_Not_Updating_1028"></a>Live View Not Updating</h4>
+<p class="has-line-data" data-line-start="1029" data-line-end="1030"><strong>Causes:</strong></p>
+<ul>
+<li class="has-line-data" data-line-start="1030" data-line-end="1031">Window minimized or closed</li>
+<li class="has-line-data" data-line-start="1031" data-line-end="1032">Highlighting disabled</li>
+<li class="has-line-data" data-line-start="1032" data-line-end="1034">Sync issues between CLI and GUI</li>
+</ul>
+<p class="has-line-data" data-line-start="1034" data-line-end="1035"><strong>Solutions:</strong></p>
+<pre><code class="has-line-data" data-line-start="1036" data-line-end="1045" class="language-bash"><span class="hljs-comment"># Reopen Live View</span>
+liveview
+
+<span class="hljs-comment"># Enable highlighting</span>
+highlight_toggle on
+
+<span class="hljs-comment"># Force refresh</span>
+show  <span class="hljs-comment"># Any command that updates display</span>
+</code></pre>
+<h3 class="code-line" data-line-start=1046 data-line-end=1047 ><a id="93_Advanced_Troubleshooting_1046"></a>9.3 Advanced Troubleshooting</h3>
+<h4 class="code-line" data-line-start=1048 data-line-end=1049 ><a id="Command_History_Issues_1048"></a>Command History Issues</h4>
+<p class="has-line-data" data-line-start="1049" data-line-end="1050"><strong>Problem</strong>: History not saving between sessions</p>
+<p class="has-line-data" data-line-start="1051" data-line-end="1052"><strong>Solution</strong>: Check file permissions for <code>.text_tool_history.txt</code></p>
+<h4 class="code-line" data-line-start=1053 data-line-end=1054 ><a id="Encoding_Problems_1053"></a>Encoding Problems</h4>
+<p class="has-line-data" data-line-start="1054" data-line-end="1055"><strong>Symptoms</strong>: Garbled text with special characters</p>
+<p class="has-line-data" data-line-start="1056" data-line-end="1057"><strong>Solutions:</strong></p>
+<pre><code class="has-line-data" data-line-start="1058" data-line-end="1065" class="language-bash"><span class="hljs-comment"># Specify encoding on load</span>
+load <span class="hljs-string">"file.txt"</span> --encoding utf-<span class="hljs-number">8</span>
+
+<span class="hljs-comment"># Try different encodings</span>
+load <span class="hljs-string">"file.txt"</span> --encoding latin-<span class="hljs-number">1</span>
+load <span class="hljs-string">"file.txt"</span> --encoding cp1252
+</code></pre>
+<h4 class="code-line" data-line-start=1066 data-line-end=1067 ><a id="Clipboard_Integration_Issues_1066"></a>Clipboard Integration Issues</h4>
+<p class="has-line-data" data-line-start="1067" data-line-end="1068"><strong>Problem</strong>: Clipboard operations not working</p>
+<p class="has-line-data" data-line-start="1069" data-line-end="1070"><strong>Solutions:</strong></p>
+<ul>
+<li class="has-line-data" data-line-start="1070" data-line-end="1071">Ensure running on Windows for full clipboard support</li>
+<li class="has-line-data" data-line-start="1071" data-line-end="1072">Check if other applications are locking clipboard</li>
+<li class="has-line-data" data-line-start="1072" data-line-end="1074">Use file-based operations as alternative</li>
+</ul>
+<hr>
+<h2 class="code-line" data-line-start=1076 data-line-end=1077 ><a id="10_API__Extension_Guide_1076"></a>10. API &amp; Extension Guide</h2>
+<h3 class="code-line" data-line-start=1078 data-line-end=1079 ><a id="101_Command_Structure_1078"></a>10.1 Command Structure</h3>
+<h4 class="code-line" data-line-start=1080 data-line-end=1081 ><a id="Adding_Custom_Commands_1080"></a>Adding Custom Commands</h4>
+<pre><code class="has-line-data" data-line-start="1082" data-line-end="1099" class="language-python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">do_my_command</span><span class="hljs-params">(self, arg)</span>:</span>
+    <span class="hljs-string">"""Description of my custom command
+    
+    Usage:
+        my_command &lt;arguments&gt;
+    
+    Examples:
+        my_command "parameter"
+    """</span>
+    <span class="hljs-comment"># Command implementation</span>
+    <span class="hljs-keyword">if</span> arg.strip() == <span class="hljs-string">"?"</span>:
+        self.poutput(self.do_my_command.__doc__)
+        <span class="hljs-keyword">return</span>
+    
+    <span class="hljs-comment"># Your command logic here</span>
+    self.poutput(<span class="hljs-string">"Custom command executed"</span>)
+</code></pre>
+<h4 class="code-line" data-line-start=1100 data-line-end=1101 ><a id="Command_Best_Practices_1100"></a>Command Best Practices</h4>
+<ul>
+<li class="has-line-data" data-line-start="1101" data-line-end="1102">Always include comprehensive help with <code>?</code> support</li>
+<li class="has-line-data" data-line-start="1102" data-line-end="1103">Use <code>self.previous_lines</code> to save state for revert</li>
+<li class="has-line-data" data-line-start="1103" data-line-end="1104">Update <code>self.current_lines</code> for text modifications</li>
+<li class="has-line-data" data-line-start="1104" data-line-end="1105">Call <code>self.update_live_view()</code> to refresh display</li>
+<li class="has-line-data" data-line-start="1105" data-line-end="1107">Handle errors with informative messages</li>
+</ul>
+<h3 class="code-line" data-line-start=1107 data-line-end=1108 ><a id="102_Live_View_Integration_1107"></a>10.2 Live View Integration</h3>
+<h4 class="code-line" data-line-start=1109 data-line-end=1110 ><a id="Adding_UI_Components_1109"></a>Adding UI Components</h4>
+<pre><code class="has-line-data" data-line-start="1111" data-line-end="1119" class="language-python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">add_custom_button</span><span class="hljs-params">(self)</span>:</span>
+    button = tk.Button(
+        self.liveview_root, 
+        text=<span class="hljs-string">"Custom Action"</span>,
+        command=self.custom_action
+    )
+    button.pack(side=<span class="hljs-string">"left"</span>, padx=<span class="hljs-number">5</span>)
+</code></pre>
+<h4 class="code-line" data-line-start=1120 data-line-end=1121 ><a id="Custom_Context_Menu_Items_1120"></a>Custom Context Menu Items</h4>
+<pre><code class="has-line-data" data-line-start="1122" data-line-end="1129" class="language-python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">enhance_context_menu</span><span class="hljs-params">(self, event)</span>:</span>
+    <span class="hljs-comment"># Add to existing context menu</span>
+    context_menu.add_command(
+        label=<span class="hljs-string">"Custom Action"</span>,
+        command=self.custom_context_action
+    )
+</code></pre>
+<h3 class="code-line" data-line-start=1130 data-line-end=1131 ><a id="103_Advanced_Extension_Examples_1130"></a>10.3 Advanced Extension Examples</h3>
+<h4 class="code-line" data-line-start=1132 data-line-end=1133 ><a id="Batch_Processing_Plugin_1132"></a>Batch Processing Plugin</h4>
+<pre><code class="has-line-data" data-line-start="1134" data-line-end="1143" class="language-python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">do_batch_process</span><span class="hljs-params">(self, arg)</span>:</span>
+    <span class="hljs-string">"""Process multiple files with same operations
+    
+    Usage:
+        batch_process "*.txt" "operations_script.txt"
+    """</span>
+    <span class="hljs-comment"># Implementation for processing file batches</span>
+    <span class="hljs-keyword">pass</span>
+</code></pre>
+<h4 class="code-line" data-line-start=1144 data-line-end=1145 ><a id="Data_Analysis_Plugin_1144"></a>Data Analysis Plugin</h4>
+<pre><code class="has-line-data" data-line-start="1146" data-line-end="1155" class="language-python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">do_analyze_patterns</span><span class="hljs-params">(self, arg)</span>:</span>
+    <span class="hljs-string">"""Analyze text for pattern frequency
+    
+    Usage:
+        analyze_patterns "pattern1,pattern2,pattern3"
+    """</span>
+    <span class="hljs-comment"># Pattern frequency analysis implementation</span>
+    <span class="hljs-keyword">pass</span>
+</code></pre>
+<hr>
+<h2 class="code-line" data-line-start=1158 data-line-end=1159 ><a id="Appendix_1158"></a>Appendix</h2>
+<h3 class="code-line" data-line-start=1160 data-line-end=1161 ><a id="A_Keyboard_Shortcuts_Reference_1160"></a>A. Keyboard Shortcuts Reference</h3>
+<h4 class="code-line" data-line-start=1162 data-line-end=1163 ><a id="Live_View_Shortcuts_1162"></a>Live View Shortcuts</h4>
+<ul>
+<li class="has-line-data" data-line-start="1163" data-line-end="1164"><strong>Ctrl+F</strong>: Toggle search</li>
+<li class="has-line-data" data-line-start="1164" data-line-end="1165"><strong>Ctrl+R</strong>: Replacement dialog</li>
+<li class="has-line-data" data-line-start="1165" data-line-end="1166"><strong>Ctrl+S</strong>: Save</li>
+<li class="has-line-data" data-line-start="1166" data-line-end="1167"><strong>F3</strong>: Next match</li>
+<li class="has-line-data" data-line-start="1167" data-line-end="1168"><strong>Shift+F3</strong>: Previous match</li>
+<li class="has-line-data" data-line-start="1168" data-line-end="1169"><strong>Tab</strong>: Indent selection</li>
+<li class="has-line-data" data-line-start="1169" data-line-end="1171"><strong>Shift+Tab</strong>: Unindent selection</li>
+</ul>
+<h4 class="code-line" data-line-start=1171 data-line-end=1172 ><a id="CLI_Shortcuts_1171"></a>CLI Shortcuts</h4>
+<ul>
+<li class="has-line-data" data-line-start="1172" data-line-end="1173"><strong>↑/↓</strong>: Command history</li>
+<li class="has-line-data" data-line-start="1173" data-line-end="1174"><strong>Tab</strong>: Auto-completion</li>
+<li class="has-line-data" data-line-start="1174" data-line-end="1175"><strong>Ctrl+D</strong>: Exit</li>
+<li class="has-line-data" data-line-start="1175" data-line-end="1177"><strong>Ctrl+C</strong>: Interrupt current operation</li>
+</ul>
+<h3 class="code-line" data-line-start=1177 data-line-end=1178 ><a id="B_File_Format_Support_1177"></a>B. File Format Support</h3>
+<h4 class="code-line" data-line-start=1179 data-line-end=1180 ><a id="Input_Formats_1179"></a>Input Formats</h4>
+<ul>
+<li class="has-line-data" data-line-start="1180" data-line-end="1181"><strong>Text files</strong>: .txt, .log, .csv, .xml, .json, etc.</li>
+<li class="has-line-data" data-line-start="1181" data-line-end="1182"><strong>Excel files</strong>: .xls, .xlsx (first two columns)</li>
+<li class="has-line-data" data-line-start="1182" data-line-end="1184"><strong>Clipboard</strong>: Text content or file paths</li>
+</ul>
+<h4 class="code-line" data-line-start=1184 data-line-end=1185 ><a id="Output_Formats_1184"></a>Output Formats</h4>
+<ul>
+<li class="has-line-data" data-line-start="1185" data-line-end="1186"><strong>Text files</strong>: Any extension</li>
+<li class="has-line-data" data-line-start="1186" data-line-end="1188"><strong>Clipboard</strong>: Text content</li>
+</ul>
+<h3 class="code-line" data-line-start=1188 data-line-end=1189 ><a id="C_Performance_Benchmarks_1188"></a>C. Performance Benchmarks</h3>
+<h4 class="code-line" data-line-start=1190 data-line-end=1191 ><a id="Typical_Operation_Times_1190"></a>Typical Operation Times</h4>
+<ul>
+<li class="has-line-data" data-line-start="1191" data-line-end="1192"><strong>Load 1MB file</strong>: &lt;1 second</li>
+<li class="has-line-data" data-line-start="1192" data-line-end="1193"><strong>Regex replace on 10k lines</strong>: 1-2 seconds</li>
+<li class="has-line-data" data-line-start="1193" data-line-end="1194"><strong>Bulk replace 100 mappings</strong>: 2-3 seconds</li>
+<li class="has-line-data" data-line-start="1194" data-line-end="1196"><strong>Live View update</strong>: &lt;100ms</li>
+</ul>
+<h4 class="code-line" data-line-start=1196 data-line-end=1197 ><a id="Memory_Usage_1196"></a>Memory Usage</h4>
+<ul>
+<li class="has-line-data" data-line-start="1197" data-line-end="1198"><strong>Base memory</strong>: ~50MB</li>
+<li class="has-line-data" data-line-start="1198" data-line-end="1199"><strong>Per 10k lines</strong>: +10-20MB</li>
+<li class="has-line-data" data-line-start="1199" data-line-end="1201"><strong>Live View overhead</strong>: +5-10MB</li>
+</ul>
+<h3 class="code-line" data-line-start=1201 data-line-end=1202 ><a id="D_Regular_Expression_Quick_Reference_1201"></a>D. Regular Expression Quick Reference</h3>
+<h4 class="code-line" data-line-start=1203 data-line-end=1204 ><a id="Common_Patterns_1203"></a>Common Patterns</h4>
+<pre><code class="has-line-data" data-line-start="1205" data-line-end="1213" class="language-regex">.            # Any character except newline
+\w+          # One or more word characters
+\d{3}        # Exactly three digits
+[aeiou]      # Any vowel
+[^aeiou]     # Any non-vowel
+^            # Start of line
+$            # End of line
+</code></pre>
+<h4 class="code-line" data-line-start=1214 data-line-end=1215 ><a id="TextTool_Placeholders_1214"></a>TextTool Placeholders</h4>
+<pre><code class="has-line-data" data-line-start="1216" data-line-end="1222">[pipe]        → |
+[doublequote] → &quot;
+[quote]       → '
+[tab]         → \t
+[spaces]      → \s+
+</code></pre>
+<hr>
+<p class="has-line-data" data-line-start="1225" data-line-end="1226"><em>This comprehensive guide covers all aspects of TextTool from basic usage to advanced extension development. The tool’s design emphasizes power, flexibility, and user productivity through its unique dual-interface approach.</em></p>
+
+</body></html>

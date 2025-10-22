@@ -4,7 +4,6 @@ import subprocess
 import sys
 import inspect
 import shlex
-import win32clipboard
 import importlib
 global input_file
 import difflib
@@ -87,7 +86,7 @@ def check_and_install_libraries():
 
 # Check and install required libraries
 check_and_install_libraries()
-
+import win32clipboard
 _unquote = lambda s: s[1:-1] if s[0] == '"' == s[-1] else s
 
 import cmd2

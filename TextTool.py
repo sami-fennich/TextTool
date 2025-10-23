@@ -137,6 +137,7 @@ def read_mapping_file(map_file, separator):
         return replacements
 
 def get_copied_file():
+    import win32clipboard
     win32clipboard.OpenClipboard()
     try:
         if win32clipboard.IsClipboardFormatAvailable(win32clipboard.CF_HDROP):
@@ -163,10 +164,12 @@ class TextTool(cmd2.Cmd):
         super().__init__(persistent_history_file=".text_tool_history.txt")
         self.text_lines = []
         self.current_lines = []
+        self.words = []
         self.previous_lines = []
+        self.previous_words = []
         self.original_full_text = []
         self.text_changed = False
-        self.highlight_enabled = True
+        self.highlight_enabled = False
         self.selected_indices = []
         self.COLOR_HEADER = "\033[1;36m"  # Cyan
         self.COLOR_COMMAND = "\033[1;32m"  # Green
@@ -274,7 +277,7 @@ class TextTool(cmd2.Cmd):
         self.hidden_commands.append('trim_whitespace_in_selection') 
         self.hidden_commands.append('replace_in_selection')
         self.hidden_commands.append('select_lines')
-        self.hidden_commands.append('select_indented')
+        #self.hidden_commands.append('indented_select')
         
 
         self.liveview_box = None  # keep reference to the text box
@@ -419,7 +422,7 @@ class TextTool(cmd2.Cmd):
                             display_pattern = display_pattern[:22] + "..."
                         
                         context_menu.add_command(label=f"Select Indented: '{display_pattern}'", 
-                                               command=lambda: self.onecmd(f'select_indented "{clean_pattern}"'))
+                                               command=lambda: self.onecmd(f'indented_select "{clean_pattern}"'))
                     
                     context_menu.add_separator()
                     context_menu.add_command(label="Clone Selection...", 
@@ -1130,9 +1133,11 @@ class TextTool(cmd2.Cmd):
 
                     # Save current state for revert
                     self.previous_lines = self.current_lines.copy()
+                    self.previous_words = self.words.copy()
 
                     # Replace current_lines with content from Live View
                     self.current_lines = [line for line in new_text.splitlines(keepends=True)]
+                    self.do_fill_words('')
 
                     # Refresh Live View to ensure consistency
                     self.update_live_view()
@@ -1264,7 +1269,12 @@ class TextTool(cmd2.Cmd):
                 if hasattr(self, 'liveview_box') and self.liveview_box:
                     new_text = self.liveview_box.get("1.0", "end-1c")
                     self.previous_lines = self.current_lines.copy()
+                    self.previous_words = self.words.copy()
                     self.current_lines = [ln + "\n" for ln in new_text.splitlines()]
+                    try:
+                        self.do_fill_words('')
+                    except:
+                        a=0
                 self.text_changed = False
             except Exception as e:
                 print(f"[Warning] Auto-sync from LiveView failed: {e}")
@@ -1451,6 +1461,7 @@ class TextTool(cmd2.Cmd):
             
             # Save previous state
             self.previous_lines = self.current_lines.copy()
+            self.previous_words = self.words.copy()
             
             # Extract selected lines
             selected_lines = self.current_lines[start_line:end_line + 1]
@@ -1619,6 +1630,7 @@ class TextTool(cmd2.Cmd):
         
         # Save previous state
         self.previous_lines = self.current_lines.copy()
+        self.previous_words = self.words.copy()
         
         # Apply operation to selected lines only
         for i in range(start_line, end_line + 1):
@@ -1650,19 +1662,19 @@ class TextTool(cmd2.Cmd):
                 # Perform the replacement
                 try:
                     flags = 0 if case_sensitive else re.IGNORECASE
-                    regex = re.compile(string1.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+"), flags)
+                    regex = re.compile(string1.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[greater]',">").replace('[spaces]',r"[^\S\r\n]+"), flags)
                     
                     if "\\0" in string2:
                         def replacement(match):
-                            return string2.replace("\\0", match.group(0)).replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+")
+                            return string2.replace("\\0", match.group(0)).replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[greater]',">").replace('[spaces]',r"[^\S\r\n]+")
                         self.current_lines[i] = regex.sub(replacement, original_line)
                     else:
-                        self.current_lines[i] = regex.sub(string2.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+"), original_line)
+                        self.current_lines[i] = regex.sub(string2.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[greater]',">").replace('[spaces]',r"[^\S\r\n]+"), original_line)
                         
                 except re.error:
                     # Fallback to literal replacement
                     if case_sensitive:
-                        self.current_lines[i] = original_line.replace(string1.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+"), string2.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+"))
+                        self.current_lines[i] = original_line.replace(string1.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[greater]',">").replace('[spaces]',r"[^\S\r\n]+"), string2.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[greater]',">").replace('[spaces]',r"[^\S\r\n]+"))
                     else:
                         line_lower = original_line.lower()
                         search_lower = string1.lower()
@@ -1773,6 +1785,7 @@ class TextTool(cmd2.Cmd):
         
         # Save previous state
         self.previous_lines = self.current_lines.copy()
+        self.previous_words = self.words.copy()
         
         # Process only the selected range
         before_selection = self.current_lines[:start_line]
@@ -1873,6 +1886,7 @@ class TextTool(cmd2.Cmd):
         
         # Save previous state
         self.previous_lines = self.current_lines.copy()
+        self.previous_words = self.words.copy()
         
         # Trim whitespace only in selected range
         for i in range(start_line, end_line + 1):
@@ -2137,6 +2151,10 @@ class TextTool(cmd2.Cmd):
                     self.text_lines = file.readlines()
 
             self.current_lines = self.text_lines.copy()
+            try:
+                self.do_fill_words('')
+            except:
+                a=0            
             self.original_file_path = file_path  # Store the original file path
             self.update_live_view()
             
@@ -2153,6 +2171,10 @@ class TextTool(cmd2.Cmd):
             if clipboard_content:
                 self.text_lines = [ s.replace("\r","") for s in clipboard_content.splitlines(keepends=True)]
                 self.current_lines = self.text_lines.copy()
+                try:
+                    self.do_fill_words('')
+                except:
+                    a=0                  
                 self.update_live_view()
                 self.original_file_path = None  # No file path for clipboard content
                 
@@ -2165,7 +2187,7 @@ class TextTool(cmd2.Cmd):
             else:
                 file_path = get_copied_file()
                 if file_path:
-                    self.do_load(file_path)
+                    self.do_load(file_path)                   
                 else:                
                     self.poutput("Error: Clipboard is empty or does not contain text.")
 
@@ -2228,7 +2250,7 @@ class TextTool(cmd2.Cmd):
 
         try:
             # Compile regex patterns for each search term
-            regexes = [re.compile(term) for term in search_terms]
+            regexes = [re.compile(term.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[greater]',">").replace('[spaces]',r"[^\S\r\n]+")) for term in search_terms]
             # Find lines that match any of the regex patterns
             matching_lines = [
                 line for line in self.current_lines
@@ -2275,7 +2297,7 @@ class TextTool(cmd2.Cmd):
             - Supports regex patterns for more complex selections.
         """
         if arg.strip() == "?":  # Check if the argument is just "?"
-            self.poutput(help_text)
+            self.do_help("filter")
             return  # Exit the function        
         return self.do_select(arg)
 
@@ -2340,6 +2362,7 @@ class TextTool(cmd2.Cmd):
             return
 
         self.previous_lines = self.current_lines.copy()
+        self.previous_words = self.words.copy()
         # Save the current state for unselect functionality
         self.original_full_text = self.current_lines.copy()
         self.selected_indices = []
@@ -2371,7 +2394,7 @@ class TextTool(cmd2.Cmd):
         try:
             # Compile regex patterns for each search term with appropriate flags
             flags = 0 if case_sensitive else re.IGNORECASE
-            regexes = [re.compile(term.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+"), flags) for term in search_terms]
+            regexes = [re.compile(term.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[greater]',">").replace('[spaces]',r"[^\S\r\n]+"), flags) for term in search_terms]
             
             if negate:
                 # Select lines that do NOT match any of the regex patterns
@@ -2379,6 +2402,10 @@ class TextTool(cmd2.Cmd):
                     line for line in self.current_lines
                     if not any(regex.search(line) for regex in regexes)
                 ]
+                try:
+                    self.do_fill_words('')
+                except:
+                    a=0                
                 self.selected_indices = [
                     i for i, line in enumerate(self.original_full_text)
                     if not any(regex.search(line) for regex in regexes)
@@ -2389,6 +2416,10 @@ class TextTool(cmd2.Cmd):
                     line for line in self.current_lines
                     if any(regex.search(line) for regex in regexes)
                 ]
+                try:
+                    self.do_fill_words('')
+                except:
+                    a=0                
                 self.selected_indices = [
                     i for i, line in enumerate(self.original_full_text)
                     if any(regex.search(line) for regex in regexes)
@@ -2398,6 +2429,7 @@ class TextTool(cmd2.Cmd):
             self.poutput(f"Selected {len(self.current_lines)} lines ({sensitivity}).")
         except re.error:
             self.poutput("Error: Invalid regex pattern.")
+            
 
     def do_unselect(self, arg):
         """Revert the last select action while keeping other modifications.
@@ -2440,6 +2472,7 @@ class TextTool(cmd2.Cmd):
 
         # Restore the original full text
         self.previous_lines = self.current_lines.copy()
+        self.previous_words = self.words.copy()
         restored_text = self.original_full_text.copy()
 
         # Overwrite the selected lines with their modified versions
@@ -2449,6 +2482,10 @@ class TextTool(cmd2.Cmd):
 
         # Update the current lines
         self.current_lines = restored_text
+        try:
+            self.do_fill_words('')
+        except:
+            a=0        
         self.update_live_view()
         self.poutput("Reverted to the original full text with modified selected lines.")
     
@@ -2513,6 +2550,7 @@ class TextTool(cmd2.Cmd):
             return
 
         self.previous_lines = self.current_lines.copy()
+        self.previous_words = self.words.copy()
         # Save the current state for undelete functionality
         self.original_full_text = self.current_lines.copy()
         self.deleteed_indices = []
@@ -2544,7 +2582,7 @@ class TextTool(cmd2.Cmd):
         try:
             # Compile regex patterns for each search term with appropriate flags
             flags = 0 if case_sensitive else re.IGNORECASE
-            regexes = [re.compile(term.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+"), flags) for term in search_terms]
+            regexes = [re.compile(term.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[greater]',">").replace('[spaces]',r"[^\S\r\n]+"), flags) for term in search_terms]
             
             if not negate:
                 # Delete lines that do NOT match any of the regex patterns
@@ -2617,6 +2655,7 @@ class TextTool(cmd2.Cmd):
 
         # Restore the original full text
         self.previous_lines = self.current_lines.copy()
+        self.previous_words = self.words.copy()
         restored_text = self.original_full_text.copy()
 
         # Overwrite the deleteed lines with their modified versions
@@ -2698,6 +2737,7 @@ class TextTool(cmd2.Cmd):
             self.poutput("Error: No file is loaded.")
             return
         self.previous_lines = self.current_lines.copy()
+        self.previous_words = self.words.copy()
 
         try:
             arg=arg.args
@@ -2828,6 +2868,7 @@ class TextTool(cmd2.Cmd):
 
         # Save the current state for revert functionality
         self.previous_lines = self.current_lines.copy()
+        self.previous_words = self.words.copy()
 
         # Extract the raw input string from the cmd2.parsing.Statement object
         if hasattr(arg, 'args'):
@@ -2864,18 +2905,18 @@ class TextTool(cmd2.Cmd):
         try:
             # Compile the regex pattern with appropriate flags
             flags = 0 if case_sensitive else re.IGNORECASE
-            regex = re.compile(string1.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+"), flags)
+            regex = re.compile(string1.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[greater]',">").replace('[spaces]',r"[^\S\r\n]+"), flags)
 
             # Replace \0 with the entire match
             if "\\0" in string2:
                 def replacement(match):
-                    return string2.replace("\\0", match.group(0)).replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+")
+                    return string2.replace("\\0", match.group(0)).replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[greater]',">").replace('[spaces]',r"[^\S\r\n]+")
 
                 self.current_lines = [regex.sub(replacement, line) for line in self.current_lines]
                 self.update_live_view()
             else:
                 # Perform the replacement using the regex pattern and the replacement string
-                self.current_lines = [regex.sub(string2.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+"), line) for line in self.current_lines]
+                self.current_lines = [regex.sub(string2.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[greater]',">").replace('[spaces]',r"[^\S\r\n]+"), line) for line in self.current_lines]
                 self.update_live_view()
 
             sensitivity = "case sensitive" if case_sensitive else "case insensitive"
@@ -2885,7 +2926,7 @@ class TextTool(cmd2.Cmd):
             self.poutput(f"Literal replacement will be now tried")
             try:
                 if case_sensitive:
-                    self.current_lines = [line.replace(string1.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+"), string2.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+")) for line in self.current_lines]
+                    self.current_lines = [line.replace(string1.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[greater]',">").replace('[spaces]',r"[^\S\r\n]+"), string2.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[greater]',">").replace('[spaces]',r"[^\S\r\n]+")) for line in self.current_lines]
                 else:
                     # Case insensitive literal replacement
                     for i, line in enumerate(self.current_lines):
@@ -2913,7 +2954,7 @@ class TextTool(cmd2.Cmd):
         return completions
 
     def complete_show(self, text, line, begidx, endidx):      
-        FRIENDS_T = ['?']
+        FRIENDS_T = self.words[:]+['?']
         if not text:
           completions = FRIENDS_T[:]
         else: 
@@ -2965,6 +3006,7 @@ class TextTool(cmd2.Cmd):
 
         # Restore the previous state
         self.current_lines = self.previous_lines.copy()
+        self.words =  self.previous_words.copy()     
         self.update_live_view()
         self.poutput("Reverted to the previous state.")
 
@@ -3241,10 +3283,10 @@ class TextTool(cmd2.Cmd):
             self.hidden_commands.remove('csv_to_table')
         except:
             a = 0    			
-        try:
-            self.hidden_commands.remove('select_indented')
-        except:
-            a = 0  
+        #try:
+            #self.hidden_commands.remove('indented_select')
+        #except:
+            #a = 0  
 
     def do_standard(self, arg):
         """Disable the advanced text operation functions.
@@ -3362,10 +3404,10 @@ class TextTool(cmd2.Cmd):
             self.hidden_commands.append('csv_to_table')
         except:
             a = 0  
-        try:
-            self.hidden_commands.append('select_indented')
-        except:
-            a = 0   		
+        #try:
+            #self.hidden_commands.append('indented_select')
+        #except:
+            #a = 0   		
 		
 
     def do_replace_confirm(self, arg):
@@ -3452,6 +3494,7 @@ class TextTool(cmd2.Cmd):
             return
 
         self.previous_lines = self.current_lines.copy()
+        self.previous_words = self.words.copy()
         
         if hasattr(arg, 'args'):
             arg = arg.args
@@ -3684,6 +3727,7 @@ class TextTool(cmd2.Cmd):
             return
             
         self.previous_lines = self.current_lines.copy()
+        self.previous_words = self.words.copy()
 
         # Check for case_sensitive parameter
         case_sensitive = "case_sensitive" in arg
@@ -3716,11 +3760,11 @@ class TextTool(cmd2.Cmd):
         try:
             # Use appropriate flags based on case sensitivity
             flags = 0 if case_sensitive else re.IGNORECASE
-            target_regex = re.compile(target_pattern.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+"), flags)
-            search_regex = re.compile(search_pattern.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+"), flags)
+            target_regex = re.compile(target_pattern.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[greater]',">").replace('[spaces]',r"[^\S\r\n]+"), flags)
+            search_regex = re.compile(search_pattern.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[greater]',">").replace('[spaces]',r"[^\S\r\n]+"), flags)
             
             self.current_lines = [
-                search_regex.sub(replace_pattern.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+"), line) if target_regex.search(line) else line
+                search_regex.sub(replace_pattern.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[greater]',">").replace('[spaces]',r"[^\S\r\n]+"), line) if target_regex.search(line) else line
                 for line in self.current_lines
             ]
             self.update_live_view()
@@ -3731,7 +3775,7 @@ class TextTool(cmd2.Cmd):
             self.poutput(f"Literal replacement will be now tried")
             try:
                 if case_sensitive:
-                    self.current_lines = [line.replace(search_pattern.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+"), replace_pattern.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+")) if target_pattern.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+") in line else line for line in self.current_lines]
+                    self.current_lines = [line.replace(search_pattern.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[greater]',">").replace('[spaces]',r"[^\S\r\n]+"), replace_pattern.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[greater]',">").replace('[spaces]',r"[^\S\r\n]+")) if target_pattern.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[greater]',">").replace('[spaces]',r"[^\S\r\n]+") in line else line for line in self.current_lines]
                 else:
                     # Case insensitive literal replacement
                     target_lower = target_pattern.lower()
@@ -3856,6 +3900,7 @@ class TextTool(cmd2.Cmd):
             return
 
         self.previous_lines = self.current_lines.copy()
+        self.previous_words = self.words.copy()
 
         # Check for case_sensitive parameter
         case_sensitive = "case_sensitive" in arg
@@ -3973,6 +4018,7 @@ class TextTool(cmd2.Cmd):
             return
 
         self.previous_lines = self.current_lines.copy()
+        self.previous_words = self.words.copy()
 
         args = arg.split('"')
         if len(args) < 2:
@@ -4039,6 +4085,7 @@ class TextTool(cmd2.Cmd):
             return
 
         self.previous_lines = self.current_lines.copy()
+        self.previous_words = self.words.copy()
 
         delimiter = arg.strip()
         new_lines = []
@@ -4094,6 +4141,7 @@ class TextTool(cmd2.Cmd):
             return
 
         self.previous_lines = self.current_lines.copy()
+        self.previous_words = self.words.copy()
 
         delimiter = arg.strip() if arg else ""
         merged_line = delimiter.join(line.strip() for line in self.current_lines)
@@ -4177,6 +4225,7 @@ class TextTool(cmd2.Cmd):
         
         # Save previous state
         self.previous_lines = self.current_lines.copy()
+        self.previous_words = self.words.copy()
         
         if case_sensitive:
             # Case sensitive matching
@@ -4255,6 +4304,7 @@ class TextTool(cmd2.Cmd):
             return
 
         self.previous_lines = self.current_lines.copy()
+        self.previous_words = self.words.copy()
 
         case_type = arg.strip().lower()
         if case_type == "upper":
@@ -4308,6 +4358,7 @@ class TextTool(cmd2.Cmd):
             return
 
         self.previous_lines = self.current_lines.copy()
+        self.previous_words = self.words.copy()
 
         self.current_lines = [line.strip() + "\n" for line in self.current_lines]
         self.update_live_view()
@@ -4347,6 +4398,7 @@ class TextTool(cmd2.Cmd):
             return
 
         self.previous_lines = self.current_lines.copy()
+        self.previous_words = self.words.copy()
 
         self.current_lines.reverse()
         self.update_live_view()
@@ -4389,6 +4441,7 @@ class TextTool(cmd2.Cmd):
             return
 
         self.previous_lines = self.current_lines.copy()
+        self.previous_words = self.words.copy()
 
         url_pattern = re.compile(r'https?://[^\s]+')
         urls = [url for line in self.current_lines for url in url_pattern.findall(line)]
@@ -4431,6 +4484,7 @@ class TextTool(cmd2.Cmd):
             return
 
         self.previous_lines = self.current_lines.copy()
+        self.previous_words = self.words.copy()
 
         email_pattern = re.compile(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}')
         emails = [email for line in self.current_lines for email in email_pattern.findall(line)]
@@ -4511,6 +4565,7 @@ class TextTool(cmd2.Cmd):
 
         # Save the current state for revert functionality
         self.previous_lines = self.current_lines.copy()
+        self.previous_words = self.words.copy()
 
         # Sort the lines
         self.current_lines.sort()
@@ -4555,15 +4610,16 @@ class TextTool(cmd2.Cmd):
         if arg.strip() == "?":
             self.poutput(help_text)
             return
-        if arg.strip() == "?":  # Check if the argument is just "?"
-            self.do_help(self._cmd_func_name)  # Execute help for the current function
-            return  # Exit the function
+        #if arg.strip() == "?":  # Check if the argument is just "?"
+            #self.do_help(self._cmd_func_name)  # Execute help for the current function
+            #return  # Exit the function
         if not self.current_lines:
             self.poutput("Error: No file is loaded.")
             return
 
         # Save the current state for revert functionality
         self.previous_lines = self.current_lines.copy()
+        self.previous_words = self.words.copy()
 
         # Remove duplicate lines
         unique_lines = []
@@ -4577,7 +4633,7 @@ class TextTool(cmd2.Cmd):
             else:
                 deleted_lines_count += 1
 
-        self.current_lines = unique_lines
+        self.current_lines = unique_lines   
         self.update_live_view()
         self.poutput(f"Duplicate lines removed successfully. Deleted {deleted_lines_count} lines.")
         
@@ -4627,11 +4683,16 @@ class TextTool(cmd2.Cmd):
 
         # Save the current state for revert functionality
         self.previous_lines = self.current_lines.copy()
+        self.previous_words = self.words.copy()
 
         # Remove empty lines
         non_empty_lines = [line for line in self.current_lines if line.strip()]
         deleted_lines_count = len(self.current_lines) - len(non_empty_lines)
         self.current_lines = non_empty_lines
+        try:
+            self.do_fill_words('')
+        except:
+            a=0        
         self.update_live_view()
 
         self.poutput(f"Empty lines removed successfully. Deleted {deleted_lines_count} lines.")
@@ -4664,9 +4725,14 @@ class TextTool(cmd2.Cmd):
 
             # Save current state for revert
             self.previous_lines = self.current_lines.copy()
+            self.previous_words = self.words.copy()
 
             # Replace current_lines with content from Live View
             self.current_lines = [line for line in new_text.splitlines(keepends=True)]
+            try:
+                self.do_fill_words('')
+            except:
+                a=0            
 
             # Refresh Live View to ensure consistency and show new line count
             self.update_live_view()
@@ -4733,6 +4799,7 @@ class TextTool(cmd2.Cmd):
 
         # Save previous state
         self.previous_lines = self.current_lines.copy()
+        self.previous_words = self.words.copy()
 
         import shlex
         try:
@@ -4778,10 +4845,14 @@ class TextTool(cmd2.Cmd):
             self.poutput(f"Right-side replacement completed ({'case sensitive' if case_sensitive else 'case insensitive'}).")
 
         self.current_lines = new_lines
+        try:
+            self.do_fill_words('')
+        except:
+            a=0        
         self.update_live_view()
 
     def complete_right_replace(self, text, line, begidx, endidx):      
-        FRIENDS_T = ['case_sensitive','?']
+        FRIENDS_T = self.words[:]+['case_sensitive','?']
         if not text:
           completions = FRIENDS_T[:]
         else: 
@@ -4848,6 +4919,7 @@ class TextTool(cmd2.Cmd):
 
         # Save previous state
         self.previous_lines = self.current_lines.copy()
+        self.previous_words = self.words.copy()
 
         import shlex
         try:
@@ -4891,10 +4963,14 @@ class TextTool(cmd2.Cmd):
             self.poutput(f"Left-side replacement completed ({'case sensitive' if case_sensitive else 'case insensitive'}).")
 
         self.current_lines = new_lines
+        try:
+            self.do_fill_words('')
+        except:
+            a=0        
         self.update_live_view()
 
     def complete_left_replace(self, text, line, begidx, endidx):      
-        FRIENDS_T = ['case_sensitive','?']
+        FRIENDS_T = self.words[:]+['case_sensitive','?']
         if not text:
           completions = FRIENDS_T[:]
         else: 
@@ -5179,8 +5255,13 @@ class TextTool(cmd2.Cmd):
 
         # Save previous state for revert
         self.previous_lines = self.current_lines.copy()
+        self.previous_words = self.words.copy()
         # Replace current_lines with the concatenated results
         self.current_lines = result_lines
+        try:
+            self.do_fill_words('')
+        except:
+            a=0        
         # update live view
         try:
             self.update_live_view()
@@ -5192,7 +5273,7 @@ class TextTool(cmd2.Cmd):
 
 
     def complete_placeholder_replace(self, text, line, begidx, endidx):      
-        FRIENDS_T = ['case_sensitive','?']
+        FRIENDS_T = self.words[:] + ['case_sensitive','?']
         if not text:
           completions = FRIENDS_T[:]
         else: 
@@ -5277,6 +5358,7 @@ class TextTool(cmd2.Cmd):
 
             # Save current state for revert
             self.previous_lines = self.current_lines.copy()
+            self.previous_words = self.words.copy()
 
             # Perform repetition
             repeated_part = lines_to_repeat * repeat_number
@@ -5289,7 +5371,7 @@ class TextTool(cmd2.Cmd):
             self.poutput("Error: Parameters must be integers.")
 
     def complete_select(self, text, line, begidx, endidx):      
-        FRIENDS_T = ['case-sensitive','[pipe]', '[doublequote]', '[quote]', '[tab]', 'OR','?']
+        FRIENDS_T = self.words[:]+['case-sensitive','[pipe]', '[doublequote]', '[quote]', '[tab]','[greater]', 'OR','?']
         if not text:
           completions = FRIENDS_T[:]
         else: 
@@ -5298,9 +5380,20 @@ class TextTool(cmd2.Cmd):
               if f.lower().startswith(text.lower()) 
               ]
         return completions
+        
+    def complete_filter(self, text, line, begidx, endidx):      
+        FRIENDS_T = ['case-sensitive','[pipe]', '[doublequote]', '[quote]', '[tab]','[greater]', 'OR','?']
+        if not text:
+          completions = FRIENDS_T[:]
+        else: 
+          completions = [ f 
+                          for f in (FRIENDS_T)
+              if f.lower().startswith(text.lower()) 
+              ]
+        return completions        
 
     def complete_delete(self, text, line, begidx, endidx):      
-        FRIENDS_T = ['case-sensitive','[pipe]', '[doublequote]', '[quote]', '[tab]', 'OR','?']
+        FRIENDS_T = ['case-sensitive','[pipe]', '[doublequote]', '[quote]', '[tab]','[greater]', 'OR','?']
         if not text:
           completions = FRIENDS_T[:]
         else: 
@@ -5397,6 +5490,7 @@ class TextTool(cmd2.Cmd):
         
         # Save previous state
         self.previous_lines = self.current_lines.copy()
+        self.previous_words = self.words.copy()
         
         # Parse arguments
         args = arg.strip().split()
@@ -5468,6 +5562,10 @@ class TextTool(cmd2.Cmd):
             new_lines.append(new_line)
         
         self.current_lines = new_lines
+        try:
+            self.do_fill_words('')
+        except:
+            a=0        
         self.update_live_view()
         self.poutput(f"Extracted columns {column_spec} using delimiter '{delimiter}'. Total lines: {len(new_lines)}")
 
@@ -5532,6 +5630,7 @@ class TextTool(cmd2.Cmd):
         
         # Save previous state
         self.previous_lines = self.current_lines.copy()
+        self.previous_words = self.words.copy()
         
         line_spec = arg.strip().strip('"').strip("'")
         if not line_spec:
@@ -5592,6 +5691,10 @@ class TextTool(cmd2.Cmd):
                     new_lines.append(self.current_lines[idx])
             
             self.current_lines = new_lines
+            try:
+                self.do_fill_words('')
+            except:
+                a=0            
             self.update_live_view()
             self.poutput(f"Selected {len(new_lines)} line(s).")
             
@@ -5905,6 +6008,7 @@ class TextTool(cmd2.Cmd):
         
         # Save previous state
         self.previous_lines = self.current_lines.copy()
+        self.previous_words = self.words.copy()
         
         # Parse arguments
         import shlex
@@ -5959,6 +6063,10 @@ class TextTool(cmd2.Cmd):
                 new_lines.append(new_line)
             
             self.current_lines = new_lines
+            try:
+                self.do_fill_words('')
+            except:
+                a=0            
             self.update_live_view()
             
             sensitivity = "case-sensitive" if case_sensitive else "case-insensitive"
@@ -5970,7 +6078,7 @@ class TextTool(cmd2.Cmd):
 
 
     def complete_replace_between(self, text, line, begidx, endidx):      
-        FRIENDS_T = ['case_sensitive', '?']
+        FRIENDS_T = self.words[:]+['case_sensitive', '?']
         if not text:
             completions = FRIENDS_T[:]
         else: 
@@ -6027,6 +6135,7 @@ class TextTool(cmd2.Cmd):
             return
 
         self.previous_lines = self.current_lines.copy()
+        self.previous_words = self.words.copy()
 
         args = arg.strip().split()
         if not args:
@@ -6081,6 +6190,10 @@ class TextTool(cmd2.Cmd):
                     removed_count += 1
 
             self.current_lines = filtered_lines
+            try:
+                self.do_fill_words('')
+            except:
+                a=0            
             self.update_live_view()
             
             # Build criteria description
@@ -6165,6 +6278,7 @@ class TextTool(cmd2.Cmd):
             return
 
         self.previous_lines = self.current_lines.copy()
+        self.previous_words = self.words.copy()
 
         args = shlex.split(arg) if '"' in arg or "'" in arg else arg.split()
         if not args:
@@ -6263,6 +6377,10 @@ class TextTool(cmd2.Cmd):
                         match_count += 1
             
             self.current_lines = mismatches
+            try:
+                self.do_fill_words('')
+            except:
+                a=0            
             self.update_live_view()
             
             # Build description
@@ -6474,11 +6592,11 @@ class TextTool(cmd2.Cmd):
             completions = [f for f in FRIENDS_T if f.lower().startswith(text.lower())]
         return completions
 
-    def do_select_indented(self, arg):
+    def do_indented_select(self, arg):
         """Select all indented text under a specified heading or pattern.
 
         Usage:
-            select_indented <pattern> [case_sensitive]
+            indented_select <pattern> [case_sensitive]
 
         Description:
             Finds lines matching the pattern and selects those lines plus all subsequent
@@ -6486,9 +6604,9 @@ class TextTool(cmd2.Cmd):
             encountering a line with equal or less indentation.
 
         Examples:
-            select_indented "header-rule"    - Select header-rule and all its indented content
-            select_indented "element-rule"   - Select all element-rule blocks with their content
-            select_indented "function" case_sensitive - Case-sensitive selection
+            indented_select "header-rule"    - Select header-rule and all its indented content
+            indented_select "element-rule"   - Select all element-rule blocks with their content
+            indented_select "function" case_sensitive - Case-sensitive selection
 
         Behavior:
             - Finds the target pattern in the text
@@ -6510,8 +6628,8 @@ class TextTool(cmd2.Cmd):
             f"  Automatically detects the indentation hierarchy and extracts complete blocks.\n"
             f"  Essential for working with structured configuration files and code.\n\n"
             f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
-            f"  {self.COLOR_EXAMPLE}select_indented <pattern>{self.COLOR_RESET}  - Select pattern and indented content\n"
-            f"  {self.COLOR_EXAMPLE}select_indented <pattern> case_sensitive{self.COLOR_RESET}\n\n"
+            f"  {self.COLOR_EXAMPLE}indented_select <pattern>{self.COLOR_RESET}  - Select pattern and indented content\n"
+            f"  {self.COLOR_EXAMPLE}indented_select <pattern> case_sensitive{self.COLOR_RESET}\n\n"
             f"{self.COLOR_COMMAND}Selection Logic:{self.COLOR_RESET}\n"
             f"  • Finds all lines matching the pattern\n"
             f"  • Includes the matching line itself\n"
@@ -6520,13 +6638,13 @@ class TextTool(cmd2.Cmd):
             f"  • Handles {self.COLOR_COMMAND}multiple blocks{self.COLOR_RESET} independently\n"
             f"  • Preserves the {self.COLOR_COMMAND}original structure{self.COLOR_RESET}\n\n"
             f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
-            f"  {self.COLOR_EXAMPLE}select_indented \"header-rule\"{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}indented_select \"header-rule\"{self.COLOR_RESET}\n"
             f"    - Selects header-rule line and all its indented sub-elements\n\n"
-            f"  {self.COLOR_EXAMPLE}select_indented \"element-rule\"{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}indented_select \"element-rule\"{self.COLOR_RESET}\n"
             f"    - Selects all element-rule blocks with their nested content\n\n"
-            f"  {self.COLOR_EXAMPLE}select_indented \"function\"{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}indented_select \"function\"{self.COLOR_RESET}\n"
             f"    - Selects function definitions and their implementation\n\n"
-            f"  {self.COLOR_EXAMPLE}select_indented \"class \" case_sensitive{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}indented_select \"class \" case_sensitive{self.COLOR_RESET}\n"
             f"    - Case-sensitive selection of class definitions\n\n"
             f"{self.COLOR_COMMAND}Perfect For:{self.COLOR_RESET}\n"
             f"  • Configuration files (YAML, JSON, XML, INI)\n"
@@ -6557,6 +6675,7 @@ class TextTool(cmd2.Cmd):
 
         # Save previous state
         self.previous_lines = self.current_lines.copy()
+        self.previous_words = self.words.copy()
 
         # Parse arguments
         args = arg.strip().split()
@@ -6577,7 +6696,7 @@ class TextTool(cmd2.Cmd):
         try:
             # Compile regex pattern
             flags = 0 if case_sensitive else re.IGNORECASE
-            regex = re.compile(pattern.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[spaces]',r"[^\S\r\n]+"), flags)
+            regex = re.compile(pattern.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[greater]',">").replace('[spaces]',r"[^\S\r\n]+"), flags)
 
             selected_lines = []
             i = 0
@@ -6622,6 +6741,10 @@ class TextTool(cmd2.Cmd):
 
             if selected_lines:
                 self.current_lines = selected_lines
+                try:
+                    self.do_fill_words('')
+                except:
+                    a=0                
                 self.update_live_view()
                 sensitivity = "case sensitive" if case_sensitive else "case insensitive"
                 self.poutput(f"Selected {len(selected_lines)} lines of indented content under '{pattern}' ({sensitivity}).")
@@ -6632,13 +6755,39 @@ class TextTool(cmd2.Cmd):
             self.poutput(f"Error: Invalid regex pattern. {e}")
 
 
-    def complete_select_indented(self, text, line, begidx, endidx):      
-        FRIENDS_T = ['case_sensitive', '?']
+    def complete_indented_select(self, text, line, begidx, endidx):      
+        FRIENDS_T = self.words[:]+['case_sensitive', '?']
         if not text:
             completions = FRIENDS_T[:]
         else: 
             completions = [f for f in FRIENDS_T if f.lower().startswith(text.lower())]
         return completions
+
+
+    def do_fill_words(self, arg):
+        import re
+
+        # Example: self.current_lines is a list of strings
+
+        if self.current_lines:
+            full_text = " ".join(self.current_lines)
+
+        # Use regex to split by spaces, tabs, <, >, or >< (handled by splitting on all non-word characters)
+            delimiters = r"[\s\t<>\/,\"&;:\\=\(\)\+\|\.\'\!\^\’\”\“\{\}]+"
+            wordss = re.split(delimiters, full_text)
+
+
+            filtered_words = {
+                word for word in wordss
+                if word and len(word) > 3 and re.match(r'^[A-Za-z]', word)
+}
+
+        # Filter out empty strings and get unique words
+            self.words = sorted(filtered_words)
+
+        # Print as a table (one word per line)
+            #for word in self.words:
+                #print(word)
 
 if __name__ == '__main__':
     app = TextTool()

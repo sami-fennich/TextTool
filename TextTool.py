@@ -1206,17 +1206,36 @@ class TextTool(cmd2.Cmd):
 
 
     def update_live_view(self):
+        """Refresh the LiveView content safely and keep text syncing and cursor tracking working."""
         if hasattr(self, "liveview_box") and self.liveview_box:
             try:
+                # Temporarily unbind to prevent recursive triggers
                 self.liveview_box.unbind("<<Modified>>")
+                
+                # Replace text
                 self.liveview_box.delete("1.0", tk.END)
                 self.liveview_box.insert(tk.END, ''.join(self.current_lines))
+                
+                # Reset modification flag
                 self.liveview_box.edit_modified(False)
-                self.liveview_box.bind("<<Modified>>", lambda e: setattr(self, 'text_changed', True))
+
+                def on_text_modified(event=None):
+                    """Mark text as changed and update cursor info."""
+                    if self.liveview_box.edit_modified():
+                        self.text_changed = True
+                        self.liveview_box.edit_modified(False)
+                        try:
+                            self.update_cursor_position()
+                        except Exception:
+                            pass
+
+                # Rebind full handler (sync + cursor update)
+                self.liveview_box.bind("<<Modified>>", on_text_modified)
+
                 if hasattr(self, "liveview_root") and self.liveview_root:
                     self.liveview_root.title(f"Live Text Viewer – {len(self.current_lines)} lines")
+
             except Exception as e:
-                # Window was destroyed, clean up references
                 self.liveview_root = None
                 self.liveview_box = None
                 self.file_path_label = None
@@ -2943,7 +2962,7 @@ class TextTool(cmd2.Cmd):
                 self.poutput(f"Literal Replacement failed. Details: {d}")            
                 
     def complete_replace(self, text, line, begidx, endidx):      
-        FRIENDS_T = ['case_sensitive','?']
+        FRIENDS_T = self.words[:]+['case_sensitive','?']
         if not text:
           completions = FRIENDS_T[:]
         else: 
@@ -5384,7 +5403,7 @@ class TextTool(cmd2.Cmd):
     def complete_filter(self, text, line, begidx, endidx):      
         FRIENDS_T = ['case-sensitive','[pipe]', '[doublequote]', '[quote]', '[tab]','[greater]', 'OR','?']
         if not text:
-          completions = FRIENDS_T[:]
+          completions = self.words[:]+FRIENDS_T[:]
         else: 
           completions = [ f 
                           for f in (FRIENDS_T)
@@ -5415,7 +5434,7 @@ class TextTool(cmd2.Cmd):
         return completions
 
     def complete_extract_between(self, text, line, begidx, endidx):      
-        FRIENDS_T = ['case_sensitive','?']
+        FRIENDS_T = self.words[:]+['case_sensitive','?']
         if not text:
           completions = FRIENDS_T[:]
         else: 
@@ -5426,7 +5445,7 @@ class TextTool(cmd2.Cmd):
         return completions
 
     def complete_bulk_replace(self, text, line, begidx, endidx):      
-        FRIENDS_T = ['case_sensitive','?']
+        FRIENDS_T = self.words[:]+['case_sensitive','?']
         if not text:
           completions = FRIENDS_T[:]
         else: 

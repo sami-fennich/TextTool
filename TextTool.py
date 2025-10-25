@@ -276,6 +276,7 @@ class TextTool(cmd2.Cmd):
         self.hidden_commands.append('right_replace_in_selection')
         self.hidden_commands.append('trim_whitespace_in_selection') 
         self.hidden_commands.append('replace_in_selection')
+        self.hidden_commands.append('clone_selection')
         self.hidden_commands.append('select_lines')
         #self.hidden_commands.append('indented_select')
         
@@ -1856,6 +1857,8 @@ class TextTool(cmd2.Cmd):
                     
                     # Insert at cursor position
                     self.liveview_box.insert(cursor_pos, clipboard_content)
+                    self.liveview_box.see(cursor_pos)
+
                     
                     # Mark text as changed
                     self.text_changed = True
@@ -1864,7 +1867,7 @@ class TextTool(cmd2.Cmd):
                     self.show_status_message("Content pasted from clipboard")
                     
                     # Update the display
-                    self.update_live_view()
+                    #self.update_live_view()
         except tk.TclError:
             self.show_status_message("Clipboard is empty or contains non-text data")
 

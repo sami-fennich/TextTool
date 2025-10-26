@@ -416,16 +416,23 @@ class TextTool(cmd2.Cmd):
                     # Selection-specific operations
                     
                     # Add Select Indented option for any selection
-                    clean_pattern = selected_text.strip()
+                    clean_pattern = selected_text.rstrip('\n\r')
                     if clean_pattern:
                         # Show the actual pattern that will be used
                         display_pattern = clean_pattern
                         if len(display_pattern) > 25:
                             display_pattern = display_pattern[:22] + "..."
+
+                        # Add visual indicator for trailing spaces in display
+                        if clean_pattern != clean_pattern.rstrip():
+                            trailing_spaces = len(clean_pattern) - len(clean_pattern.rstrip())
+                            display_pattern = display_pattern.rstrip() + f"[+{trailing_spaces}sp]"
                         
-                        context_menu.add_command(label=f"Select Indented: '{display_pattern}'", 
-                                               command=lambda: self.onecmd(f'indented_select "{clean_pattern}"'))
+                    context_menu.add_command(label=f"Select Indented: '{display_pattern}'", 
+                                           command=lambda p=clean_pattern: self.onecmd(f'indented_select "{p}"'))
                     
+                    context_menu.add_command(label=f"Remove Indented: '{display_pattern}'", 
+                                           command=lambda p=clean_pattern: self.onecmd(f'indented_remove "{p}"'))                
                     context_menu.add_separator()
                     context_menu.add_command(label="Clone Selection...", 
                                            command=lambda: self.clone_selection_dialog())
@@ -6773,7 +6780,8 @@ class TextTool(cmd2.Cmd):
         Examples:
             indented_select "header-rule"    - Select header-rule and all its indented content
             indented_select "element-rule"   - Select all element-rule blocks with their content
-            indented_select "function" case_sensitive - Case-sensitive selection
+            indented_select "function " case_sensitive - Pattern with trailing space (case-sensitive)
+            indented_select "class "         - Select lines starting with "class " (with space)
 
         Behavior:
             - Finds the target pattern in the text
@@ -6782,11 +6790,13 @@ class TextTool(cmd2.Cmd):
             - Stops at lines with equal or less indentation
             - Handles multiple matching sections independently
             - Preserves the hierarchical structure
+            - Trailing spaces in quoted patterns are preserved
 
         Notes:
             - By default, search is case-insensitive
             - Add 'case_sensitive' for exact case matching
             - Perfect for configuration files, code blocks, and structured data
+            - Use quotes to preserve trailing/leading spaces in pattern
         """
         help_text = (
             f"{self.COLOR_HEADER}Select Indented - Extract Hierarchical Blocks{self.COLOR_RESET}\n\n"
@@ -6809,10 +6819,10 @@ class TextTool(cmd2.Cmd):
             f"    - Selects header-rule line and all its indented sub-elements\n\n"
             f"  {self.COLOR_EXAMPLE}indented_select \"element-rule\"{self.COLOR_RESET}\n"
             f"    - Selects all element-rule blocks with their nested content\n\n"
-            f"  {self.COLOR_EXAMPLE}indented_select \"function\"{self.COLOR_RESET}\n"
-            f"    - Selects function definitions and their implementation\n\n"
+            f"  {self.COLOR_EXAMPLE}indented_select \"function \"{self.COLOR_RESET}\n"
+            f"    - Selects lines with 'function ' (note the trailing space)\n\n"
             f"  {self.COLOR_EXAMPLE}indented_select \"class \" case_sensitive{self.COLOR_RESET}\n"
-            f"    - Case-sensitive selection of class definitions\n\n"
+            f"    - Case-sensitive selection with trailing space preserved\n\n"
             f"{self.COLOR_COMMAND}Perfect For:{self.COLOR_RESET}\n"
             f"  • Configuration files (YAML, JSON, XML, INI)\n"
             f"  • Code blocks and function definitions\n"
@@ -6825,7 +6835,8 @@ class TextTool(cmd2.Cmd):
             f"  • Uses leading whitespace to determine indentation level\n"
             f"  • Tabs and spaces are both supported\n"
             f"  • Empty lines are included if they're within the indented block\n"
-            f"  • Multiple matching blocks are combined in output\n\n"
+            f"  • Multiple matching blocks are combined in output\n"
+            f"  • Quoted patterns preserve leading/trailing spaces\n\n"
             f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
             f"  • Use {self.COLOR_EXAMPLE}unselect{self.COLOR_RESET} to return to full text\n"
             f"  • Works best with consistently indented text\n"
@@ -6844,8 +6855,14 @@ class TextTool(cmd2.Cmd):
         self.previous_lines = self.current_lines.copy()
         self.previous_words = self.words.copy()
 
-        # Parse arguments
-        args = arg.strip().split()
+        # Parse arguments - preserve spaces in quotes
+        import shlex
+        try:
+            args = shlex.split(arg)
+        except ValueError:
+            # Fallback to basic parsing if shlex fails
+            args = arg.strip().split()
+        
         if not args:
             self.poutput("Error: Please specify a pattern to search for.")
             return
@@ -6855,10 +6872,17 @@ class TextTool(cmd2.Cmd):
         if case_sensitive:
             args.remove("case_sensitive")
 
-        pattern = " ".join(args).strip('"').strip("'")
-        if not pattern:
+        # Get pattern - use first argument and preserve all spaces
+        if not args:
             self.poutput("Error: Invalid pattern specified.")
             return
+        
+        # If there are multiple args left, join them (in case pattern had spaces)
+        # But shlex should handle this correctly
+        pattern = args[0] if len(args) == 1 else " ".join(args)
+        
+        # Don't strip quotes or spaces from the pattern
+        # shlex already removed the outer quotes, preserving internal content
 
         try:
             # Compile regex pattern
@@ -6925,8 +6949,211 @@ class TextTool(cmd2.Cmd):
         except re.error as e:
             self.poutput(f"Error: Invalid regex pattern. {e}")
 
-
     def complete_indented_select(self, text, line, begidx, endidx):      
+        FRIENDS_T = self.words[:]+['case_sensitive', '?']
+        if not text:
+            completions = FRIENDS_T[:]
+        else: 
+            completions = [f for f in FRIENDS_T if f.lower().startswith(text.lower())]
+        return completions
+
+
+    def do_indented_remove(self, arg):
+        """Remove all indented text under a specified heading or pattern.
+
+        Usage:
+            indented_remove <pattern> [case_sensitive]
+
+        Description:
+            Finds lines matching the pattern and removes those lines plus all subsequent
+            lines that are more indented (have more leading whitespace). Stops when
+            encountering a line with equal or less indentation.
+
+        Examples:
+            indented_remove "header-rule"    - Remove header-rule and all its indented content
+            indented_remove "element-rule"   - Remove all element-rule blocks with their content
+            indented_remove "debug " case_sensitive - Pattern with trailing space (case-sensitive)
+            indented_remove "test_ "         - Remove lines starting with "test_ " (with space)
+
+        Behavior:
+            - Finds the target pattern in the text
+            - Removes the matching line itself
+            - Removes all subsequent lines with greater indentation
+            - Stops at lines with equal or less indentation
+            - Handles multiple matching sections independently
+            - Preserves all other lines in their original structure
+            - Trailing spaces in quoted patterns are preserved
+
+        Notes:
+            - By default, search is case-insensitive
+            - Add 'case_sensitive' for exact case matching
+            - Perfect for removing debug sections, unused code blocks, or config sections
+            - Use 'revert' to undo the removal
+            - Use quotes to preserve trailing/leading spaces in pattern
+        """
+        help_text = (
+            f"{self.COLOR_HEADER}Remove Indented - Delete Hierarchical Blocks{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Description:{self.COLOR_RESET}\n"
+            f"  Remove lines matching a pattern plus all indented content beneath them.\n"
+            f"  Automatically detects the indentation hierarchy and removes complete blocks.\n"
+            f"  Inverse operation of {self.COLOR_EXAMPLE}indented_select{self.COLOR_RESET}.\n\n"
+            f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}indented_remove <pattern>{self.COLOR_RESET}  - Remove pattern and indented content\n"
+            f"  {self.COLOR_EXAMPLE}indented_remove <pattern> case_sensitive{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Removal Logic:{self.COLOR_RESET}\n"
+            f"  • Finds all lines matching the pattern\n"
+            f"  • Removes the matching line itself\n"
+            f"  • Removes all subsequent lines with {self.COLOR_COMMAND}greater indentation{self.COLOR_RESET}\n"
+            f"  • Stops at lines with {self.COLOR_COMMAND}equal or less indentation{self.COLOR_RESET}\n"
+            f"  • Handles {self.COLOR_COMMAND}multiple blocks{self.COLOR_RESET} independently\n"
+            f"  • Preserves {self.COLOR_COMMAND}all other content{self.COLOR_RESET}\n\n"
+            f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
+            f"  {self.COLOR_EXAMPLE}indented_remove \"debug-section\"{self.COLOR_RESET}\n"
+            f"    - Removes debug-section and all its nested content\n\n"
+            f"  {self.COLOR_EXAMPLE}indented_remove \"test_\"{self.COLOR_RESET}\n"
+            f"    - Removes all test functions and their implementations\n\n"
+            f"  {self.COLOR_EXAMPLE}indented_remove \"deprecated \"{self.COLOR_RESET}\n"
+            f"    - Removes lines with 'deprecated ' (note the trailing space)\n\n"
+            f"  {self.COLOR_EXAMPLE}indented_remove \"TODO\" case_sensitive{self.COLOR_RESET}\n"
+            f"    - Case-sensitive removal of TODO sections\n\n"
+            f"{self.COLOR_COMMAND}Perfect For:{self.COLOR_RESET}\n"
+            f"  • Removing debug or test sections from code\n"
+            f"  • Cleaning up deprecated configuration entries\n"
+            f"  • Removing specific modules from configs\n"
+            f"  • Deleting commented-out code blocks\n"
+            f"  • Stripping development-only sections\n"
+            f"  • Cleaning logs by removing verbose sections\n\n"
+            f"{self.COLOR_COMMAND}Technical Details:{self.COLOR_RESET}\n"
+            f"  • Case-insensitive by default (add {self.COLOR_EXAMPLE}case_sensitive{self.COLOR_RESET})\n"
+            f"  • Uses leading whitespace to determine indentation level\n"
+            f"  • Tabs and spaces are both supported\n"
+            f"  • Empty lines within blocks are also removed\n"
+            f"  • All matching blocks are removed in one operation\n"
+            f"  • Quoted patterns preserve leading/trailing spaces\n\n"
+            f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
+            f"  • Use {self.COLOR_EXAMPLE}revert{self.COLOR_RESET} to restore removed content\n"
+            f"  • Works best with consistently indented text\n"
+            f"  • Reports count of lines and blocks removed\n"
+            f"  • Opposite of {self.COLOR_EXAMPLE}indented_select{self.COLOR_RESET} command\n"
+        )
+        if arg.strip() == "?":
+            self.poutput(help_text)
+            return
+
+        if not self.current_lines:
+            self.poutput("Error: No file is loaded.")
+            return
+
+        # Save previous state
+        self.previous_lines = self.current_lines.copy()
+        self.previous_words = self.words.copy()
+
+        # Parse arguments - preserve spaces in quotes
+        import shlex
+        try:
+            args = shlex.split(arg)
+        except ValueError:
+            # Fallback to basic parsing if shlex fails
+            args = arg.strip().split()
+        
+        if not args:
+            self.poutput("Error: Please specify a pattern to search for.")
+            return
+
+        # Check for case_sensitive parameter
+        case_sensitive = "case_sensitive" in args
+        if case_sensitive:
+            args.remove("case_sensitive")
+
+        # Get pattern - use first argument and preserve all spaces
+        if not args:
+            self.poutput("Error: Invalid pattern specified.")
+            return
+        
+        # If there are multiple args left, join them (in case pattern had spaces)
+        # But shlex should handle this correctly
+        pattern = args[0] if len(args) == 1 else " ".join(args)
+        
+        # Don't strip quotes or spaces from the pattern
+        # shlex already removed the outer quotes, preserving internal content
+
+        try:
+            # Compile regex pattern
+            flags = 0 if case_sensitive else re.IGNORECASE
+            regex = re.compile(pattern.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[greater]',">").replace('[spaces]',r"[^\S\r\n]+"), flags)
+
+            lines_to_remove = set()  # Use set to track line indices to remove
+            i = 0
+            blocks_removed = 0
+            
+            while i < len(self.current_lines):
+                line = self.current_lines[i]
+                
+                # Check if this line matches our pattern
+                if regex.search(line):
+                    blocks_removed += 1
+                    # Calculate base indentation (count leading whitespace)
+                    base_indent = len(line) - len(line.lstrip())
+                    
+                    # Mark the matching line for removal
+                    lines_to_remove.add(i)
+                    
+                    # Mark subsequent lines with greater indentation for removal
+                    j = i + 1
+                    while j < len(self.current_lines):
+                        next_line = self.current_lines[j]
+                        
+                        # Handle completely empty lines - include them in removal
+                        if not next_line.strip():
+                            lines_to_remove.add(j)
+                            j += 1
+                            continue
+                        
+                        # Calculate next line's indentation
+                        next_indent = len(next_line) - len(next_line.lstrip())
+                        
+                        # If next line has equal or less indentation, we've reached the end of this block
+                        if next_indent <= base_indent:
+                            break
+                        
+                        # Line has greater indentation - mark for removal
+                        lines_to_remove.add(j)
+                        j += 1
+                    
+                    # Move i to where we left off
+                    i = j
+                else:
+                    i += 1
+
+            if lines_to_remove:
+                # Create new list without the removed lines
+                remaining_lines = [line for idx, line in enumerate(self.current_lines) 
+                                 if idx not in lines_to_remove]
+                
+                lines_removed = len(lines_to_remove)
+                self.current_lines = remaining_lines
+                
+                try:
+                    self.do_fill_words('')
+                except:
+                    pass
+                
+                self.update_live_view()
+                sensitivity = "case sensitive" if case_sensitive else "case insensitive"
+                
+                try:
+                    self.do_fill_words('')
+                except:
+                    pass
+                
+                self.poutput(f"Removed {blocks_removed} block(s) ({lines_removed} lines) matching '{pattern}' ({sensitivity}).")
+            else:
+                self.poutput(f"No matching indented blocks found for pattern '{pattern}'.")
+                
+        except re.error as e:
+            self.poutput(f"Error: Invalid regex pattern. {e}")
+
+    def complete_indented_remove(self, text, line, begidx, endidx):      
         FRIENDS_T = self.words[:]+['case_sensitive', '?']
         if not text:
             completions = FRIENDS_T[:]

@@ -170,6 +170,7 @@ class TextTool(cmd2.Cmd):
         self.original_full_text = []
         self.text_changed = False
         self.highlight_enabled = False
+        self.auotocomplete_from_text = False        
         self.selected_indices = []
         self.COLOR_HEADER = "\033[1;36m"  # Cyan
         self.COLOR_COMMAND = "\033[1;32m"  # Green
@@ -451,21 +452,31 @@ class TextTool(cmd2.Cmd):
             self.liveview_box.bind("<Button-3>", create_context_menu)  # Button-3 is right-click
 
             def on_text_modified(event=None):
-                """Mark text as changed and scroll to the last inserted text."""
+                """
+                Triggered whenever text in LiveView changes.
+                Marks the content as 'dirty' so it can be synchronized
+                to current_lines later (before next command execution).
+                """
                 if self.liveview_box.edit_modified():
+                    # Mark unsynced content
                     self.text_changed = True
 
-                    # Move cursor to end of text
-                    self.liveview_box.mark_set(tk.INSERT, tk.END)
+                    # Optional: visual indicator of unsaved state
+                    try:
+                        if hasattr(self, "liveview_root") and self.liveview_root:
+                            title = self.liveview_root.title()
+                            if not title.endswith("*"):
+                                self.liveview_root.title(title + " *")
+                    except Exception:
+                        pass
 
-                    # Force scrolling *after* Tk updates the display
-                    self.liveview_box.after_idle(lambda: self.liveview_box.see(tk.INSERT))
-
-                    # Reset modified flag
+                    # Reset the modified flag so next edit triggers again
                     self.liveview_box.edit_modified(False)
 
-
+            self._on_text_modified = on_text_modified
             self.liveview_box.bind("<<Modified>>", on_text_modified)
+            self.text_changed = False
+            self.liveview_box.focus_set()
             
             # --- Ensure paste actions scroll correctly ---
             def on_paste(event=None):
@@ -1207,40 +1218,41 @@ class TextTool(cmd2.Cmd):
 
 
     def update_live_view(self):
-        """Refresh the LiveView content safely and keep text syncing and cursor tracking working."""
-        if hasattr(self, "liveview_box") and self.liveview_box:
-            try:
-                # Temporarily unbind to prevent recursive triggers
-                self.liveview_box.unbind("<<Modified>>")
-                
-                # Replace text
-                self.liveview_box.delete("1.0", tk.END)
-                self.liveview_box.insert(tk.END, ''.join(self.current_lines))
-                
-                # Reset modification flag
-                self.liveview_box.edit_modified(False)
+        """
+        Refresh the LiveView content from current_lines safely.
+        Pushes backend text → GUI without breaking <<Modified>> bindings
+        or triggering recursive modification events.
+        """
+        if not (hasattr(self, "liveview_box") and self.liveview_box):
+            return
 
-                def on_text_modified(event=None):
-                    """Mark text as changed and update cursor info."""
-                    if self.liveview_box.edit_modified():
-                        self.text_changed = True
-                        self.liveview_box.edit_modified(False)
-                        try:
-                            self.update_cursor_position()
-                        except Exception:
-                            pass
+        try:
+            # Optional: temporarily disable modification event during refresh
+            self.liveview_box.unbind("<<Modified>>")
 
-                # Rebind full handler (sync + cursor update)
-                self.liveview_box.bind("<<Modified>>", on_text_modified)
+            # Replace GUI content
+            self.liveview_box.delete("1.0", tk.END)
+            self.liveview_box.insert(tk.END, ''.join(self.current_lines))
 
-                if hasattr(self, "liveview_root") and self.liveview_root:
-                    self.liveview_root.title(f"Live Text Viewer – {len(self.current_lines)} lines")
+            # Reset internal Tk modified flag
+            self.liveview_box.edit_modified(False)
 
-            except Exception as e:
-                self.liveview_root = None
-                self.liveview_box = None
-                self.file_path_label = None
-                self.update_file_path_display = None
+            # Re-enable existing modification handler (defined in start_live_view)
+            if hasattr(self, "_on_text_modified"):
+                self.liveview_box.bind("<<Modified>>", self._on_text_modified)
+
+            # Update title with line count
+            if hasattr(self, "liveview_root") and self.liveview_root:
+                total_lines = len(self.current_lines)
+                title = f"Live Text Viewer – {total_lines} lines"
+                self.liveview_root.title(title)
+
+        except Exception as e:
+            print(f"[Warning] update_live_view failed: {e}")
+            self.liveview_root = None
+            self.liveview_box = None
+            self.file_path_label = None
+            self.update_file_path_display = None
 
 
 
@@ -1281,35 +1293,66 @@ class TextTool(cmd2.Cmd):
             print(f"[Warning] Failed to highlight lines: {e}")
 
 
+    def sync_liveview_to_current_lines(self):
+        """Synchronize LiveView to current_lines if text changed."""
+        if hasattr(self, "liveview_box") and self.liveview_box:
+            new_text = self.liveview_box.get("1.0", "end-1c")
+            self.previous_lines = self.current_lines.copy()
+            self.previous_words = self.words.copy()
+            self.current_lines = [line + "\n" for line in new_text.splitlines()]
+            self.do_fill_words('')
+            self.text_changed = False
+
+
+
     def onecmd(self, line, **kwargs):
-        """Intercept all CLI commands to auto-sync and clear highlights when needed."""
-        # 1️⃣ Before running any command, sync if user manually edited text
+        """
+        Intercepts all CLI commands to ensure synchronization between
+        LiveView (ScrolledText) and backend text (current_lines).
+        """
+        # 1️⃣ Sync LiveView → backend if user modified text manually
         if getattr(self, 'text_changed', False):
             try:
                 if hasattr(self, 'liveview_box') and self.liveview_box:
                     new_text = self.liveview_box.get("1.0", "end-1c")
+
+                    # Backup current state for revert
                     self.previous_lines = self.current_lines.copy()
                     self.previous_words = self.words.copy()
-                    self.current_lines = [ln + "\n" for ln in new_text.splitlines()]
-                    try:
-                        self.do_fill_words('')
-                    except:
-                        a=0
-                self.text_changed = False
-            except Exception as e:
-                print(f"[Warning] Auto-sync from LiveView failed: {e}")
 
-        # 2️⃣ Clear any existing highlights before executing the command
+                    # Update backend data
+                    self.current_lines = [ln + "\n" for ln in new_text.splitlines()]
+                    self.do_fill_words('')
+
+                    # Reset flags
+                    self.text_changed = False
+                    self.liveview_box.edit_modified(False)
+
+                    # Remove unsaved marker
+                    if hasattr(self, "liveview_root") and self.liveview_root:
+                        title = self.liveview_root.title().rstrip(" *")
+                        self.liveview_root.title(title)
+            except Exception as e:
+                print(f"[Warning] LiveView → backend sync failed before command: {e}")
+
+        # 2️⃣ Optional: remove highlights before executing a new command
         try:
             if hasattr(self, "liveview_box") and self.liveview_box:
                 self.liveview_box.tag_remove("highlight", "1.0", "end")
         except Exception:
             pass
 
-        # 3️⃣ Execute the command
+        # 3️⃣ Execute the command using cmd2
         result = super().onecmd(line, **kwargs)
 
-        # 4️⃣ Reset flag afterward
+        # 4️⃣ Backend → LiveView update after command (if backend changed)
+        try:
+            if hasattr(self, "liveview_box") and self.liveview_box:
+                self.update_live_view()
+        except Exception:
+            pass
+
+        # 5️⃣ Cleanup: clear change flag after full sync
         self.text_changed = False
         return result
 
@@ -1391,6 +1434,36 @@ class TextTool(cmd2.Cmd):
         state = "enabled" if self.highlight_enabled else "disabled"
         self.poutput(f"LiveView highlighting is now {state}.")
 
+    def do_autocompletion_from_text(self, arg):
+        """activate/deactivate autocompletion based on the content of the current text.
+
+        Usage:
+            autocompletion_from_text          - Toggle the autocompletion state
+            autocompletion_from_text on/off    - Set explicitly
+        """
+        arg = arg.strip().lower()
+        if arg.strip() == "?":  # Check if the argument is just "?"
+            self.do_help("autocompletion_from_text")
+            state = "enabled" if self.auotocomplete_from_text else "disabled"
+            self.poutput(f"\nAuto-Completion based on current text is now {state}.\n")
+            return  # Exit the function   
+        if arg in ["on", "true", "1"]:
+            self.auotocomplete_from_text = True
+            self.do_fill_words('')
+        elif arg in ["off", "false", "0"]:
+            self.auotocomplete_from_text = False
+            self.words=[]
+        else:
+            # toggle state if no arg given
+            self.auotocomplete_from_text = not self.auotocomplete_from_text
+            if self.auotocomplete_from_text:
+                self.do_fill_words('')
+            else:
+                self.words=[]
+
+
+        state = "enabled" if self.auotocomplete_from_text else "disabled"
+        self.poutput(f"Auto-Completion based on current text is now {state}.")
 
 
     def myhookmethod(self, params: cmd2.plugin.PostparsingData) -> cmd2.plugin.PostparsingData:
@@ -1444,7 +1517,7 @@ class TextTool(cmd2.Cmd):
                 "How many times to clone the selection?",
                 initialvalue=1,
                 minvalue=1,
-                maxvalue=100
+                maxvalue=99999999
             )
             
             if repetitions is not None:
@@ -1457,6 +1530,15 @@ class TextTool(cmd2.Cmd):
         
         Usage: clone_selection start_line end_line repetitions
         """
+        try:
+            if hasattr(self, 'liveview_box') and self.liveview_box:
+                new_text = self.liveview_box.get("1.0", "end-1c")
+                self.previous_lines = self.current_lines.copy()
+                self.previous_words = self.words.copy()
+                self.current_lines = [ln + "\n" for ln in new_text.splitlines()]
+            #self.text_changed = True
+        except Exception as e:
+                a=0        
         if not self.current_lines:
             self.poutput("Error: No file is loaded.")
             return
@@ -1629,6 +1711,15 @@ class TextTool(cmd2.Cmd):
 
     def _apply_to_selection(self, arg, operation):
         """Helper method to apply operations to selected range."""
+        try:
+            if hasattr(self, 'liveview_box') and self.liveview_box:
+                new_text = self.liveview_box.get("1.0", "end-1c")
+                self.previous_lines = self.current_lines.copy()
+                self.previous_words = self.words.copy()
+                self.current_lines = [ln + "\n" for ln in new_text.splitlines()]
+                #self.text_changed = True
+        except Exception as e:
+            a=0        
         if not self.current_lines:
             self.poutput("Error: No file is loaded.")
             return
@@ -1690,6 +1781,7 @@ class TextTool(cmd2.Cmd):
                         self.current_lines[i] = regex.sub(replacement, original_line)
                     else:
                         self.current_lines[i] = regex.sub(string2.replace('[doublequote]','\\"').replace('[pipe]','\\|').replace('[quote]',"\\'").replace('[tab]',"\t").replace('[greater]',">").replace('[spaces]',r"[^\S\r\n]+"), original_line)
+                    
                         
                 except re.error:
                     # Fallback to literal replacement
@@ -1774,6 +1866,10 @@ class TextTool(cmd2.Cmd):
                         self.current_lines[i] = original_line
         
         self.update_live_view()
+        try:
+            self.do_fill_words('')
+        except:
+            a=0
         self.poutput(f"Applied {operation} to {end_line - start_line + 1} selected lines.")
 
     def remove_empty_lines_in_selection(self):
@@ -2173,13 +2269,13 @@ class TextTool(cmd2.Cmd):
                     self.text_lines = file.readlines()
 
             self.current_lines = self.text_lines.copy()
+         
+            self.original_file_path = file_path  # Store the original file path
+            self.update_live_view()
             try:
                 self.do_fill_words('')
             except:
-                a=0            
-            self.original_file_path = file_path  # Store the original file path
-            self.update_live_view()
-            
+                a=0               
             # Update file path display in liveview
             # Update file path display in liveview (safe call)
             if callable(getattr(self, 'update_file_path_display', None)):
@@ -2193,11 +2289,12 @@ class TextTool(cmd2.Cmd):
             if clipboard_content:
                 self.text_lines = [ s.replace("\r","") for s in clipboard_content.splitlines(keepends=True)]
                 self.current_lines = self.text_lines.copy()
+                
+                self.update_live_view()
                 try:
                     self.do_fill_words('')
                 except:
                     a=0                  
-                self.update_live_view()
                 self.original_file_path = None  # No file path for clipboard content
                 
                 # Update file path display in liveview (safe call)
@@ -2448,6 +2545,10 @@ class TextTool(cmd2.Cmd):
                 ]
             self.update_live_view()
             sensitivity = "case sensitive" if case_sensitive else "case insensitive"
+            try:
+                self.do_fill_words('')
+            except:
+                a=0
             self.poutput(f"Selected {len(self.current_lines)} lines ({sensitivity}).")
         except re.error:
             self.poutput("Error: Invalid regex pattern.")
@@ -2504,11 +2605,12 @@ class TextTool(cmd2.Cmd):
 
         # Update the current lines
         self.current_lines = restored_text
+      
+        self.update_live_view()
         try:
             self.do_fill_words('')
         except:
-            a=0        
-        self.update_live_view()
+            a=0          
         self.poutput("Reverted to the original full text with modified selected lines.")
     
 
@@ -2628,6 +2730,10 @@ class TextTool(cmd2.Cmd):
                 ]
             self.update_live_view()
             sensitivity = "case sensitive" if case_sensitive else "case insensitive"
+            try:
+                self.do_fill_words('')
+            except:
+                a=0              
             self.poutput(f"Remaining {len(self.current_lines)} lines ({sensitivity}).")
         except re.error:
             self.poutput("Error: Invalid regex pattern.")
@@ -2808,6 +2914,10 @@ class TextTool(cmd2.Cmd):
             
             self.update_live_view()
             sensitivity = "case sensitive" if case_sensitive else "case insensitive"
+            try:
+                self.do_fill_words('')
+            except:
+                a=0             
             self.poutput(f"Replacement completed using clipboard content ({sensitivity}).")
             return
         
@@ -2942,6 +3052,7 @@ class TextTool(cmd2.Cmd):
                 self.update_live_view()
 
             sensitivity = "case sensitive" if case_sensitive else "case insensitive"
+            self.do_fill_words('')
             self.poutput(f"Replacement completed ({sensitivity}).")
         except re.error as e:
             self.poutput(f"Error: Invalid regex pattern or replacement string. Details: {e}")
@@ -2960,6 +3071,7 @@ class TextTool(cmd2.Cmd):
                             self.current_lines[i] = line[:start_idx] + string2 + line[end_idx:]
                 self.update_live_view()
                 sensitivity = "case sensitive" if case_sensitive else "case insensitive"
+                self.do_fill_words('')
                 self.poutput(f"Literal Replacement completed ({sensitivity}).")
             except Exception as d:
                 self.poutput(f"Literal Replacement failed. Details: {d}")            
@@ -3791,6 +3903,10 @@ class TextTool(cmd2.Cmd):
             ]
             self.update_live_view()
             sensitivity = "case sensitive" if case_sensitive else "case insensitive"
+            try:
+                self.do_fill_words('')
+            except:
+                a=0             
             self.poutput(f"Replacement completed in specified lines ({sensitivity}).")
         except re.error:
             self.poutput("Error: Invalid regex pattern.")
@@ -3983,6 +4099,10 @@ class TextTool(cmd2.Cmd):
                 self.current_lines = extracted_lines
                 self.update_live_view()
                 sensitivity = "case sensitive" if case_sensitive else "case insensitive"
+                try:
+                    self.do_fill_words('')
+                except:
+                    a=0                 
                 self.poutput(f"Extracted {len(extracted_lines)} lines between matching patterns ({sensitivity}).")
             else:
                 self.poutput("No matching start/end patterns found.")
@@ -4056,6 +4176,10 @@ class TextTool(cmd2.Cmd):
 
             self.current_lines.insert(line_number - 1, text_to_insert)
             self.update_live_view()
+            try:
+                self.do_fill_words('')
+            except:
+                a=0             
             self.poutput(f"Line inserted successfully at position {line_number}.")
         except ValueError:
             self.poutput("Error: Invalid line number.")
@@ -4266,6 +4390,10 @@ class TextTool(cmd2.Cmd):
         self.update_live_view()
         sensitivity = "case sensitive" if case_sensitive else "case insensitive"
         action = "excluded" if negate else "selected"
+        try:
+            self.do_fill_words('')
+        except:
+            a=0         
         self.poutput(f"{action.capitalize()} {len(self.current_lines)} lines ({sensitivity}).")
 
     def complete_select_from_file(self, text, line, begidx, endidx):      
@@ -4872,6 +5000,10 @@ class TextTool(cmd2.Cmd):
         except:
             a=0        
         self.update_live_view()
+        try:
+            self.do_fill_words('')
+        except:
+            a=0         
 
     def complete_right_replace(self, text, line, begidx, endidx):      
         FRIENDS_T = self.words[:]+['case_sensitive','?']
@@ -4985,12 +5117,13 @@ class TextTool(cmd2.Cmd):
             self.poutput(f"Left-side replacement completed ({'case sensitive' if case_sensitive else 'case insensitive'}).")
 
         self.current_lines = new_lines
+       
+        self.update_live_view()
         try:
             self.do_fill_words('')
         except:
-            a=0        
-        self.update_live_view()
-
+            a=0 
+            
     def complete_left_replace(self, text, line, begidx, endidx):      
         FRIENDS_T = self.words[:]+['case_sensitive','?']
         if not text:
@@ -5280,16 +5413,16 @@ class TextTool(cmd2.Cmd):
         self.previous_words = self.words.copy()
         # Replace current_lines with the concatenated results
         self.current_lines = result_lines
-        try:
-            self.do_fill_words('')
-        except:
-            a=0        
+     
         # update live view
         try:
             self.update_live_view()
         except Exception:
             pass
-
+        try:
+            self.do_fill_words('')
+        except:
+            a=0   
         self.poutput(f"Applied {len(mappings)} mapping lines; produced {len(result_lines)} output lines. ({skipped} mapping lines skipped)")
 
 
@@ -5589,6 +5722,10 @@ class TextTool(cmd2.Cmd):
         except:
             a=0        
         self.update_live_view()
+        try:
+            self.do_fill_words('')
+        except:
+            a=0          
         self.poutput(f"Extracted columns {column_spec} using delimiter '{delimiter}'. Total lines: {len(new_lines)}")
 
 
@@ -5718,6 +5855,10 @@ class TextTool(cmd2.Cmd):
             except:
                 a=0            
             self.update_live_view()
+            try:
+                self.do_fill_words('')
+            except:
+                a=0              
             self.poutput(f"Selected {len(new_lines)} line(s).")
             
         except ValueError as e:
@@ -6092,6 +6233,10 @@ class TextTool(cmd2.Cmd):
             self.update_live_view()
             
             sensitivity = "case-sensitive" if case_sensitive else "case-insensitive"
+            try:
+                self.do_fill_words('')
+            except:
+                a=0              
             self.poutput(f"Replaced {total_replacements} occurrence(s) between '{start_delim}' and '{end_delim}' ({sensitivity}).")
             
         except re.error as e:
@@ -6769,6 +6914,10 @@ class TextTool(cmd2.Cmd):
                     a=0                
                 self.update_live_view()
                 sensitivity = "case sensitive" if case_sensitive else "case insensitive"
+                try:
+                    self.do_fill_words('')
+                except:
+                    a=0                  
                 self.poutput(f"Selected {len(selected_lines)} lines of indented content under '{pattern}' ({sensitivity}).")
             else:
                 self.poutput(f"No matching indented blocks found for pattern '{pattern}'.")
@@ -6785,12 +6934,28 @@ class TextTool(cmd2.Cmd):
             completions = [f for f in FRIENDS_T if f.lower().startswith(text.lower())]
         return completions
 
+    def complete_autocompletion_from_text(self, text, line, begidx, endidx):      
+        FRIENDS_T = ['on', 'off','?']
+        if not text:
+            completions = FRIENDS_T[:]
+        else: 
+            completions = [f for f in FRIENDS_T if f.lower().startswith(text.lower())]
+        return completions
+
+
 
     def do_fill_words(self, arg):
         import re
 
         # Example: self.current_lines is a list of strings
-
+        if not self.auotocomplete_from_text:
+            return
+        if not hasattr(self, "previous_lines"):
+            self.previous_lines = []
+        if not hasattr(self, "current_lines"):
+            self.current_lines = []            
+        if self.current_lines == self.previous_lines:
+            return
         if self.current_lines:
             full_text = " ".join(self.current_lines)
 
@@ -6801,8 +6966,7 @@ class TextTool(cmd2.Cmd):
 
             filtered_words = {
                 word for word in wordss
-                if word and len(word) > 3 and re.match(r'^[A-Za-z]', word)
-}
+                if word and len(word) > 3 and re.match(r'^[A-Za-z]', word)}
 
         # Filter out empty strings and get unique words
             self.words = sorted(filtered_words)

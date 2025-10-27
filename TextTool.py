@@ -280,6 +280,9 @@ class TextTool(cmd2.Cmd):
         self.hidden_commands.append('clone_selection')
         self.hidden_commands.append('select_lines')
         self.hidden_commands.append('fill_words')
+        self.hidden_commands.append('remove_blocks')
+        self.hidden_commands.append('replace_multiline')
+        self.hidden_commands.append('extract_context')
         
 
         self.liveview_box = None  # keep reference to the text box
@@ -1143,27 +1146,6 @@ class TextTool(cmd2.Cmd):
                 except Exception as e:
                     messagebox.showerror("Error", f"Failed to save file:\n{str(e)}")
 
-            def sync_from_liveview_internal():
-                """Synchronize Live View content back to current_lines."""
-                from tkinter import messagebox
-                try:
-                    # Read all content from the text box
-                    new_text = self.liveview_box.get("1.0", tk.END)
-
-                    # Save current state for revert
-                    self.previous_lines = self.current_lines.copy()
-                    self.previous_words = self.words.copy()
-
-                    # Replace current_lines with content from Live View
-                    self.current_lines = [line for line in new_text.splitlines(keepends=True)]
-                    self.do_fill_words('')
-
-                    # Refresh Live View to ensure consistency
-                    self.update_live_view()
-
-                    messagebox.showinfo("Success", f"Synchronized {len(self.current_lines)} lines from Live View.")
-                except Exception as e:
-                    messagebox.showerror("Error", f"Failed to sync:\n{str(e)}")
 
             # Bind Ctrl+S to save
             self.liveview_root.bind("<Control-s>", lambda e: save_from_liveview())
@@ -1392,7 +1374,6 @@ class TextTool(cmd2.Cmd):
             f"  • {self.COLOR_COMMAND}File operations{self.COLOR_RESET} - Load/save from the interface\n\n"
             f"{self.COLOR_COMMAND}Integration:{self.COLOR_RESET}\n"
             f"  • Changes in CLI automatically update Live View\n"
-            f"  • Edits in Live View sync back to CLI (with {self.COLOR_EXAMPLE}sync_from_liveview{self.COLOR_RESET})\n"
             f"  • Perfect for visual verification of operations\n"
             f"  • Great for large files where scrolling in CLI is difficult\n\n"
             f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
@@ -3424,6 +3405,19 @@ class TextTool(cmd2.Cmd):
             self.hidden_commands.remove('csv_to_table')
         except:
             a = 0    			
+        try:
+            self.hidden_commands.remove('remove_blocks')
+        except:
+            a = 0    			
+        try:
+            self.hidden_commands.remove('replace_multiline')
+        except:
+            a = 0    			
+        try:
+            self.hidden_commands.remove('extract_context')
+        except:
+            a = 0    			
+
         #try:
             #self.hidden_commands.remove('indented_select')
         #except:
@@ -3545,6 +3539,19 @@ class TextTool(cmd2.Cmd):
             self.hidden_commands.append('csv_to_table')
         except:
             a = 0  
+        try:
+            self.hidden_commands.append('remove_blocks')
+        except:
+            a = 0  
+        try:
+            self.hidden_commands.append('replace_multiline')
+        except:
+            a = 0  
+        try:
+            self.hidden_commands.append('extract_context')
+        except:
+            a = 0  
+            
         #try:
             #self.hidden_commands.append('indented_select')
         #except:
@@ -4831,48 +4838,6 @@ class TextTool(cmd2.Cmd):
         self.poutput(f"Empty lines removed successfully. Deleted {deleted_lines_count} lines.")
         
 
-    def do_sync_from_liveview(self, arg):
-        """Synchronize the content of the Live View back into current_lines.
-
-        Usage:
-            sync_from_liveview
-
-        Description:
-            Reads the editable content of the Live View window and overwrites
-            self.current_lines with it.
-            Useful if the user manually modified text directly in the Live View.
-
-        Notes:
-            - If the Live View window is not open, an error is shown.
-            - The synchronization replaces current_lines entirely.
-            - The previous state is saved so 'revert' can undo the change.
-            - The Live View is refreshed immediately after syncing.
-        """
-        if not hasattr(self, "liveview_box") or self.liveview_box is None:
-            self.poutput("Error: Live View window is not running.")
-            return
-
-        try:
-            # Read all content from the text box
-            new_text = self.liveview_box.get("1.0", tk.END)
-
-            # Save current state for revert
-            self.previous_lines = self.current_lines.copy()
-            self.previous_words = self.words.copy()
-
-            # Replace current_lines with content from Live View
-            self.current_lines = [line for line in new_text.splitlines(keepends=True)]
-            try:
-                self.do_fill_words('')
-            except:
-                a=0            
-
-            # Refresh Live View to ensure consistency and show new line count
-            self.update_live_view()
-
-            self.poutput(f"Synchronized {len(self.current_lines)} lines from Live View.")
-        except Exception as e:
-            self.poutput(f"Error reading Live View content: {e}")
 
 
     def do_right_replace(self, arg):
@@ -7128,6 +7093,270 @@ class TextTool(cmd2.Cmd):
         return completions
 
 
+    def do_extract_context(self, arg):
+        """Extract lines surrounding a pattern (context extraction).
+
+        Usage:
+            extract_context "pattern" [lines_before] [lines_after] [case_sensitive]
+
+        Type:
+            extract_context ?      → Show detailed help with examples
+        """
+        import re, shlex
+
+        # --- Help text ---
+        if arg.strip() == "?":
+            help_text = (
+                f"{self.COLOR_HEADER}Extract Context - Show surrounding lines for matches{self.COLOR_RESET}\n\n"
+                f"{self.COLOR_COMMAND}Description:{self.COLOR_RESET}\n"
+                f"  Extracts lines that match a given pattern along with a number of surrounding lines.\n"
+                f"  Useful for viewing context around keywords in logs or documents.\n\n"
+                f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
+                f"  {self.COLOR_EXAMPLE}extract_context \"pattern\" [before] [after] [case_sensitive]{self.COLOR_RESET}\n\n"
+                f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
+                f"  1. Extract 2 lines before and after matches of 'ERROR':\n"
+                f"     {self.COLOR_EXAMPLE}extract_context \"ERROR\" 2 2{self.COLOR_RESET}\n\n"
+                f"  2. Extract 1 line before, 3 after, case-sensitive:\n"
+                f"     {self.COLOR_EXAMPLE}extract_context \"Warning\" 1 3 case_sensitive{self.COLOR_RESET}\n\n"
+                f"  3. Default (1 before, 1 after):\n"
+                f"     {self.COLOR_EXAMPLE}extract_context \"failed\"{self.COLOR_RESET}\n"
+            )
+            self.poutput(help_text)
+            return
+
+        if not self.current_lines:
+            self.poutput("Error: No file is loaded.")
+            return
+
+        try:
+            args = shlex.split(arg)
+        except ValueError:
+            self.poutput("Error: Invalid quotes in arguments.")
+            return
+
+        if not args:
+            self.poutput("Error: Missing pattern. Type 'extract_context ?' for help.")
+            return
+
+        pattern = args[0]
+        before = int(args[1]) if len(args) > 1 and args[1].isdigit() else 1
+        after = int(args[2]) if len(args) > 2 and args[2].isdigit() else 1
+        case_sensitive = any(a.lower() == "case_sensitive" for a in args)
+
+        flags = 0 if case_sensitive else re.IGNORECASE
+        regex = re.compile(pattern, flags)
+
+        lines = self.current_lines
+        matched_indices = [i for i, line in enumerate(lines) if regex.search(line)]
+        if not matched_indices:
+            self.poutput(f"No matches found for pattern '{pattern}'.")
+            return
+
+        selected_indices = set()
+        for i in matched_indices:
+            for j in range(max(0, i - before), min(len(lines), i + after + 1)):
+                selected_indices.add(j)
+
+        extracted = [lines[i] for i in sorted(selected_indices)]
+
+        # --- Apply changes ---
+        self.previous_lines = self.current_lines.copy()
+        self.current_lines = extracted
+
+        try:
+            self.do_fill_words('')
+        except Exception:
+            pass
+        self.update_live_view()
+
+        self.poutput(
+            f"Extracted {self.COLOR_COMMAND}{len(extracted)}{self.COLOR_RESET} lines around pattern '{pattern}' "
+            f"(before={before}, after={after})."
+        )
+
+
+    def complete_extract_context(self, text, line, begidx, endidx):      
+        FRIENDS_T = self.words[:]+['case_sensitive', '?']
+        if not text:
+            completions = FRIENDS_T[:]
+        else: 
+            completions = [f for f in FRIENDS_T if f.lower().startswith(text.lower())]
+        return completions
+
+    def do_replace_multiline(self, arg):
+        """Perform regex-based replacement across multiple lines.
+
+        Usage:
+            replace_multiline "pattern" "replacement" [case_sensitive]
+
+        Type:
+            replace_multiline ?      → Show detailed help with examples
+        """
+        import re, shlex
+
+        # --- Help text ---
+        if arg.strip() == "?":
+            help_text = (
+                f"{self.COLOR_HEADER}Replace Multiline - Regex Replacement Over Full Text{self.COLOR_RESET}\n\n"
+                f"{self.COLOR_COMMAND}Description:{self.COLOR_RESET}\n"
+                f"  Performs replacements using a regular expression that can match across multiple lines.\n"
+                f"  Useful for removing or transforming multi-line code blocks, comments, or sections.\n\n"
+                f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
+                f"  {self.COLOR_EXAMPLE}replace_multiline \"pattern\" \"replacement\" [case_sensitive]{self.COLOR_RESET}\n\n"
+                f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
+                f"  1. Remove multi-line HTML <script> blocks:\n"
+                f"     {self.COLOR_EXAMPLE}replace_multiline \"<script[\\s\\S]*?</script>\" \"\"{self.COLOR_RESET}\n\n"
+                f"  2. Replace text in triple-quoted Python strings:\n"
+                f"     {self.COLOR_EXAMPLE}replace_multiline \"'''[\\s\\S]*?'''\" \"[STRING BLOCK]\"{self.COLOR_RESET}\n\n"
+                f"  3. Case-sensitive replacement:\n"
+                f"     {self.COLOR_EXAMPLE}replace_multiline \"TODO:\" \"✔ Done:\" case_sensitive{self.COLOR_RESET}\n"
+            )
+            self.poutput(help_text)
+            return
+
+        if not self.current_lines:
+            self.poutput("Error: No file is loaded.")
+            return
+
+        try:
+            args = shlex.split(arg)
+        except ValueError:
+            self.poutput("Error: Invalid quotes in arguments.")
+            return
+
+        if len(args) < 2:
+            self.poutput("Error: Missing parameters. Type 'replace_multiline ?' for help.")
+            return
+
+        pattern, replacement = args[:2]
+        case_sensitive = any(a.lower() == "case_sensitive" for a in args)
+
+        flags = re.DOTALL if case_sensitive else re.IGNORECASE | re.DOTALL
+
+        try:
+            regex = re.compile(pattern, flags)
+        except re.error as e:
+            self.poutput(f"Error: Invalid regex pattern → {e}")
+            return
+
+        text = "".join(self.current_lines)
+        new_text, count = regex.subn(replacement, text)
+
+        if count == 0:
+            self.poutput("No matches found.")
+            return
+
+        # --- Apply changes ---
+        self.previous_lines = self.current_lines.copy()
+        self.current_lines = new_text.splitlines(keepends=True)
+
+        try:
+            self.do_fill_words('')
+        except Exception:
+            pass
+        self.update_live_view()
+
+        self.poutput(
+            f"Replaced {self.COLOR_COMMAND}{count}{self.COLOR_RESET} multi-line occurrence(s) matching pattern '{pattern}'."
+        )
+
+
+    def complete_replace_multiline(self, text, line, begidx, endidx):      
+        FRIENDS_T = self.words[:]+['case_sensitive', '?']
+        if not text:
+            completions = FRIENDS_T[:]
+        else: 
+            completions = [f for f in FRIENDS_T if f.lower().startswith(text.lower())]
+        return completions
+
+    def do_remove_blocks(self, arg):
+        """Remove text blocks between two delimiters (multi-line delete).
+
+        Usage:
+            remove_blocks "start_pattern" "end_pattern" [case_sensitive]
+
+        Type:
+            remove_blocks ?      → Show detailed help with examples
+        """
+        import re, shlex
+
+        # --- Help text ---
+        if arg.strip() == "?":
+            help_text = (
+                f"{self.COLOR_HEADER}Remove Blocks - Delete Text Between Delimiters{self.COLOR_RESET}\n\n"
+                f"{self.COLOR_COMMAND}Description:{self.COLOR_RESET}\n"
+                f"  Deletes all text between two delimiters (including the delimiters themselves).\n"
+                f"  Works across multiple lines and supports regex patterns.\n\n"
+                f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
+                f"  {self.COLOR_EXAMPLE}remove_blocks \"start_pattern\" \"end_pattern\" [case_sensitive]{self.COLOR_RESET}\n\n"
+                f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
+                f"  1. Remove multi-line C-style comments:\n"
+                f"     {self.COLOR_EXAMPLE}remove_blocks \"/\\*\" \"\\*/\"{self.COLOR_RESET}\n\n"
+                f"  2. Remove XML <debug> sections (case-sensitive):\n"
+                f"     {self.COLOR_EXAMPLE}remove_blocks \"<debug>\" \"</debug>\" case_sensitive{self.COLOR_RESET}\n\n"
+                f"  3. Remove everything between BEGIN and END markers:\n"
+                f"     {self.COLOR_EXAMPLE}remove_blocks \"BEGIN\" \"END\"{self.COLOR_RESET}\n"
+            )
+            self.poutput(help_text)
+            return
+
+        if not self.current_lines:
+            self.poutput("Error: No file is loaded.")
+            return
+
+        try:
+            args = shlex.split(arg)
+        except ValueError:
+            self.poutput("Error: Invalid quotes in arguments.")
+            return
+
+        if len(args) < 2:
+            self.poutput("Error: Missing parameters. Type 'remove_blocks ?' for help.")
+            return
+
+        start_pat, end_pat = args[:2]
+        case_sensitive = any(a.lower() == "case_sensitive" for a in args)
+        flags = 0 if case_sensitive else re.IGNORECASE | re.DOTALL
+
+        try:
+            regex = re.compile(f"{re.escape(start_pat)}.*?{re.escape(end_pat)}", flags)
+        except re.error:
+            # fallback for raw regex delimiters
+            try:
+                regex = re.compile(f"{start_pat}.*?{end_pat}", flags)
+            except re.error as e:
+                self.poutput(f"Error: Invalid regex pattern → {e}")
+                return
+
+        text = "".join(self.current_lines)
+        new_text, count = regex.subn("", text)
+
+        if count == 0:
+            self.poutput(f"No blocks found between '{start_pat}' and '{end_pat}'.")
+            return
+
+        # --- Apply changes ---
+        self.previous_lines = self.current_lines.copy()
+        self.current_lines = new_text.splitlines(keepends=True)
+
+        try:
+            self.do_fill_words('')
+        except Exception:
+            pass
+        self.update_live_view()
+
+        self.poutput(
+            f"Removed {self.COLOR_COMMAND}{count}{self.COLOR_RESET} block(s) between '{start_pat}' and '{end_pat}'."
+        )
+
+
+    def complete_remove_blocks(self, text, line, begidx, endidx):      
+        FRIENDS_T = self.words[:]+['case_sensitive', '?']
+        if not text:
+            completions = FRIENDS_T[:]
+        else: 
+            completions = [f for f in FRIENDS_T if f.lower().startswith(text.lower())]
+        return completions
 
     def do_fill_words(self, arg):
         import re

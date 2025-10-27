@@ -291,6 +291,53 @@ class TextTool(cmd2.Cmd):
         if input_file:
             self.do_load(input_file)  
 
+    def _compile_regex_safely(self, start_pat, end_pat=None, *,
+                               inner_only=False,
+                               keep_delimiters=False,
+                               case_sensitive=False,
+                               multiline=True,
+                               allow_raw_fallback=True):
+        """
+        Safely compile a regex pattern (single or paired delimiters).
+        """
+        import re
+        flags = 0
+        if not case_sensitive:
+            flags |= re.IGNORECASE
+        if multiline:
+            flags |= re.DOTALL
+
+        if end_pat is None:
+            # Single regex case
+            try:
+                return re.compile(start_pat, flags), start_pat
+            except re.error as e:
+                return None, f"Invalid regex pattern: {e}"
+
+        # Build escaped pattern
+        try:
+            if inner_only:
+                pattern = f"{re.escape(start_pat)}(.*?){re.escape(end_pat)}"
+            elif keep_delimiters:
+                pattern = f"({re.escape(start_pat)})(.*?)(?={re.escape(end_pat)})"
+            else:
+                pattern = f"{re.escape(start_pat)}.*?{re.escape(end_pat)}"
+            return re.compile(pattern, flags), pattern
+        except re.error:
+            if not allow_raw_fallback:
+                return None, "Invalid regex and fallback disabled."
+
+            # Fallback using raw regex patterns
+            try:
+                if inner_only:
+                    pattern = f"{start_pat}(.*?){end_pat}"
+                elif keep_delimiters:
+                    pattern = f"({start_pat})(.*?)(?={end_pat})"
+                else:
+                    pattern = f"{start_pat}.*?{end_pat}"
+                return re.compile(pattern, flags), pattern
+            except re.error as e2:
+                return None, f"Invalid regex pattern: {e2}"
 
 
     def start_live_view(self):
@@ -2910,7 +2957,7 @@ class TextTool(cmd2.Cmd):
             return
         
         # If arguments are provided, proceed with the original logic
-        args = arg.split()
+        args = shlex.split(arg) if '"' in arg or "'" in arg else arg.strip().split()
         if len(args) >= 2:
             separator = _unquote(args[1])
         elif len(args) == 1:
@@ -3977,11 +4024,11 @@ class TextTool(cmd2.Cmd):
                 f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
                 f"  {self.COLOR_EXAMPLE}extract_between \"<start>\" \"<end>\" [inner_only] [case_sensitive] [occurrence]{self.COLOR_RESET}\n\n"
                 f"{self.COLOR_COMMAND}Parameters:{self.COLOR_RESET}\n"
-                f"  • {self.COLOR_COMMAND}start_pattern{self.COLOR_RESET}   – Starting delimiter (literal or regex)\n"
-                f"  • {self.COLOR_COMMAND}end_pattern{self.COLOR_RESET}     – Ending delimiter (literal or regex)\n"
-                f"  • {self.COLOR_COMMAND}inner_only{self.COLOR_RESET}      – (Optional) Exclude delimiters from results\n"
-                f"  • {self.COLOR_COMMAND}case_sensitive{self.COLOR_RESET}  – (Optional) Enable case-sensitive matching\n"
-                f"  • {self.COLOR_COMMAND}occurrence{self.COLOR_RESET}      – (Optional) Extract a specific match (e.g. 2) "
+                f"  • {self.COLOR_COMMAND}start_pattern{self.COLOR_RESET}   — Starting delimiter (literal or regex)\n"
+                f"  • {self.COLOR_COMMAND}end_pattern{self.COLOR_RESET}     — Ending delimiter (literal or regex)\n"
+                f"  • {self.COLOR_COMMAND}inner_only{self.COLOR_RESET}      — (Optional) Exclude delimiters from results\n"
+                f"  • {self.COLOR_COMMAND}case_sensitive{self.COLOR_RESET}  — (Optional) Enable case-sensitive matching\n"
+                f"  • {self.COLOR_COMMAND}occurrence{self.COLOR_RESET}      — (Optional) Extract a specific match (e.g. 2) "
                 f"or a range (e.g. 2-5)\n\n"
                 f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
                 f"  1. Extract all blocks between XML tags:\n"
@@ -4006,7 +4053,7 @@ class TextTool(cmd2.Cmd):
             return
 
         try:
-            args = shlex.split(arg)
+            args = shlex.split(arg) if '"' in arg or "'" in arg else arg.strip().split()
         except ValueError:
             self.poutput("Error: Invalid quotes in arguments.")
             return
@@ -4025,22 +4072,18 @@ class TextTool(cmd2.Cmd):
 
         start_pattern, end_pattern = args[:2]
 
-        # --- Compile regex ---
-        flags = 0 if case_sensitive else re.IGNORECASE | re.DOTALL
-        try:
-            if inner_only:
-                pattern = f"{re.escape(start_pattern)}(.*?){re.escape(end_pattern)}"
-            else:
-                pattern = f"{re.escape(start_pattern)}.*?{re.escape(end_pattern)}"
-            regex = re.compile(pattern, flags)
-        except re.error:
-            # Retry without escaping (allow regex)
-            pattern = f"{start_pattern}(.*?){end_pattern}" if inner_only else f"{start_pattern}.*?{end_pattern}"
-            try:
-                regex = re.compile(pattern, flags)
-            except re.error as e:
-                self.poutput(f"Error: Invalid regex pattern → {e}")
-                return
+        # --- Compile regex using helper function ---
+        regex, msg = self._compile_regex_safely(
+            start_pattern,
+            end_pattern,
+            inner_only=inner_only,
+            case_sensitive=case_sensitive,
+            multiline=True
+        )
+        
+        if not regex:
+            self.poutput(f"Error: {msg}")
+            return
 
         # --- Run extraction ---
         text = "".join(self.current_lines)
@@ -4051,7 +4094,12 @@ class TextTool(cmd2.Cmd):
             return
 
         # Normalize matches (string list)
-        extracted = matches if isinstance(matches[0], str) else [m[0] for m in matches]
+        # If inner_only is True, findall returns tuples with groups, otherwise strings
+        if inner_only and matches and isinstance(matches[0], tuple):
+            extracted = [m[0] if isinstance(m, tuple) else m for m in matches]
+        else:
+            extracted = matches if isinstance(matches[0], str) else [m[0] if isinstance(m, tuple) else m for m in matches]
+        
         total = len(extracted)
 
         # --- Handle specific occurrences ---
@@ -4098,7 +4146,6 @@ class TextTool(cmd2.Cmd):
                 f"Extracted {self.COLOR_COMMAND}{len(selected)}{self.COLOR_RESET} matches "
                 f"between '{start_pattern}' and '{end_pattern}'."
             )
-
 
 
 
@@ -4152,7 +4199,7 @@ class TextTool(cmd2.Cmd):
         self.previous_lines = self.current_lines.copy()
         self.previous_words = self.words.copy()
 
-        args = arg.split('"')
+        args = shlex.split(arg) if '"' in arg or "'" in arg else arg.strip().split()
         if len(args) < 2:
             self.poutput("Error: Invalid arguments. Usage: insert_line <line_number> \"text_to_insert\"")
             return
@@ -4329,7 +4376,7 @@ class TextTool(cmd2.Cmd):
             self.poutput(help_text)
             return  # Exit the function
 
-        args = shlex.split(arg)
+        args = args = shlex.split(arg) if '"' in arg or "'" in arg else arg.strip().split()
         if not args:
             self.poutput("Error: No file specified.")
             return
@@ -4901,7 +4948,7 @@ class TextTool(cmd2.Cmd):
 
         import shlex
         try:
-            args = shlex.split(arg)
+            args = shlex.split(arg) if '"' in arg or "'" in arg else arg.strip().split()
         except ValueError:
             self.poutput("Error: Invalid quotes or arguments.")
             return
@@ -5025,7 +5072,7 @@ class TextTool(cmd2.Cmd):
 
         import shlex
         try:
-            args = shlex.split(arg)
+            args = shlex.split(arg) if '"' in arg or "'" in arg else arg.strip().split()
         except ValueError:
             self.poutput("Error: Invalid quotes or arguments.")
             return
@@ -6056,71 +6103,40 @@ class TextTool(cmd2.Cmd):
 
 
     def do_replace_between(self, arg):
-        """Replace text between two delimiters (supports multiline and regex).
-        
+        """Replace text between two delimiters (supports multi-line, regex, and keep_delimiters).
+
         Usage:
-            replace_between "start_delimiter" "end_delimiter" "replacement" [case_sensitive] [keep_delimiters]
-            
-        Arguments:
-            start_delimiter - Starting delimiter (can be regex).
-            end_delimiter   - Ending delimiter (can be regex).
-            replacement     - Text to replace the content between delimiters.
-            case_sensitive  - Make delimiter matching case-sensitive.
-            keep_delimiters  - Add 'keep_delimiters' to preserve start/end tags.
-            
-        Examples:
-            replace_between "<b>" "</b>" "BOLD"
-                - Replaces everything between <b> and </b> with "BOLD".
-                
-            replace_between "START" "END" ""
-                - Removes everything between START and END (including delimiters).
-                
-            replace_between "\\[" "\\]" "REDACTED"
-                - Replaces content between square brackets (regex escaped).
-                
-            replace_between "<!--" "-->" "" case_sensitive
-                - Remove HTML comments (case-sensitive).
-        
-        Notes:
-            - Delimiters themselves are included in the replacement.
-            - Supports regex patterns for delimiters.
-            - By default, matching is case-insensitive.
-            - Non-greedy matching (replaces shortest match between delimiters).
-            - If end delimiter is not found, the line remains unchanged.
+            replace_between "start_pattern" "end_pattern" "replacement" [keep_delimiters] [case_sensitive]
+
+        Type:
+            replace_between ?      → Show detailed help with examples
         """
-        help_text = (
-            f"{self.COLOR_HEADER}\nReplace text between two delimiters.{self.COLOR_RESET}\n\n"
-            f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
-            f"  {self.COLOR_EXAMPLE}replace_between \"start\" \"end\" \"replacement\" [case_sensitive]  [keep_delimiters]{self.COLOR_RESET}\n\n"
-            f"{self.COLOR_COMMAND}Arguments:{self.COLOR_RESET}\n"
-            f"  {self.COLOR_EXAMPLE}start_delimiter{self.COLOR_RESET} - Starting delimiter (can be regex).\n"
-            f"  {self.COLOR_EXAMPLE}end_delimiter{self.COLOR_RESET}   - Ending delimiter (can be regex).\n"
-            f"  {self.COLOR_EXAMPLE}replacement{self.COLOR_RESET}     - Text to replace the content between delimiters.\n"
-            f"  {self.COLOR_EXAMPLE}case_sensitive{self.COLOR_RESET}  - Make delimiter matching case-sensitive.\n"
-            f"  {self.COLOR_EXAMPLE}keep_delimiters{self.COLOR_RESET}  - Add \'keep_delimiters\' to preserve start\/end tags.\n\n"            
-            f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
-            f"  {self.COLOR_EXAMPLE}replace_between \"<b>\" \"</b>\" \"BOLD\"{self.COLOR_RESET}\n"
-            f"    - Replaces everything between <b> and </b> with \"BOLD\".\n\n"
-            f"  {self.COLOR_EXAMPLE}replace_between \"START\" \"END\" \"\"{self.COLOR_RESET}\n"
-            f"    - Removes everything between START and END.\n\n"
-            f"  {self.COLOR_EXAMPLE}replace_between \"\\\\[\" \"\\\\]\" \"REDACTED\"{self.COLOR_RESET}\n"
-            f"    - Replaces content between square brackets.\n\n"
-            f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
-            f"  - Delimiters are included in the replacement.\n"
-            f"  - Supports regex patterns.\n"
-            f"  - Non-greedy matching (shortest match).\n"
-            f"  - Use double backslashes for literal backslashes (e.g., '\\\\[' for '[').\n"
-        )
+        import re, shlex
+
+        # --- Help text ---
         if arg.strip() == "?":
+            help_text = (
+                f"{self.COLOR_HEADER}Replace Between - Modify Text Between Delimiters{self.COLOR_RESET}\n\n"
+                f"{self.COLOR_COMMAND}Description:{self.COLOR_RESET}\n"
+                f"  Replaces text located between two delimiters. Works across multiple lines.\n"
+                f"  Supports literal or regex delimiters, and optional delimiter preservation.\n\n"
+                f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
+                f"  {self.COLOR_EXAMPLE}replace_between \"start\" \"end\" \"replacement\" [keep_delimiters] [case_sensitive]{self.COLOR_RESET}\n\n"
+                f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
+                f"  1. Replace content between XML tags:\n"
+                f"     {self.COLOR_EXAMPLE}replace_between \"<tag>\" \"</tag>\" \"NEW CONTENT\"{self.COLOR_RESET}\n\n"
+                f"  2. Keep the start and end tags:\n"
+                f"     {self.COLOR_EXAMPLE}replace_between \"<tag>\" \"</tag>\" \"NEW\" keep_delimiters{self.COLOR_RESET}\n\n"
+                f"  3. Case-sensitive replacement:\n"
+                f"     {self.COLOR_EXAMPLE}replace_between \"Start\" \"End\" \"value\" case_sensitive{self.COLOR_RESET}\n"
+            )
             self.poutput(help_text)
             return
 
+        # --- Validation ---
         if not self.current_lines:
             self.poutput("Error: No file is loaded.")
             return
-
-        self.previous_lines = self.current_lines.copy()
-        self.previous_words = self.words.copy()
 
         try:
             args = shlex.split(arg)
@@ -6128,50 +6144,55 @@ class TextTool(cmd2.Cmd):
             self.poutput("Error: Invalid quotes in arguments.")
             return
 
-        # --- Flags ---
+        # Parse arguments
         case_sensitive = "case_sensitive" in args
         keep_delims = "keep_delimiters" in args
         args = [a for a in args if a not in ("case_sensitive", "keep_delimiters")]
 
         if len(args) < 3:
-            self.poutput("Error: Missing parameters. Usage: replace_between \"start\" \"end\" \"replacement\"")
+            self.poutput("Error: Missing parameters. Type 'replace_between ?' for help.")
             return
 
         start_delim, end_delim, replacement = args[:3]
 
-        # --- Compile regex ---
-        flags = 0 if case_sensitive else re.IGNORECASE | re.DOTALL
-        try:
-            if keep_delims:
-                pattern = f"({re.escape(start_delim)})(.*?)(?={re.escape(end_delim)})"
-            else:
-                pattern = f"{re.escape(start_delim)}.*?{re.escape(end_delim)}"
-            regex = re.compile(pattern, flags)
-        except re.error as e:
-            self.poutput(f"Error: Invalid regex pattern: {e}")
+        # --- Compile regex safely ---
+        regex, msg = self._compile_regex_safely(
+            start_delim,
+            end_delim,
+            keep_delimiters=keep_delims,
+            case_sensitive=case_sensitive,
+            multiline=True
+        )
+        if not regex:
+            self.poutput(f"Error: {msg}")
             return
 
-        # --- Join text for multiline processing ---
+        # --- Perform replacement ---
         text = "".join(self.current_lines)
-
-        # --- Replacement ---
         if keep_delims:
+            # Replace only the inner part (group 2)
             new_text = regex.sub(lambda m: m.group(1) + replacement, text)
         else:
             new_text = regex.sub(replacement, text)
 
-        # --- Split back into lines ---
+        if new_text == text:
+            self.poutput("No matches found.")
+            return
+
+        # --- Apply updates ---
+        self.previous_lines = self.current_lines.copy()
         self.current_lines = new_text.splitlines(keepends=True)
 
-        # --- Update view ---
         try:
             self.do_fill_words('')
         except Exception:
             pass
-
         self.update_live_view()
-        sensitivity = "case-sensitive" if case_sensitive else "case-insensitive"
-        self.poutput(f"Replaced text between '{start_delim}' and '{end_delim}' ({sensitivity}).")
+
+        self.poutput(
+            f"Replaced text between '{start_delim}' and '{end_delim}' "
+            f"({'case-sensitive' if case_sensitive else 'case-insensitive'})."
+        )
 
 
     def complete_replace_between(self, text, line, begidx, endidx):      
@@ -6377,7 +6398,7 @@ class TextTool(cmd2.Cmd):
         self.previous_lines = self.current_lines.copy()
         self.previous_words = self.words.copy()
 
-        args = shlex.split(arg) if '"' in arg or "'" in arg else arg.split()
+        args = shlex.split(arg) if '"' in arg or "'" in arg else arg.strip().split()
         if not args:
             self.poutput("Error: Please specify a pattern or criteria.")
             return
@@ -6565,7 +6586,7 @@ class TextTool(cmd2.Cmd):
 
         try:
             # Parse arguments
-            args = arg.strip().split()
+            args = shlex.split(arg) if '"' in arg or "'" in arg else arg.split()
             delimiter = ","
             use_header = True
             max_cols = 10
@@ -7129,7 +7150,7 @@ class TextTool(cmd2.Cmd):
             return
 
         try:
-            args = shlex.split(arg)
+            args = shlex.split(arg) if '"' in arg or "'" in arg else arg.strip().split()
         except ValueError:
             self.poutput("Error: Invalid quotes in arguments.")
             return
@@ -7192,7 +7213,7 @@ class TextTool(cmd2.Cmd):
         Type:
             replace_multiline ?      → Show detailed help with examples
         """
-        import re, shlex
+        import shlex
 
         # --- Help text ---
         if arg.strip() == "?":
@@ -7200,26 +7221,27 @@ class TextTool(cmd2.Cmd):
                 f"{self.COLOR_HEADER}Replace Multiline - Regex Replacement Over Full Text{self.COLOR_RESET}\n\n"
                 f"{self.COLOR_COMMAND}Description:{self.COLOR_RESET}\n"
                 f"  Performs replacements using a regular expression that can match across multiple lines.\n"
-                f"  Useful for removing or transforming multi-line code blocks, comments, or sections.\n\n"
+                f"  Useful for modifying code blocks, comments, or sections spanning lines.\n\n"
                 f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
                 f"  {self.COLOR_EXAMPLE}replace_multiline \"pattern\" \"replacement\" [case_sensitive]{self.COLOR_RESET}\n\n"
                 f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
-                f"  1. Remove multi-line HTML <script> blocks:\n"
+                f"  1. Remove <script> blocks from HTML:\n"
                 f"     {self.COLOR_EXAMPLE}replace_multiline \"<script[\\s\\S]*?</script>\" \"\"{self.COLOR_RESET}\n\n"
-                f"  2. Replace text in triple-quoted Python strings:\n"
-                f"     {self.COLOR_EXAMPLE}replace_multiline \"'''[\\s\\S]*?'''\" \"[STRING BLOCK]\"{self.COLOR_RESET}\n\n"
-                f"  3. Case-sensitive replacement:\n"
+                f"  2. Replace triple-quoted strings:\n"
+                f"     {self.COLOR_EXAMPLE}replace_multiline \"'''[\\s\\S]*?'''\" \"[STRING]\"{self.COLOR_RESET}\n\n"
+                f"  3. Case-sensitive version:\n"
                 f"     {self.COLOR_EXAMPLE}replace_multiline \"TODO:\" \"✔ Done:\" case_sensitive{self.COLOR_RESET}\n"
             )
             self.poutput(help_text)
             return
 
+        # --- Validation ---
         if not self.current_lines:
             self.poutput("Error: No file is loaded.")
             return
 
         try:
-            args = shlex.split(arg)
+            args = shlex.split(arg) if '"' in arg or "'" in arg else arg.strip().split()
         except ValueError:
             self.poutput("Error: Invalid quotes in arguments.")
             return
@@ -7229,16 +7251,20 @@ class TextTool(cmd2.Cmd):
             return
 
         pattern, replacement = args[:2]
-        case_sensitive = any(a.lower() == "case_sensitive" for a in args)
+        case_sensitive = "case_sensitive" in args
 
-        flags = re.DOTALL if case_sensitive else re.IGNORECASE | re.DOTALL
-
-        try:
-            regex = re.compile(pattern, flags)
-        except re.error as e:
-            self.poutput(f"Error: Invalid regex pattern → {e}")
+        # --- Compile regex safely ---
+        regex, msg = self._compile_regex_safely(
+            pattern,
+            case_sensitive=case_sensitive,
+            multiline=True,
+            allow_raw_fallback=False
+        )
+        if not regex:
+            self.poutput(f"Error: {msg}")
             return
 
+        # --- Apply replacement ---
         text = "".join(self.current_lines)
         new_text, count = regex.subn(replacement, text)
 
@@ -7246,7 +7272,7 @@ class TextTool(cmd2.Cmd):
             self.poutput("No matches found.")
             return
 
-        # --- Apply changes ---
+        # --- Update text ---
         self.previous_lines = self.current_lines.copy()
         self.current_lines = new_text.splitlines(keepends=True)
 
@@ -7257,7 +7283,8 @@ class TextTool(cmd2.Cmd):
         self.update_live_view()
 
         self.poutput(
-            f"Replaced {self.COLOR_COMMAND}{count}{self.COLOR_RESET} multi-line occurrence(s) matching pattern '{pattern}'."
+            f"Replaced {self.COLOR_COMMAND}{count}{self.COLOR_RESET} multi-line occurrence(s) "
+            f"matching pattern '{pattern}'."
         )
 
 
@@ -7278,7 +7305,7 @@ class TextTool(cmd2.Cmd):
         Type:
             remove_blocks ?      → Show detailed help with examples
         """
-        import re, shlex
+        import shlex
 
         # --- Help text ---
         if arg.strip() == "?":
@@ -7286,26 +7313,27 @@ class TextTool(cmd2.Cmd):
                 f"{self.COLOR_HEADER}Remove Blocks - Delete Text Between Delimiters{self.COLOR_RESET}\n\n"
                 f"{self.COLOR_COMMAND}Description:{self.COLOR_RESET}\n"
                 f"  Deletes all text between two delimiters (including the delimiters themselves).\n"
-                f"  Works across multiple lines and supports regex patterns.\n\n"
+                f"  Works across multiple lines and supports regex delimiters.\n\n"
                 f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
                 f"  {self.COLOR_EXAMPLE}remove_blocks \"start_pattern\" \"end_pattern\" [case_sensitive]{self.COLOR_RESET}\n\n"
                 f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
-                f"  1. Remove multi-line C-style comments:\n"
+                f"  1. Remove C-style comments:\n"
                 f"     {self.COLOR_EXAMPLE}remove_blocks \"/\\*\" \"\\*/\"{self.COLOR_RESET}\n\n"
-                f"  2. Remove XML <debug> sections (case-sensitive):\n"
+                f"  2. Remove XML debug sections (case-sensitive):\n"
                 f"     {self.COLOR_EXAMPLE}remove_blocks \"<debug>\" \"</debug>\" case_sensitive{self.COLOR_RESET}\n\n"
-                f"  3. Remove everything between BEGIN and END markers:\n"
+                f"  3. Remove everything between BEGIN and END:\n"
                 f"     {self.COLOR_EXAMPLE}remove_blocks \"BEGIN\" \"END\"{self.COLOR_RESET}\n"
             )
             self.poutput(help_text)
             return
 
+        # --- Validation ---
         if not self.current_lines:
             self.poutput("Error: No file is loaded.")
             return
 
         try:
-            args = shlex.split(arg)
+            args = shlex.split(arg) if '"' in arg or "'" in arg else arg.strip().split()
         except ValueError:
             self.poutput("Error: Invalid quotes in arguments.")
             return
@@ -7315,19 +7343,20 @@ class TextTool(cmd2.Cmd):
             return
 
         start_pat, end_pat = args[:2]
-        case_sensitive = any(a.lower() == "case_sensitive" for a in args)
-        flags = 0 if case_sensitive else re.IGNORECASE | re.DOTALL
+        case_sensitive = "case_sensitive" in args
 
-        try:
-            regex = re.compile(f"{re.escape(start_pat)}.*?{re.escape(end_pat)}", flags)
-        except re.error:
-            # fallback for raw regex delimiters
-            try:
-                regex = re.compile(f"{start_pat}.*?{end_pat}", flags)
-            except re.error as e:
-                self.poutput(f"Error: Invalid regex pattern → {e}")
-                return
+        # --- Compile regex safely ---
+        regex, msg = self._compile_regex_safely(
+            start_pat,
+            end_pat,
+            case_sensitive=case_sensitive,
+            multiline=True
+        )
+        if not regex:
+            self.poutput(f"Error: {msg}")
+            return
 
+        # --- Apply deletion ---
         text = "".join(self.current_lines)
         new_text, count = regex.subn("", text)
 
@@ -7335,7 +7364,7 @@ class TextTool(cmd2.Cmd):
             self.poutput(f"No blocks found between '{start_pat}' and '{end_pat}'.")
             return
 
-        # --- Apply changes ---
+        # --- Update text ---
         self.previous_lines = self.current_lines.copy()
         self.current_lines = new_text.splitlines(keepends=True)
 
@@ -7346,7 +7375,8 @@ class TextTool(cmd2.Cmd):
         self.update_live_view()
 
         self.poutput(
-            f"Removed {self.COLOR_COMMAND}{count}{self.COLOR_RESET} block(s) between '{start_pat}' and '{end_pat}'."
+            f"Removed {self.COLOR_COMMAND}{count}{self.COLOR_RESET} block(s) "
+            f"between '{start_pat}' and '{end_pat}'."
         )
 
 

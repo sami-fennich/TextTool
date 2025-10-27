@@ -279,7 +279,7 @@ class TextTool(cmd2.Cmd):
         self.hidden_commands.append('replace_in_selection')
         self.hidden_commands.append('clone_selection')
         self.hidden_commands.append('select_lines')
-        #self.hidden_commands.append('indented_select')
+        self.hidden_commands.append('fill_words')
         
 
         self.liveview_box = None  # keep reference to the text box
@@ -3950,171 +3950,147 @@ class TextTool(cmd2.Cmd):
         return completions
 
     def do_extract_between(self, arg):
-        """Extract all sections of text between pairs of start_pattern and end_pattern.
+        """Extract text between two delimiters (supports multi-line, regex, and occurrence selection).
 
         Usage:
-            extract_between "start_pattern" "end_pattern" [case_sensitive]
+            extract_between "start_pattern" "end_pattern" [inner_only] [case_sensitive] [occurrence]
 
-        Arguments:
-            start_pattern  - Pattern marking the beginning of extraction (can be regex).
-            end_pattern    - Pattern marking the end of extraction (can be regex).
-            case_sensitive - Optional flag for case-sensitive matching.
-
-        Description:
-            Finds every occurrence of start_pattern and extracts all text from that point
-            until the next occurrence of end_pattern (inclusive). The process repeats
-            for the whole text. Only the extracted sections are kept in the output.
-
-        Special Placeholders:
-            - Use [pipe] instead of the pipe character (|) in your input.
-            - Use [doublequote] instead of double quotes (") in your input.
-            - Use [quote] instead of quotes (') in your input.
-            - Use [tab] instead of tabulation character in your input.
-            - Use [spaces] to match one or more spaces (all kind of spaces).
-
-        Examples:
-            extract_between "BEGIN" "END"
-                → Extracts all segments between each 'BEGIN' and the next 'END'.
-            
-            extract_between "<div>" "</div>"
-                → Extracts content between HTML div tags.
-            
-            extract_between "START:" "STOP:" case_sensitive
-                → Case-sensitive extraction between markers.
-            
-            extract_between "\\[" "\\]"
-                → Extracts content between square brackets (regex).
-            
-        Notes:
-            - By default, the search is case-insensitive.
-            - Add 'case_sensitive' to make it case sensitive.
-            - Both start and end patterns are included in the output.
-            - If no end_pattern is found after a start_pattern, that section is skipped.
-            - Supports regex patterns for complex matching.
-            - Original text is replaced with only the extracted sections.
-            - Useful for extracting log sections, code blocks, or tagged content.
+        Type:
+            extract_between ?      → Show detailed help with examples
         """
-        
-        help_text = (
-            f"{self.COLOR_HEADER}Extract Between - Extract Text Between Delimiters{self.COLOR_RESET}\n\n"
-            f"{self.COLOR_COMMAND}Description:{self.COLOR_RESET}\n"
-            f"  Extract complete text sections bounded by start and end patterns.\n"
-            f"  Finds each start pattern and captures everything until the corresponding end pattern.\n"
-            f"  Perfect for extracting code blocks, configuration sections, or marked content.\n\n"
-            f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
-            f"  {self.COLOR_EXAMPLE}extract_between \"start\" \"end\"{self.COLOR_RESET}  - Extract between delimiters\n"
-            f"  {self.COLOR_EXAMPLE}extract_between \"start\" \"end\" case_sensitive{self.COLOR_RESET}\n\n"
-            f"{self.COLOR_COMMAND}Extraction Behavior:{self.COLOR_RESET}\n"
-            f"  • {self.COLOR_COMMAND}Multiple sections{self.COLOR_RESET} - Extracts all matching pairs in the text\n"
-            f"  • {self.COLOR_COMMAND}Inclusive extraction{self.COLOR_RESET} - Includes both start and end markers\n"
-            f"  • {self.COLOR_COMMAND}Complete pairs only{self.COLOR_RESET} - Requires both start and end patterns\n"
-            f"  • {self.COLOR_COMMAND}Line-based{self.COLOR_RESET} - Can span multiple lines within sections\n\n"
-            f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
-            f"  {self.COLOR_EXAMPLE}extract_between \"<!--\" \"-->\"{self.COLOR_RESET}\n"
-            f"    - Extract all HTML/XML comments from a document\n\n"
-            f"  {self.COLOR_EXAMPLE}extract_between \"function\" \"end\"{self.COLOR_RESET}\n"
-            f"    - Extract function definitions from code (if 'end' marks the end)\n\n"
-            f"  {self.COLOR_EXAMPLE}extract_between \"[[\" \"]]\"{self.COLOR_RESET}\n"
-            f"    - Extract wiki-style links or marked sections\n\n"
-            f"  {self.COLOR_EXAMPLE}extract_between \"<div class=\\\"special\\\">\" \"</div>\"{self.COLOR_RESET}\n"
-            f"    - Extract specific HTML elements with their content\n\n"
-            f"{self.COLOR_COMMAND}Common Use Cases:{self.COLOR_RESET}\n"
-            f"  • Extracting code blocks from documentation\n"
-            f"  • Isolating configuration sections from files\n"
-            f"  • Pulling specific elements from HTML/XML\n"
-            f"  • Capturing marked regions in text documents\n"
-            f"  • Separating structured data segments\n"
-            f"  • Isolating template blocks or components\n\n"
-            f"{self.COLOR_COMMAND}Technical Details:{self.COLOR_RESET}\n"
-            f"  • Case-insensitive by default (add {self.COLOR_EXAMPLE}case_sensitive{self.COLOR_RESET})\n"
-            f"  • Uses regex matching for flexible pattern definition\n"
-            f"  • Non-greedy matching between patterns\n"
-            f"  • Only extracts complete start-end pairs\n"
-            f"  • Original text outside sections is discarded\n\n"
-            f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
-            f"  • Use {self.COLOR_EXAMPLE}revert{self.COLOR_RESET} to restore original text if needed\n"
-            f"  • For nested structures, only the outer pairs are extracted\n"
-            f"  • Empty sections (start immediately followed by end) are included\n"
-            f"  • Perfect for preprocessing before more detailed analysis\n"
-        )
+        import re, shlex
+
+        # --- Show help text if user requests it ---
         if arg.strip() == "?":
+            help_text = (
+                f"{self.COLOR_HEADER}Extract Between - Advanced Extraction Tool{self.COLOR_RESET}\n\n"
+                f"{self.COLOR_COMMAND}Description:{self.COLOR_RESET}\n"
+                f"  Extracts portions of text that appear between two delimiters or patterns.\n"
+                f"  Works across multiple lines and supports regex, occurrence selection, and case options.\n\n"
+                f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
+                f"  {self.COLOR_EXAMPLE}extract_between \"<start>\" \"<end>\" [inner_only] [case_sensitive] [occurrence]{self.COLOR_RESET}\n\n"
+                f"{self.COLOR_COMMAND}Parameters:{self.COLOR_RESET}\n"
+                f"  • {self.COLOR_COMMAND}start_pattern{self.COLOR_RESET}   – Starting delimiter (literal or regex)\n"
+                f"  • {self.COLOR_COMMAND}end_pattern{self.COLOR_RESET}     – Ending delimiter (literal or regex)\n"
+                f"  • {self.COLOR_COMMAND}inner_only{self.COLOR_RESET}      – (Optional) Exclude delimiters from results\n"
+                f"  • {self.COLOR_COMMAND}case_sensitive{self.COLOR_RESET}  – (Optional) Enable case-sensitive matching\n"
+                f"  • {self.COLOR_COMMAND}occurrence{self.COLOR_RESET}      – (Optional) Extract a specific match (e.g. 2) "
+                f"or a range (e.g. 2-5)\n\n"
+                f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
+                f"  1. Extract all blocks between XML tags:\n"
+                f"     {self.COLOR_EXAMPLE}extract_between \"<tag>\" \"</tag>\" inner_only{self.COLOR_RESET}\n\n"
+                f"  2. Extract 2nd occurrence only:\n"
+                f"     {self.COLOR_EXAMPLE}extract_between \"BEGIN\" \"END\" 2{self.COLOR_RESET}\n\n"
+                f"  3. Extract occurrences 2 to 5 (case-sensitive):\n"
+                f"     {self.COLOR_EXAMPLE}extract_between \"start\" \"stop\" 2-5 case_sensitive{self.COLOR_RESET}\n\n"
+                f"  4. Use regex delimiters to capture sections:\n"
+                f"     {self.COLOR_EXAMPLE}extract_between \"<h[1-3]>\" \"</h[1-3]>\" inner_only{self.COLOR_RESET}\n\n"
+                f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
+                f"  • Supports multi-line extraction (non-greedy)\n"
+                f"  • Updates the current buffer with the extracted text\n"
+                f"  • Use {self.COLOR_EXAMPLE}revert{self.COLOR_RESET} to return to previous content\n"
+            )
             self.poutput(help_text)
             return
+
+        # --- Main logic ---
         if not self.current_lines:
             self.poutput("Error: No file is loaded.")
             return
 
+        try:
+            args = shlex.split(arg)
+        except ValueError:
+            self.poutput("Error: Invalid quotes in arguments.")
+            return
+
+        # --- Flags and occurrence parsing ---
+        case_sensitive = any(a.lower() == "case_sensitive" for a in args)
+        inner_only = any(a.lower() == "inner_only" for a in args)
+        occurrence_arg = next((a for a in args if re.match(r"^\d+(-\d+)?$", a)), None)
+
+        # Remove non-positional arguments
+        args = [a for a in args if a.lower() not in ("case_sensitive", "inner_only") and not re.match(r"^\d+(-\d+)?$", a)]
+
+        if len(args) < 2:
+            self.poutput("Error: Missing parameters. Type 'extract_between ?' for help.")
+            return
+
+        start_pattern, end_pattern = args[:2]
+
+        # --- Compile regex ---
+        flags = 0 if case_sensitive else re.IGNORECASE | re.DOTALL
+        try:
+            if inner_only:
+                pattern = f"{re.escape(start_pattern)}(.*?){re.escape(end_pattern)}"
+            else:
+                pattern = f"{re.escape(start_pattern)}.*?{re.escape(end_pattern)}"
+            regex = re.compile(pattern, flags)
+        except re.error:
+            # Retry without escaping (allow regex)
+            pattern = f"{start_pattern}(.*?){end_pattern}" if inner_only else f"{start_pattern}.*?{end_pattern}"
+            try:
+                regex = re.compile(pattern, flags)
+            except re.error as e:
+                self.poutput(f"Error: Invalid regex pattern → {e}")
+                return
+
+        # --- Run extraction ---
+        text = "".join(self.current_lines)
+        matches = regex.findall(text)
+
+        if not matches:
+            self.poutput(f"No matches found between '{start_pattern}' and '{end_pattern}'.")
+            return
+
+        # Normalize matches (string list)
+        extracted = matches if isinstance(matches[0], str) else [m[0] for m in matches]
+        total = len(extracted)
+
+        # --- Handle specific occurrences ---
+        selected = extracted
+        if occurrence_arg:
+            if "-" in occurrence_arg:
+                try:
+                    start_idx, end_idx = map(int, occurrence_arg.split("-"))
+                    selected = extracted[start_idx - 1:end_idx]
+                except Exception:
+                    self.poutput("Error: Invalid range format. Use e.g. 2-5")
+                    return
+            else:
+                try:
+                    idx = int(occurrence_arg)
+                    if 1 <= idx <= total:
+                        selected = [extracted[idx - 1]]
+                    else:
+                        self.poutput(f"Error: Occurrence {idx} is out of range (1–{total}).")
+                        return
+                except ValueError:
+                    self.poutput("Error: Invalid occurrence number.")
+                    return
+
+        # --- Update current buffer ---
         self.previous_lines = self.current_lines.copy()
         self.previous_words = self.words.copy()
-
-        # Check for case_sensitive parameter
-        case_sensitive = "case_sensitive" in arg
-        if case_sensitive:
-            arg = arg.replace("case_sensitive", "").strip()
-
-        if arg.startswith('"') and arg.count('"') >= 2:
-            # Split the arguments by double quotes
-            args = arg.split('"')
-            start_pattern, end_pattern = args[1], args[3]
-            if (start_pattern.startswith("(") or start_pattern.startswith("\\") or "." in start_pattern) and not (start_pattern.startswith("^") and start_pattern.endswith("$")):
-                start_pattern = f"^{start_pattern}$"
-        elif arg.startswith("'") and arg.count("'") >= 2:
-            # Split the arguments by double quotes
-            args = arg.split("'")
-            start_pattern, end_pattern = args[1], args[3]
-            if (start_pattern.startswith("(") or start_pattern.startswith("\\") or "." in start_pattern) and not (start_pattern.startswith("^") and start_pattern.endswith("$")):
-                start_pattern = f"^{start_pattern}$"            
-        else:
-            # Split the arguments by spaces (for unquoted arguments)
-            args = arg.split()
-            if len(args) < 2:
-                self.poutput("Error: Invalid arguments. Usage: extract_between \"start_pattern\" \"end_pattern\"")
-                return
-            start_pattern, end_pattern = args[0], args[1]
-            if (start_pattern.startswith("(") or start_pattern.startswith("\\") or "." in start_pattern) and not (start_pattern.startswith("^") and start_pattern.endswith("$")):
-                start_pattern = f"^{start_pattern}$"
+        self.current_lines = [seg.strip() + "\n" for seg in selected]
 
         try:
-            # Use appropriate flags based on case sensitivity
-            flags = 0 if case_sensitive else re.IGNORECASE
-            start_regex = re.compile(start_pattern, flags)
-            end_regex = re.compile(end_pattern, flags)
+            self.do_fill_words('')
+        except Exception:
+            pass
+        self.update_live_view()
 
-            extracting = False
-            extracted_lines = []
-
-            i = 0
-            while i < len(self.current_lines):
-                line = self.current_lines[i]
-                if not extracting and start_regex.search(line):
-                    # Found a start
-                    extracting = True
-                    segment = [line]
-                    i += 1
-                    # Collect until the next end_pattern
-                    while i < len(self.current_lines):
-                        segment.append(self.current_lines[i])
-                        if end_regex.search(self.current_lines[i]):
-                            extracted_lines.extend(segment)
-                            break
-                        i += 1
-                    
-                    extracting = False
-                i += 1
-
-            if extracted_lines:
-                self.current_lines = extracted_lines
-                self.update_live_view()
-                sensitivity = "case sensitive" if case_sensitive else "case insensitive"
-                try:
-                    self.do_fill_words('')
-                except:
-                    a=0                 
-                self.poutput(f"Extracted {len(extracted_lines)} lines between matching patterns ({sensitivity}).")
-            else:
-                self.poutput("No matching start/end patterns found.")
-        except re.error:
-            self.poutput("Error: Invalid regex pattern.")
+        if occurrence_arg:
+            self.poutput(
+                f"Extracted {self.COLOR_COMMAND}{len(selected)}{self.COLOR_RESET} of {self.COLOR_COMMAND}{total}{self.COLOR_RESET} "
+                f"matches between '{start_pattern}' and '{end_pattern}' "
+                f"({self.COLOR_EXAMPLE}{occurrence_arg}{self.COLOR_RESET})."
+            )
+        else:
+            self.poutput(
+                f"Extracted {self.COLOR_COMMAND}{len(selected)}{self.COLOR_RESET} matches "
+                f"between '{start_pattern}' and '{end_pattern}'."
+            )
 
 
 
@@ -5577,7 +5553,7 @@ class TextTool(cmd2.Cmd):
         return completions
 
     def complete_extract_between(self, text, line, begidx, endidx):      
-        FRIENDS_T = self.words[:]+['case_sensitive','?']
+        FRIENDS_T = self.words[:]+['case_sensitive','inner_only','?']
         if not text:
           completions = FRIENDS_T[:]
         else: 
@@ -6115,16 +6091,17 @@ class TextTool(cmd2.Cmd):
 
 
     def do_replace_between(self, arg):
-        """Replace text between two delimiters.
+        """Replace text between two delimiters (supports multiline and regex).
         
         Usage:
-            replace_between "start_delimiter" "end_delimiter" "replacement" [case_sensitive]
+            replace_between "start_delimiter" "end_delimiter" "replacement" [case_sensitive] [keep_delimiters]
             
         Arguments:
             start_delimiter - Starting delimiter (can be regex).
             end_delimiter   - Ending delimiter (can be regex).
             replacement     - Text to replace the content between delimiters.
             case_sensitive  - Make delimiter matching case-sensitive.
+            keep_delimiters  - Add 'keep_delimiters' to preserve start/end tags.
             
         Examples:
             replace_between "<b>" "</b>" "BOLD"
@@ -6149,12 +6126,13 @@ class TextTool(cmd2.Cmd):
         help_text = (
             f"{self.COLOR_HEADER}\nReplace text between two delimiters.{self.COLOR_RESET}\n\n"
             f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
-            f"  {self.COLOR_EXAMPLE}replace_between \"start\" \"end\" \"replacement\" [case_sensitive]{self.COLOR_RESET}\n\n"
+            f"  {self.COLOR_EXAMPLE}replace_between \"start\" \"end\" \"replacement\" [case_sensitive]  [keep_delimiters]{self.COLOR_RESET}\n\n"
             f"{self.COLOR_COMMAND}Arguments:{self.COLOR_RESET}\n"
             f"  {self.COLOR_EXAMPLE}start_delimiter{self.COLOR_RESET} - Starting delimiter (can be regex).\n"
             f"  {self.COLOR_EXAMPLE}end_delimiter{self.COLOR_RESET}   - Ending delimiter (can be regex).\n"
             f"  {self.COLOR_EXAMPLE}replacement{self.COLOR_RESET}     - Text to replace the content between delimiters.\n"
-            f"  {self.COLOR_EXAMPLE}case_sensitive{self.COLOR_RESET}  - Make delimiter matching case-sensitive.\n\n"
+            f"  {self.COLOR_EXAMPLE}case_sensitive{self.COLOR_RESET}  - Make delimiter matching case-sensitive.\n"
+            f"  {self.COLOR_EXAMPLE}keep_delimiters{self.COLOR_RESET}  - Add \'keep_delimiters\' to preserve start\/end tags.\n\n"            
             f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
             f"  {self.COLOR_EXAMPLE}replace_between \"<b>\" \"</b>\" \"BOLD\"{self.COLOR_RESET}\n"
             f"    - Replaces everything between <b> and </b> with \"BOLD\".\n\n"
@@ -6171,88 +6149,68 @@ class TextTool(cmd2.Cmd):
         if arg.strip() == "?":
             self.poutput(help_text)
             return
-            
+
         if not self.current_lines:
             self.poutput("Error: No file is loaded.")
             return
-        
-        # Save previous state
+
         self.previous_lines = self.current_lines.copy()
         self.previous_words = self.words.copy()
-        
-        # Parse arguments
-        import shlex
+
         try:
             args = shlex.split(arg)
         except ValueError:
-            self.poutput("Error: Invalid quotes in arguments")
+            self.poutput("Error: Invalid quotes in arguments.")
             return
-        
-        # Check for case_sensitive flag
-        case_sensitive = False
-        if args and args[-1].lower() == "case_sensitive":
-            case_sensitive = True
-            args = args[:-1]
-        
+
+        # --- Flags ---
+        case_sensitive = "case_sensitive" in args
+        keep_delims = "keep_delimiters" in args
+        args = [a for a in args if a not in ("case_sensitive", "keep_delimiters")]
+
         if len(args) < 3:
             self.poutput("Error: Missing parameters. Usage: replace_between \"start\" \"end\" \"replacement\"")
             return
-        
-        start_delim = args[0]
-        end_delim = args[1]
-        replacement = args[2]
-        
+
+        start_delim, end_delim, replacement = args[:3]
+
+        # --- Compile regex ---
+        flags = 0 if case_sensitive else re.IGNORECASE | re.DOTALL
         try:
-            # Build regex pattern for matching between delimiters
-            # Use non-greedy matching (.*?) to get shortest match
-            flags = 0 if case_sensitive else re.IGNORECASE
-            
-            # Escape special regex characters in delimiters if they're not already regex patterns
-            # This is a simple heuristic - if it contains regex metacharacters, assume it's regex
-            regex_metacharacters = r'\.^$*+?{}[]()|\\'
-            
-            # Build pattern: start_delim + anything + end_delim (non-greedy)
-            pattern = re.escape(start_delim) + r'.*?' + re.escape(end_delim)
-            
-            # Try to compile - if user wants regex, they need to not quote special chars
-            # For simplicity, let's allow both escaped and unescaped
-            try:
-                regex = re.compile(pattern, flags)
-            except re.error:
-                # If escaped version fails, try unescaped (user provided regex)
-                pattern = start_delim + r'.*?' + end_delim
-                regex = re.compile(pattern, flags)
-            
-            # Replace in all lines
-            new_lines = []
-            total_replacements = 0
-            
-            for line in self.current_lines:
-                new_line, count = regex.subn(replacement, line)
-                total_replacements += count
-                new_lines.append(new_line)
-            
-            self.current_lines = new_lines
-            try:
-                self.do_fill_words('')
-            except:
-                a=0            
-            self.update_live_view()
-            
-            sensitivity = "case-sensitive" if case_sensitive else "case-insensitive"
-            try:
-                self.do_fill_words('')
-            except:
-                a=0              
-            self.poutput(f"Replaced {total_replacements} occurrence(s) between '{start_delim}' and '{end_delim}' ({sensitivity}).")
-            
+            if keep_delims:
+                pattern = f"({re.escape(start_delim)})(.*?)(?={re.escape(end_delim)})"
+            else:
+                pattern = f"{re.escape(start_delim)}.*?{re.escape(end_delim)}"
+            regex = re.compile(pattern, flags)
         except re.error as e:
-            self.poutput(f"Error: Invalid regex pattern. {e}")
-            self.poutput("Hint: Use double backslashes for literal backslashes (e.g., '\\\\[' for '[')")
+            self.poutput(f"Error: Invalid regex pattern: {e}")
+            return
+
+        # --- Join text for multiline processing ---
+        text = "".join(self.current_lines)
+
+        # --- Replacement ---
+        if keep_delims:
+            new_text = regex.sub(lambda m: m.group(1) + replacement, text)
+        else:
+            new_text = regex.sub(replacement, text)
+
+        # --- Split back into lines ---
+        self.current_lines = new_text.splitlines(keepends=True)
+
+        # --- Update view ---
+        try:
+            self.do_fill_words('')
+        except Exception:
+            pass
+
+        self.update_live_view()
+        sensitivity = "case-sensitive" if case_sensitive else "case-insensitive"
+        self.poutput(f"Replaced text between '{start_delim}' and '{end_delim}' ({sensitivity}).")
 
 
     def complete_replace_between(self, text, line, begidx, endidx):      
-        FRIENDS_T = self.words[:]+['case_sensitive', '?']
+        FRIENDS_T = self.words[:]+['case_sensitive', 'keep_delimiters','?']
         if not text:
             completions = FRIENDS_T[:]
         else: 

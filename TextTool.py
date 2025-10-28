@@ -1206,7 +1206,7 @@ class TextTool(cmd2.Cmd):
                 def get_all_commands():
                     """Get all available commands with their help text."""
                     commands = []
-                    excluded_commands = ['py', 'ipy','quit','help','liveview','highlight_toggle']  # Commands to exclude from the list
+                    excluded_commands = ['py', 'ipy','quit','help','liveview','highlight_toggle','alias','bulk_replace','conditional_replace','extract_between','left_replace','right_replace','load','remove_blocks','replace','replace_between','replace_multiline','revert','run_script','save']  # Commands to exclude from the list
                     
                     for attr_name in dir(self):
                         if attr_name.startswith('do_'):

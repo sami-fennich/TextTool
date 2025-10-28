@@ -790,6 +790,12 @@ class TextTool(cmd2.Cmd):
             replace_button.pack(side="left", padx=5, pady=2)
             ToolTip(replace_button, "replace, right replace, left replace and replace in specific lines")
 
+            multiline_button = tk.Button(save_frame, text="📜 Multiline...", font=("Consolas", 10),
+                                         command=lambda: open_multiline_dialog())
+            multiline_button.pack(side="left", padx=5, pady=2)
+            ToolTip(multiline_button, "perform multiline operations like replace_between, extract_between, replace_multiline, remove_blocks")
+
+
             # ADD THIS REVERT BUTTON
             revert_button = tk.Button(save_frame, text="↶ Revert", font=("Consolas", 10), 
                                      command=lambda: self.do_revert(""))
@@ -827,8 +833,12 @@ class TextTool(cmd2.Cmd):
                 dialog.title("Smart Text Replacement")
                 dialog.geometry("500x250")  # Adjusted size
                 dialog.resizable(False, False)
-                dialog.transient(self.liveview_root)  # Make it modal to main window
-                dialog.grab_set()  # Make it modal
+                dialog.transient(self.liveview_root)
+                dialog.attributes('-topmost', True)
+                dialog.attributes('-toolwindow', True)
+
+                # dialog.grab_set()  # Disabled so user can still copy from main window
+
                 
                 # Main frame
                 main_frame = ttk.Frame(dialog, padding="15")
@@ -959,6 +969,183 @@ class TextTool(cmd2.Cmd):
                 x = self.liveview_root.winfo_x() + (self.liveview_root.winfo_width() - dialog.winfo_width()) // 2
                 y = self.liveview_root.winfo_y() + (self.liveview_root.winfo_height() - dialog.winfo_height()) // 2
                 dialog.geometry(f"+{x}+{y}")
+
+            def open_multiline_dialog():
+                """Dialog window for multiline operations."""
+                import tkinter as tk
+                from tkinter import ttk, messagebox
+
+                dialog = tk.Toplevel()
+                dialog.title("Multiline Operations")
+                dialog.geometry("520x340")
+                dialog.resizable(False, False)
+                dialog.transient(self.liveview_root)
+                dialog.attributes('-topmost', True)
+                dialog.attributes('-toolwindow', True)
+                # dialog.grab_set()  # Disabled to allow access to main window
+
+
+                main_frame = ttk.Frame(dialog, padding="15")
+                main_frame.pack(fill=tk.BOTH, expand=True)
+
+                # Operation type
+                ttk.Label(main_frame, text="Operation Type:").grid(row=0, column=0, sticky=tk.W, pady=8)
+                operation_var = tk.StringVar(value="replace_between")
+                operation_combo = ttk.Combobox(
+                    main_frame, textvariable=operation_var,
+                    values=["replace_between", "extract_between", "replace_multiline", "remove_blocks"],
+                    state="readonly", width=25
+                )
+                operation_combo.grid(row=0, column=1, sticky=(tk.W, tk.E), pady=8, padx=5)
+
+                # --- Start Pattern ---
+                ttk.Label(main_frame, text="Start Pattern:").grid(row=1, column=0, sticky=tk.W, pady=8)
+                start_entry = ttk.Entry(main_frame, width=40)
+                start_entry.grid(row=1, column=1, sticky=(tk.W, tk.E), pady=8, padx=5)
+
+                # --- End Pattern ---
+                ttk.Label(main_frame, text="End Pattern:").grid(row=2, column=0, sticky=tk.W, pady=8)
+                end_entry = ttk.Entry(main_frame, width=40)
+                end_entry.grid(row=2, column=1, sticky=(tk.W, tk.E), pady=8, padx=5)
+
+                # --- Replacement (only for replace_between & replace_multiline) ---
+                replace_label = ttk.Label(main_frame, text="Replacement Text:")
+                replace_label.grid(row=3, column=0, sticky=tk.W, pady=8)
+                replace_entry = ttk.Entry(main_frame, width=40)
+                replace_entry.grid(row=3, column=1, sticky=(tk.W, tk.E), pady=8, padx=5)
+
+                # --- Occurrence (only for extract_between) ---
+                occurrence_label = ttk.Label(main_frame, text="Occurrence:")
+                occurrence_label.grid(row=4, column=0, sticky=tk.W, pady=8)
+                occurrence_entry = ttk.Entry(main_frame, width=20)
+                occurrence_entry.grid(row=4, column=1, sticky=(tk.W, tk.W), pady=8, padx=5)
+                occurrence_label.grid_remove()
+                occurrence_entry.grid_remove()
+
+                # --- Checkboxes (optional flags) ---
+                options_frame = ttk.Frame(main_frame)
+                options_frame.grid(row=5, column=0, columnspan=2, sticky=tk.W, pady=8)
+                case_var = tk.BooleanVar(value=False)
+                inner_var = tk.BooleanVar(value=False)
+                keep_var = tk.BooleanVar(value=False)
+                ttk.Checkbutton(options_frame, text="Case Sensitive", variable=case_var).pack(side=tk.LEFT, padx=5)
+                inner_check = ttk.Checkbutton(options_frame, text="Inner Only", variable=inner_var)
+                inner_check.pack(side=tk.LEFT, padx=5)
+                keep_check = ttk.Checkbutton(options_frame, text="Keep Delimiters", variable=keep_var)
+                keep_check.pack(side=tk.LEFT, padx=5)
+
+                # --- Buttons ---
+                button_frame = ttk.Frame(main_frame)
+                button_frame.grid(row=6, column=0, columnspan=2, pady=15)
+                ttk.Button(button_frame, text="Apply Operation", command=lambda: apply_operation()).pack(side=tk.LEFT, padx=8)
+                ttk.Button(button_frame, text="Close", command=dialog.destroy).pack(side=tk.LEFT, padx=8)
+
+                # --- Adjust visibility dynamically ---
+                def update_field_visibility(*args):
+                    op = operation_var.get()
+
+                    # Default: show all
+                    replace_label.grid()
+                    replace_entry.grid()
+                    end_entry.grid()
+                    occurrence_label.grid_remove()
+                    occurrence_entry.grid_remove()
+                    inner_check.pack_forget()
+                    keep_check.pack_forget()
+
+                    if op == "replace_between":
+                        # Needs start, end, replacement
+                        inner_check.pack(side=tk.LEFT, padx=5)
+                        # no occurrence
+
+                    elif op == "extract_between":
+                        # Needs start, end, occurrence, and optionally inner_only
+                        replace_label.grid_remove()
+                        replace_entry.grid_remove()
+                        occurrence_label.grid()
+                        occurrence_entry.grid()
+                        inner_check.pack(side=tk.LEFT, padx=5)
+
+                    elif op == "replace_multiline":
+                        # Needs start pattern + replacement (no end, no inner/keep)
+                        end_entry.delete(0, tk.END)
+                        end_entry.grid_remove()
+                        replace_label.grid()
+                        replace_entry.grid()
+                        # no inner or keep
+                        pass
+
+                    elif op == "remove_blocks":
+                        # Needs start + end only
+                        replace_label.grid_remove()
+                        replace_entry.grid_remove()
+                        inner_check.pack_forget()
+                        keep_check.pack_forget()
+                        occurrence_label.grid_remove()
+                        occurrence_entry.grid_remove()
+
+                operation_var.trace("w", update_field_visibility)
+                update_field_visibility()
+
+                # --- Apply logic ---
+                def apply_operation():
+                    try:
+                        op = operation_var.get()
+                        start_pat = start_entry.get().strip()
+                        end_pat = end_entry.get().strip()
+                        repl = replace_entry.get().strip()
+                        case_sensitive = " case_sensitive" if case_var.get() else ""
+                        inner_only = " inner_only" if inner_var.get() else ""
+                        keep_delimiters = " keep_delimiters" if keep_var.get() else ""
+                        occurrence = occurrence_entry.get().strip()
+
+                        # --- Validate & build commands ---
+                        if op == "replace_between":
+                            if not start_pat or not end_pat or not repl:
+                                messagebox.showwarning("Warning", "Start, End, and Replacement are required.")
+                                return
+                            cmd = f'replace_between "{start_pat}" "{end_pat}" "{repl}"{case_sensitive}{keep_delimiters}'
+
+                        elif op == "extract_between":
+                            if not start_pat or not end_pat:
+                                messagebox.showwarning("Warning", "Start and End patterns are required.")
+                                return
+                            if occurrence:
+                                cmd = f'extract_between "{start_pat}" "{end_pat}" {occurrence}{case_sensitive}{inner_only}'
+                            else:
+                                cmd = f'extract_between "{start_pat}" "{end_pat}"{case_sensitive}{inner_only}'
+
+                        elif op == "replace_multiline":
+                            if not start_pat or not repl:
+                                messagebox.showwarning("Warning", "Start pattern and replacement are required.")
+                                return
+                            cmd = f'replace_multiline "{start_pat}" "{repl}"{case_sensitive}'
+
+                        elif op == "remove_blocks":
+                            if not start_pat or not end_pat:
+                                messagebox.showwarning("Warning", "Start and End patterns are required.")
+                                return
+                            cmd = f'remove_blocks "{start_pat}" "{end_pat}"{case_sensitive}'
+
+                        else:
+                            messagebox.showerror("Error", "Unknown operation type.")
+                            return
+
+                        self.onecmd(cmd)
+                        self.update_live_view()
+                        dialog.destroy()
+
+                    except Exception as e:
+                        messagebox.showerror("Error", f"Operation failed:\n{str(e)}")
+
+                main_frame.columnconfigure(1, weight=1)
+
+                # Center dialog
+                dialog.update_idletasks()
+                x = self.liveview_root.winfo_x() + (self.liveview_root.winfo_width() - dialog.winfo_width()) // 2
+                y = self.liveview_root.winfo_y() + (self.liveview_root.winfo_height() - dialog.winfo_height()) // 2
+                dialog.geometry(f"+{x}+{y}")
+
 
             def open_command_palette():
                 """Open a command palette dialog showing all available commands."""
@@ -1631,8 +1818,11 @@ class TextTool(cmd2.Cmd):
         dialog.title("Replace in Selection")
         dialog.geometry("500x250")  # Same size as Smart Text Replacement
         dialog.resizable(False, False)
-        dialog.transient(self.liveview_root)  # Make it modal to main window
-        dialog.grab_set()  # Make it modal
+        dialog.transient(self.liveview_root)
+        dialog.attributes('-topmost', True)
+        dialog.attributes('-toolwindow', True)
+        # dialog.grab_set()  # Disabled to allow access to main window
+
         
         # Center the dialog exactly like Smart Text Replacement
         dialog.update_idletasks()

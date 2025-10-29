@@ -897,28 +897,28 @@ class TextTool(cmd2.Cmd):
                 def apply_replacement():
                     """Apply the replacement using existing commands"""
                     try:
-                        search_pattern = search_entry.get().strip()
-                        replace_pattern = replace_entry.get().strip()
-                        target_pattern = target_entry.get().strip()
+                        search_pattern = search_entry.get().strip() if search_entry.get().strip() else ""
+                        replace_pattern = replace_entry.get().strip() if replace_entry.get().strip() else ""
+                        target_pattern = target_entry.get().strip() if target_entry.get().strip() else ""
                         operation = operation_var.get()
                         case_sensitive = case_var.get()
 
                         # --- Validate replacement text ---
-                        if not replace_pattern:
-                            messagebox.showwarning("Warning", "Please enter a replacement text.")
-                            return
+                        #if not replace_pattern:
+                            #messagebox.showwarning("Warning", "Please enter a replacement text.")
+                            #return
 
                         # --- Determine command ---
                         if operation == "Simple Replace":
-                            if not search_pattern:
-                                messagebox.showwarning("Warning", "Search Pattern is required for Simple Replace.")
-                                return
+                            #if not search_pattern:
+                                #messagebox.showwarning("Warning", "Search Pattern is required for Simple Replace.")
+                                #return
                             cmd = f'replace "{search_pattern}" "{replace_pattern}"'
 
                         elif operation == "Replace in Matching Lines":
-                            if not search_pattern or not target_pattern:
-                                messagebox.showwarning("Warning", "Both Search and Target patterns are required for Replace in Matching Lines.")
-                                return
+                            #if not search_pattern or not target_pattern:
+                                #messagebox.showwarning("Warning", "Both Search and Target patterns are required for Replace in Matching Lines.")
+                                #return
                             cmd = f'conditional_replace "{search_pattern}" "{replace_pattern}" "{target_pattern}"'
 
                         elif operation == "Right Replace":
@@ -1039,6 +1039,9 @@ class TextTool(cmd2.Cmd):
                 button_frame.grid(row=6, column=0, columnspan=2, pady=15)
                 ttk.Button(button_frame, text="Apply Operation", command=lambda: apply_operation()).pack(side=tk.LEFT, padx=8)
                 ttk.Button(button_frame, text="Close", command=dialog.destroy).pack(side=tk.LEFT, padx=8)
+                status_label = ttk.Label(main_frame, text="", foreground="green")
+                status_label.grid(row=7, column=0, columnspan=2, pady=(5, 0))
+
 
                 # --- Adjust visibility dynamically ---
                 def update_field_visibility(*args):
@@ -1091,9 +1094,11 @@ class TextTool(cmd2.Cmd):
                 def apply_operation():
                     try:
                         op = operation_var.get()
-                        start_pat = start_entry.get().strip()
-                        end_pat = end_entry.get().strip()
-                        repl = replace_entry.get().strip()
+                        start_pat = start_entry.get().strip() if start_entry.get().strip() else ""
+
+                        end_pat = end_entry.get().strip() if end_entry.get().strip() else ""
+
+                        repl = replace_entry.get().strip() if replace_entry.get().strip() else ""
                         case_sensitive = " case_sensitive" if case_var.get() else ""
                         inner_only = " inner_only" if inner_var.get() else ""
                         keep_delimiters = " keep_delimiters" if keep_var.get() else ""
@@ -1101,30 +1106,30 @@ class TextTool(cmd2.Cmd):
 
                         # --- Validate & build commands ---
                         if op == "replace_between":
-                            if not start_pat or not end_pat or not repl:
-                                messagebox.showwarning("Warning", "Start, End, and Replacement are required.")
-                                return
+                            #if not start_pat or not end_pat or not repl:
+                                #messagebox.showwarning("Warning", "Start, End, and Replacement are required.")
+                                #return
                             cmd = f'replace_between "{start_pat}" "{end_pat}" "{repl}"{case_sensitive}{keep_delimiters}'
 
                         elif op == "extract_between":
-                            if not start_pat or not end_pat:
-                                messagebox.showwarning("Warning", "Start and End patterns are required.")
-                                return
+                            #if not start_pat or not end_pat:
+                                #messagebox.showwarning("Warning", "Start and End patterns are required.")
+                                #return
                             if occurrence:
                                 cmd = f'extract_between "{start_pat}" "{end_pat}" {occurrence}{case_sensitive}{inner_only}'
                             else:
                                 cmd = f'extract_between "{start_pat}" "{end_pat}"{case_sensitive}{inner_only}'
 
                         elif op == "replace_multiline":
-                            if not start_pat or not repl:
-                                messagebox.showwarning("Warning", "Start pattern and replacement are required.")
-                                return
+                            #if not start_pat or not repl:
+                                #messagebox.showwarning("Warning", "Start pattern and replacement are required.")
+                                #return
                             cmd = f'replace_multiline "{start_pat}" "{repl}"{case_sensitive}'
 
                         elif op == "remove_blocks":
-                            if not start_pat or not end_pat:
-                                messagebox.showwarning("Warning", "Start and End patterns are required.")
-                                return
+                            #if not start_pat or not end_pat:
+                                #messagebox.showwarning("Warning", "Start and End patterns are required.")
+                                #return
                             cmd = f'remove_blocks "{start_pat}" "{end_pat}"{case_sensitive}'
 
                         else:
@@ -1133,7 +1138,9 @@ class TextTool(cmd2.Cmd):
 
                         self.onecmd(cmd)
                         self.update_live_view()
-                        dialog.destroy()
+                        # Keep dialog open — don’t destroy it
+                        status_label.config(text=f"✅ {op} executed successfully.")
+
 
                     except Exception as e:
                         messagebox.showerror("Error", f"Operation failed:\n{str(e)}")
@@ -1869,24 +1876,24 @@ class TextTool(cmd2.Cmd):
         
         def apply_replacement():
             try:
-                search_pattern = search_entry.get().strip()
-                replace_pattern = replace_entry.get().strip()
+                search_pattern = search_entry.get().strip()  if search_entry.get().strip() else ""
+                replace_pattern = replace_entry.get().strip()  if replace_entry.get().strip() else ""
                 operation = operation_var.get()
                 case_sensitive = case_var.get()
                 
-                if not search_pattern and operation != "Right Replace" and operation != "Left Replace":
-                    messagebox.showwarning("Warning", "Search pattern is required for this operation.")
-                    return
+                #if not search_pattern and operation != "Right Replace" and operation != "Left Replace":
+                    #messagebox.showwarning("Warning", "Search pattern is required for this operation.")
+                    #return
                 
-                if not replace_pattern:
-                    messagebox.showwarning("Warning", "Please enter a replacement text.")
-                    return
+                #if not replace_pattern:
+                    #messagebox.showwarning("Warning", "Please enter a replacement text.")
+                    #return
                 
                 # Build command based on operation
                 if operation == "Simple Replace":
-                    if not search_pattern:
-                        messagebox.showwarning("Warning", "Search Pattern is required for Simple Replace.")
-                        return
+                    #if not search_pattern:
+                        #messagebox.showwarning("Warning", "Search Pattern is required for Simple Replace.")
+                        #return
                     cmd = f'replace_in_selection "{search_pattern}" "{replace_pattern}"'
                 elif operation == "Right Replace":
                     # Allow empty search pattern → append mode
@@ -1908,13 +1915,18 @@ class TextTool(cmd2.Cmd):
                 cmd += f" {start_line + 1} {end_line + 1}"
                 
                 self.onecmd(cmd)
-                dialog.destroy()
+                self.update_live_view()
+                status_label.config(text=f"✅ {operation} executed successfully.")
+
                 
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to apply replacement:\n{str(e)}")
         
         ttk.Button(button_frame, text="Apply Replacement", command=apply_replacement).pack(side=tk.LEFT, padx=8)
         ttk.Button(button_frame, text="Close", command=dialog.destroy).pack(side=tk.LEFT, padx=8)
+        status_label = ttk.Label(main_frame, text="", foreground="green")
+        status_label.grid(row=6, column=0, columnspan=2, pady=(5, 0))
+
         
         # Configure grid weights for proper resizing
         main_frame.columnconfigure(1, weight=1)

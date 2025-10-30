@@ -971,23 +971,21 @@ class TextTool(cmd2.Cmd):
                 dialog.geometry(f"+{x}+{y}")
 
             def open_multiline_dialog():
-                """Dialog window for multiline operations."""
+                """Dialog window for multiline operations with content filtering."""
                 import tkinter as tk
                 from tkinter import ttk, messagebox
-
+                
                 dialog = tk.Toplevel()
                 dialog.title("Multiline Operations")
-                dialog.geometry("520x340")
+                dialog.geometry("520x450")  # Increased height for multi-line replacement
                 dialog.resizable(False, False)
                 dialog.transient(self.liveview_root)
                 dialog.attributes('-topmost', True)
                 dialog.attributes('-toolwindow', True)
-                # dialog.grab_set()  # Disabled to allow access to main window
-
-
+                
                 main_frame = ttk.Frame(dialog, padding="15")
                 main_frame.pack(fill=tk.BOTH, expand=True)
-
+                
                 # Operation type
                 ttk.Label(main_frame, text="Operation Type:").grid(row=0, column=0, sticky=tk.W, pady=8)
                 operation_var = tk.StringVar(value="replace_between")
@@ -997,162 +995,261 @@ class TextTool(cmd2.Cmd):
                     state="readonly", width=25
                 )
                 operation_combo.grid(row=0, column=1, sticky=(tk.W, tk.E), pady=8, padx=5)
-
-                # --- Start Pattern ---
-                ttk.Label(main_frame, text="Start Pattern:").grid(row=1, column=0, sticky=tk.W, pady=8)
+                
+                # Content filter
+                content_filter_label = ttk.Label(main_frame, text="Content Filter:")
+                content_filter_label.grid(row=1, column=0, sticky=tk.W, pady=8)
+                filter_entry = ttk.Entry(main_frame, width=40)
+                filter_entry.grid(row=1, column=1, sticky=(tk.W, tk.E), pady=8, padx=5)
+                filter_desc_label = ttk.Label(main_frame, text="(words to find in blocks, space-separated)", 
+                          font=("", 8), foreground="gray")
+                filter_desc_label.grid(row=2, column=1, sticky=tk.W, pady=(0, 8))
+                
+                # Start pattern (will change label for replace_multiline)
+                start_pattern_label = ttk.Label(main_frame, text="Start Pattern:")
+                start_pattern_label.grid(row=3, column=0, sticky=tk.W, pady=8)
                 start_entry = ttk.Entry(main_frame, width=40)
-                start_entry.grid(row=1, column=1, sticky=(tk.W, tk.E), pady=8, padx=5)
-
-                # --- End Pattern ---
-                ttk.Label(main_frame, text="End Pattern:").grid(row=2, column=0, sticky=tk.W, pady=8)
+                start_entry.grid(row=3, column=1, sticky=(tk.W, tk.E), pady=8, padx=5)
+                
+                # End pattern
+                end_pattern_label = ttk.Label(main_frame, text="End Pattern:")
+                end_pattern_label.grid(row=4, column=0, sticky=tk.W, pady=8)
                 end_entry = ttk.Entry(main_frame, width=40)
-                end_entry.grid(row=2, column=1, sticky=(tk.W, tk.E), pady=8, padx=5)
-
-                # --- Replacement (only for replace_between & replace_multiline) ---
+                end_entry.grid(row=4, column=1, sticky=(tk.W, tk.E), pady=8, padx=5)
+                
+                # Replacement area - will switch between Entry and Text widget
                 replace_label = ttk.Label(main_frame, text="Replacement Text:")
-                replace_label.grid(row=3, column=0, sticky=tk.W, pady=8)
-                replace_entry = ttk.Entry(main_frame, width=40)
-                replace_entry.grid(row=3, column=1, sticky=(tk.W, tk.E), pady=8, padx=5)
-
-                # --- Occurrence (only for extract_between) ---
+                replace_label.grid(row=5, column=0, sticky=tk.NW, pady=8)
+                
+                # Frame to hold either Entry or Text widget
+                replace_frame = ttk.Frame(main_frame)
+                replace_frame.grid(row=5, column=1, sticky=(tk.W, tk.E, tk.N, tk.S), pady=8, padx=5)
+                
+                # Single-line replacement entry (for extract_between and remove_blocks)
+                replace_entry = ttk.Entry(replace_frame, width=40)
+                replace_entry.pack(fill=tk.X, expand=True)
+                
+                # Multi-line replacement text (for replace_between and replace_multiline)
+                replace_text = tk.Text(replace_frame, width=40, height=4, wrap=tk.WORD, font=("Consolas", 9))
+                replace_text.pack(fill=tk.BOTH, expand=True)
+                replace_text.pack_forget()  # Hide initially
+                
+                # Current replacement widget tracker
+                current_replace_widget = replace_entry
+                
+                # Occurrence
                 occurrence_label = ttk.Label(main_frame, text="Occurrence:")
-                occurrence_label.grid(row=4, column=0, sticky=tk.W, pady=8)
+                occurrence_label.grid(row=6, column=0, sticky=tk.W, pady=8)
                 occurrence_entry = ttk.Entry(main_frame, width=20)
-                occurrence_entry.grid(row=4, column=1, sticky=(tk.W, tk.W), pady=8, padx=5)
+                occurrence_entry.grid(row=6, column=1, sticky=(tk.W, tk.W), pady=8, padx=5)
                 occurrence_label.grid_remove()
                 occurrence_entry.grid_remove()
-
-                # --- Checkboxes (optional flags) ---
+                
+                # Options frame
                 options_frame = ttk.Frame(main_frame)
-                options_frame.grid(row=5, column=0, columnspan=2, sticky=tk.W, pady=8)
+                options_frame.grid(row=7, column=0, columnspan=2, sticky=tk.W, pady=8)
+                
                 case_var = tk.BooleanVar(value=False)
                 inner_var = tk.BooleanVar(value=False)
                 keep_var = tk.BooleanVar(value=False)
-                ttk.Checkbutton(options_frame, text="Case Sensitive", variable=case_var).pack(side=tk.LEFT, padx=5)
+                
+                case_check = ttk.Checkbutton(options_frame, text="Case Sensitive", variable=case_var)
+                case_check.pack(side=tk.LEFT, padx=5)
                 inner_check = ttk.Checkbutton(options_frame, text="Inner Only", variable=inner_var)
                 inner_check.pack(side=tk.LEFT, padx=5)
                 keep_check = ttk.Checkbutton(options_frame, text="Keep Delimiters", variable=keep_var)
                 keep_check.pack(side=tk.LEFT, padx=5)
-
-                # --- Buttons ---
+                
+                # Button frame
                 button_frame = ttk.Frame(main_frame)
-                button_frame.grid(row=6, column=0, columnspan=2, pady=15)
+                button_frame.grid(row=8, column=0, columnspan=2, pady=15)
+                
                 ttk.Button(button_frame, text="Apply Operation", command=lambda: apply_operation()).pack(side=tk.LEFT, padx=8)
                 ttk.Button(button_frame, text="Close", command=dialog.destroy).pack(side=tk.LEFT, padx=8)
+                
                 status_label = ttk.Label(main_frame, text="", foreground="green")
-                status_label.grid(row=7, column=0, columnspan=2, pady=(5, 0))
-
-
-                # --- Adjust visibility dynamically ---
+                status_label.grid(row=9, column=0, columnspan=2, pady=(5, 0))
+                
+                def switch_replacement_widget(use_multiline):
+                    """Switch between single-line and multi-line replacement widget."""
+                    nonlocal current_replace_widget
+                    
+                    # Save content from current widget
+                    current_content = ""
+                    if current_replace_widget == replace_entry:
+                        current_content = replace_entry.get()
+                    else:
+                        current_content = replace_text.get("1.0", tk.END).rstrip('\n')
+                    
+                    # Hide current widget
+                    if current_replace_widget == replace_entry:
+                        replace_entry.pack_forget()
+                    else:
+                        replace_text.pack_forget()
+                    
+                    # Show new widget and set content
+                    if use_multiline:
+                        replace_text.pack(fill=tk.BOTH, expand=True)
+                        replace_text.delete("1.0", tk.END)
+                        replace_text.insert("1.0", current_content)
+                        current_replace_widget = replace_text
+                    else:
+                        replace_entry.pack(fill=tk.X, expand=True)
+                        replace_entry.delete(0, tk.END)
+                        replace_entry.insert(0, current_content)
+                        current_replace_widget = replace_entry
+                
                 def update_field_visibility(*args):
                     op = operation_var.get()
-
-                    # Default: show all
+                    
+                    # Reset all fields to default state first
+                    content_filter_label.grid()
+                    filter_entry.grid(row=1, column=1, sticky=(tk.W, tk.E), pady=8, padx=5)
+                    filter_desc_label.grid(row=2, column=1, sticky=tk.W, pady=(0, 8))
+                    
+                    start_pattern_label.grid()
+                    start_entry.grid(row=3, column=1, sticky=(tk.W, tk.E), pady=8, padx=5)
+                    
+                    end_pattern_label.grid()
+                    end_entry.grid(row=4, column=1, sticky=(tk.W, tk.E), pady=8, padx=5)
+                    
                     replace_label.grid()
-                    replace_entry.grid()
-                    end_entry.grid()
+                    replace_frame.grid(row=5, column=1, sticky=(tk.W, tk.E, tk.N, tk.S), pady=8, padx=5)
+                    
                     occurrence_label.grid_remove()
                     occurrence_entry.grid_remove()
-                    inner_check.pack_forget()
-                    keep_check.pack_forget()
-
+                    
+                    # Show all options by default, then hide as needed
+                    inner_check.pack(side=tk.LEFT, padx=5)
+                    keep_check.pack(side=tk.LEFT, padx=5)
+                    
+                    # Operation-specific adjustments
                     if op == "replace_between":
-                        # Needs start, end, replacement
-                        inner_check.pack(side=tk.LEFT, padx=5)
-                        # no occurrence
-
+                        start_pattern_label.config(text="Start Pattern:")
+                        # Show content filter
+                        content_filter_label.grid()
+                        filter_entry.grid()
+                        filter_desc_label.grid()
+                        # Use multi-line replacement for replace_between
+                        switch_replacement_widget(True)
+                        # Hide Inner Only for replace_between
+                        inner_check.pack_forget()
+                        
                     elif op == "extract_between":
-                        # Needs start, end, occurrence, and optionally inner_only
+                        start_pattern_label.config(text="Start Pattern:")
+                        # Show content filter
+                        content_filter_label.grid()
+                        filter_entry.grid()
+                        filter_desc_label.grid()
+                        # Hide replacement fields for extract_between
                         replace_label.grid_remove()
-                        replace_entry.grid_remove()
+                        replace_frame.grid_remove()
+                        # Show occurrence fields
                         occurrence_label.grid()
                         occurrence_entry.grid()
+                        # Show Inner Only for extract_between
                         inner_check.pack(side=tk.LEFT, padx=5)
-
+                        # Hide Keep Delimiters for extract_between
+                        keep_check.pack_forget()
+                        
                     elif op == "replace_multiline":
-                        # Needs start pattern + replacement (no end, no inner/keep)
-                        end_entry.delete(0, tk.END)
+                        start_pattern_label.config(text="Multiline Regex:")
+                        # Hide content filter for replace_multiline
+                        content_filter_label.grid_remove()
+                        filter_entry.grid_remove()
+                        filter_desc_label.grid_remove()
+                        # Hide End Pattern for replace_multiline
+                        end_pattern_label.grid_remove()
                         end_entry.grid_remove()
-                        replace_label.grid()
-                        replace_entry.grid()
-                        # no inner or keep
-                        pass
-
-                    elif op == "remove_blocks":
-                        # Needs start + end only
-                        replace_label.grid_remove()
-                        replace_entry.grid_remove()
+                        # Use multi-line replacement for replace_multiline
+                        switch_replacement_widget(True)
+                        # Hide both Inner Only and Keep Delimiters for replace_multiline
                         inner_check.pack_forget()
                         keep_check.pack_forget()
-                        occurrence_label.grid_remove()
-                        occurrence_entry.grid_remove()
-
-                operation_var.trace("w", update_field_visibility)
-                update_field_visibility()
-
-                # --- Apply logic ---
+                        
+                    elif op == "remove_blocks":
+                        start_pattern_label.config(text="Start Pattern:")
+                        # Show content filter
+                        content_filter_label.grid()
+                        filter_entry.grid()
+                        filter_desc_label.grid()
+                        # Hide replacement fields for remove_blocks
+                        replace_label.grid_remove()
+                        replace_frame.grid_remove()
+                        # Use single-line replacement (though hidden)
+                        switch_replacement_widget(False)
+                        # Hide both Inner Only and Keep Delimiters for remove_blocks
+                        inner_check.pack_forget()
+                        keep_check.pack_forget()
+                    
+                    # Update main frame row configuration for proper expansion
+                    main_frame.rowconfigure(5, weight=1 if op in ["replace_between", "replace_multiline"] else 0)
+                
                 def apply_operation():
                     try:
                         op = operation_var.get()
-                        start_pat = start_entry.get().strip() if start_entry.get().strip() else ""
-
-                        end_pat = end_entry.get().strip() if end_entry.get().strip() else ""
-
-                        repl = replace_entry.get().strip() if replace_entry.get().strip() else ""
+                        filter_text = filter_entry.get().strip()
+                        start_pat = start_entry.get().strip()
+                        end_pat = end_entry.get().strip()
+                        
+                        # Get replacement text from appropriate widget
+                        if op in ["replace_between", "replace_multiline"]:
+                            repl = replace_text.get("1.0", tk.END).rstrip('\n')
+                        else:
+                            repl = replace_entry.get().strip()
+                            
+                        occurrence = occurrence_entry.get().strip()
+                        
                         case_sensitive = " case_sensitive" if case_var.get() else ""
                         inner_only = " inner_only" if inner_var.get() else ""
                         keep_delimiters = " keep_delimiters" if keep_var.get() else ""
-                        occurrence = occurrence_entry.get().strip()
-
-                        # --- Validate & build commands ---
-                        if op == "replace_between":
-                            #if not start_pat or not end_pat or not repl:
-                                #messagebox.showwarning("Warning", "Start, End, and Replacement are required.")
-                                #return
-                            cmd = f'replace_between "{start_pat}" "{end_pat}" "{repl}"{case_sensitive}{keep_delimiters}'
-
-                        elif op == "extract_between":
-                            #if not start_pat or not end_pat:
-                                #messagebox.showwarning("Warning", "Start and End patterns are required.")
-                                #return
-                            if occurrence:
-                                cmd = f'extract_between "{start_pat}" "{end_pat}" {occurrence}{case_sensitive}{inner_only}'
-                            else:
-                                cmd = f'extract_between "{start_pat}" "{end_pat}"{case_sensitive}{inner_only}'
-
-                        elif op == "replace_multiline":
-                            #if not start_pat or not repl:
-                                #messagebox.showwarning("Warning", "Start pattern and replacement are required.")
-                                #return
-                            cmd = f'replace_multiline "{start_pat}" "{repl}"{case_sensitive}'
-
-                        elif op == "remove_blocks":
-                            #if not start_pat or not end_pat:
-                                #messagebox.showwarning("Warning", "Start and End patterns are required.")
-                                #return
-                            cmd = f'remove_blocks "{start_pat}" "{end_pat}"{case_sensitive}'
-
+                        
+                        # Build command with optional filter
+                        if filter_text and op in ["replace_between", "extract_between", "remove_blocks"]:
+                            if op == "replace_between":
+                                cmd = f'replace_between "{filter_text}" "{start_pat}" "{end_pat}" "{repl}"{case_sensitive}{keep_delimiters}'
+                            elif op == "extract_between":
+                                if occurrence:
+                                    cmd = f'extract_between "{filter_text}" "{start_pat}" "{end_pat}" {occurrence}{case_sensitive}{inner_only}'
+                                else:
+                                    cmd = f'extract_between "{filter_text}" "{start_pat}" "{end_pat}"{case_sensitive}{inner_only}'
+                            elif op == "remove_blocks":
+                                cmd = f'remove_blocks "{filter_text}" "{start_pat}" "{end_pat}"{case_sensitive}'
                         else:
-                            messagebox.showerror("Error", "Unknown operation type.")
-                            return
-
+                            # No filter
+                            if op == "replace_between":
+                                cmd = f'replace_between "{start_pat}" "{end_pat}" "{repl}"{case_sensitive}{keep_delimiters}'
+                            elif op == "extract_between":
+                                if occurrence:
+                                    cmd = f'extract_between "{start_pat}" "{end_pat}" {occurrence}{case_sensitive}{inner_only}'
+                                else:
+                                    cmd = f'extract_between "{start_pat}" "{end_pat}"{case_sensitive}{inner_only}'
+                            elif op == "replace_multiline":
+                                cmd = f'replace_multiline "{start_pat}" "{repl}"{case_sensitive}'
+                            elif op == "remove_blocks":
+                                cmd = f'remove_blocks "{start_pat}" "{end_pat}"{case_sensitive}'
+                        
                         self.onecmd(cmd)
                         self.update_live_view()
-                        # Keep dialog open — don’t destroy it
                         status_label.config(text=f"✅ {op} executed successfully.")
-
-
+                        
                     except Exception as e:
                         messagebox.showerror("Error", f"Operation failed:\n{str(e)}")
-
+                
+                operation_var.trace("w", update_field_visibility)
+                update_field_visibility()
+                
                 main_frame.columnconfigure(1, weight=1)
-
-                # Center dialog
+                main_frame.rowconfigure(5, weight=0)  # Initially no expansion
+                
+                # Center the dialog exactly like the smart replace dialog
                 dialog.update_idletasks()
                 x = self.liveview_root.winfo_x() + (self.liveview_root.winfo_width() - dialog.winfo_width()) // 2
                 y = self.liveview_root.winfo_y() + (self.liveview_root.winfo_height() - dialog.winfo_height()) // 2
                 dialog.geometry(f"+{x}+{y}")
-
+                
+                # Set focus to first entry field
+                start_entry.focus()
 
             def open_command_palette():
                 """Open a command palette dialog showing all available commands."""
@@ -4206,75 +4303,80 @@ class TextTool(cmd2.Cmd):
         return completions
 
     def do_extract_between(self, arg):
-        """Extract text between two delimiters (supports multi-line, regex, and occurrence selection).
-
-        Usage:
-            extract_between "start_pattern" "end_pattern" [inner_only] [case_sensitive] [occurrence]
-
-        Type:
-            extract_between ?      → Show detailed help with examples
-        """
+        """Extract text between two delimiters with optional content filtering."""
         import re, shlex
-
-        # --- Show help text if user requests it ---
         if arg.strip() == "?":
-            help_text = (
-                f"{self.COLOR_HEADER}Extract Between - Advanced Extraction Tool{self.COLOR_RESET}\n\n"
-                f"{self.COLOR_COMMAND}Description:{self.COLOR_RESET}\n"
-                f"  Extracts portions of text that appear between two delimiters or patterns.\n"
-                f"  Works across multiple lines and supports regex, occurrence selection, and case options.\n\n"
-                f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
-                f"  {self.COLOR_EXAMPLE}extract_between \"<start>\" \"<end>\" [inner_only] [case_sensitive] [occurrence]{self.COLOR_RESET}\n\n"
-                f"{self.COLOR_COMMAND}Parameters:{self.COLOR_RESET}\n"
-                f"  • {self.COLOR_COMMAND}start_pattern{self.COLOR_RESET}   — Starting delimiter (literal or regex)\n"
-                f"  • {self.COLOR_COMMAND}end_pattern{self.COLOR_RESET}     — Ending delimiter (literal or regex)\n"
-                f"  • {self.COLOR_COMMAND}inner_only{self.COLOR_RESET}      — (Optional) Exclude delimiters from results\n"
-                f"  • {self.COLOR_COMMAND}case_sensitive{self.COLOR_RESET}  — (Optional) Enable case-sensitive matching\n"
-                f"  • {self.COLOR_COMMAND}occurrence{self.COLOR_RESET}      — (Optional) Extract a specific match (e.g. 2) "
-                f"or a range (e.g. 2-5)\n\n"
-                f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
-                f"  1. Extract all blocks between XML tags:\n"
-                f"     {self.COLOR_EXAMPLE}extract_between \"<tag>\" \"</tag>\" inner_only{self.COLOR_RESET}\n\n"
-                f"  2. Extract 2nd occurrence only:\n"
-                f"     {self.COLOR_EXAMPLE}extract_between \"BEGIN\" \"END\" 2{self.COLOR_RESET}\n\n"
-                f"  3. Extract occurrences 2 to 5 (case-sensitive):\n"
-                f"     {self.COLOR_EXAMPLE}extract_between \"start\" \"stop\" 2-5 case_sensitive{self.COLOR_RESET}\n\n"
-                f"  4. Use regex delimiters to capture sections:\n"
-                f"     {self.COLOR_EXAMPLE}extract_between \"<h[1-3]>\" \"</h[1-3]>\" inner_only{self.COLOR_RESET}\n\n"
-                f"{self.COLOR_COMMAND}Notes:{self.COLOR_RESET}\n"
-                f"  • Supports multi-line extraction (non-greedy)\n"
-                f"  • Updates the current buffer with the extracted text\n"
-                f"  • Use {self.COLOR_EXAMPLE}revert{self.COLOR_RESET} to return to previous content\n"
-            )
+            help_text = f"""
+    {self.COLOR_HEADER}=== EXTRACT BETWEEN - Smart Block Extraction ==={self.COLOR_RESET}
+
+    {self.COLOR_COMMAND}Basic Usage:{self.COLOR_RESET}
+      {self.COLOR_EXAMPLE}extract_between "start" "end"{self.COLOR_RESET}
+      {self.COLOR_EXAMPLE}extract_between "start" "end" inner_only case_sensitive 2-5{self.COLOR_RESET}
+
+    {self.COLOR_COMMAND}With Content Filtering:{self.COLOR_RESET}
+      {self.COLOR_EXAMPLE}extract_between "filter_text" "start" "end"{self.COLOR_RESET}
+      {self.COLOR_EXAMPLE}extract_between "filter1 filter2" "start" "end" inner_only{self.COLOR_RESET}
+
+    {self.COLOR_COMMAND}Parameters:{self.COLOR_RESET}
+      {self.COLOR_EXAMPLE}filter_text{self.COLOR_RESET}    - {self.COLOR_HEADER}Optional:{self.COLOR_RESET} Only extract blocks containing {self.COLOR_COMMAND}ALL{self.COLOR_RESET} these words
+      {self.COLOR_EXAMPLE}start{self.COLOR_RESET}         - Start delimiter pattern
+      {self.COLOR_EXAMPLE}end{self.COLOR_RESET}           - End delimiter pattern
+      {self.COLOR_EXAMPLE}inner_only{self.COLOR_RESET}    - Extract only content between delimiters
+      {self.COLOR_EXAMPLE}case_sensitive{self.COLOR_RESET} - Case-sensitive matching
+      {self.COLOR_EXAMPLE}occurrence{self.COLOR_RESET}    - Specific occurrence or range (e.g., {self.COLOR_EXAMPLE}2{self.COLOR_RESET} or {self.COLOR_EXAMPLE}2-5{self.COLOR_RESET})
+
+    {self.COLOR_COMMAND}Examples:{self.COLOR_RESET}
+      {self.COLOR_EXAMPLE}extract_between "{{" "}}"{self.COLOR_RESET}
+      {self.COLOR_EXAMPLE}extract_between "<!--" "-->" inner_only{self.COLOR_RESET}
+      {self.COLOR_EXAMPLE}extract_between "/*" "*/" 2-4{self.COLOR_RESET} {self.COLOR_HEADER}← Extract occurrences 2 through 4{self.COLOR_RESET}
+      {self.COLOR_EXAMPLE}extract_between "important" "{{" "}}"{self.COLOR_RESET}
+      {self.COLOR_EXAMPLE}extract_between "error debug" "/*" "*/" inner_only{self.COLOR_RESET} {self.COLOR_HEADER}← Only blocks with BOTH words{self.COLOR_RESET}
+      {self.COLOR_EXAMPLE}extract_between "TODO FIXME" "//" "\\n" case_sensitive{self.COLOR_RESET}
+
+    {self.COLOR_COMMAND}Notes:{self.COLOR_RESET}
+      • Content filter requires {self.COLOR_COMMAND}ALL{self.COLOR_RESET} specified words to be present in the block
+      • {self.COLOR_EXAMPLE}inner_only{self.COLOR_RESET} extracts just the content, excluding delimiters
+      • Use occurrence numbers to extract specific instances (1-based indexing)
+      • Perfect for extracting specific configuration sections, code blocks, or template variables
+      • Combine filtering with occurrence selection for precise extraction
+    """
             self.poutput(help_text)
             return
-
-        # --- Main logic ---
+        
         if not self.current_lines:
             self.poutput("Error: No file is loaded.")
             return
-
+        
         try:
             args = shlex.split(arg) if '"' in arg or "'" in arg else arg.strip().split()
         except ValueError:
             self.poutput("Error: Invalid quotes in arguments.")
             return
-
-        # --- Flags and occurrence parsing ---
+        
+        # Parse flags and occurrence
         case_sensitive = any(a.lower() == "case_sensitive" for a in args)
         inner_only = any(a.lower() == "inner_only" for a in args)
         occurrence_arg = next((a for a in args if re.match(r"^\d+(-\d+)?$", a)), None)
-
-        # Remove non-positional arguments
+        
+        # Remove flags from args
         args = [a for a in args if a.lower() not in ("case_sensitive", "inner_only") and not re.match(r"^\d+(-\d+)?$", a)]
-
-        if len(args) < 2:
-            self.poutput("Error: Missing parameters. Type 'extract_between ?' for help.")
-            return
-
-        start_pattern, end_pattern = args[:2]
-
-        # --- Compile regex using helper function ---
+        
+        # Determine if we have content filtering
+        has_filter = len(args) >= 3  # filter + start + end
+        
+        if has_filter:
+            if len(args) < 3:
+                self.poutput("Error: With filtering, need: filter start end")
+                return
+            filter_text, start_pattern, end_pattern = args[:3]
+            filter_words = filter_text.split()
+        else:
+            if len(args) < 2:
+                self.poutput("Error: Missing parameters. Need: start end")
+                return
+            start_pattern, end_pattern = args[:2]
+            filter_words = []
+        
         regex, msg = self._compile_regex_safely(
             start_pattern,
             end_pattern,
@@ -4286,26 +4388,34 @@ class TextTool(cmd2.Cmd):
         if not regex:
             self.poutput(f"Error: {msg}")
             return
-
-        # --- Run extraction ---
+        
         text = "".join(self.current_lines)
         matches = regex.findall(text)
-
+        
         if not matches:
             self.poutput(f"No matches found between '{start_pattern}' and '{end_pattern}'.")
             return
-
-        # Normalize matches (string list)
-        # If inner_only is True, findall returns tuples with groups, otherwise strings
+        
         if inner_only and matches and isinstance(matches[0], tuple):
             extracted = [m[0] if isinstance(m, tuple) else m for m in matches]
         else:
             extracted = matches if isinstance(matches[0], str) else [m[0] if isinstance(m, tuple) else m for m in matches]
         
+        # Apply content filtering - ALL words must be present
+        if filter_words:
+            filtered_extracted = []
+            for block in extracted:
+                if all(word in block for word in filter_words):
+                    filtered_extracted.append(block)
+            extracted = filtered_extracted
+        
+        if not extracted:
+            self.poutput(f"No blocks contain ALL filter words: {' '.join(filter_words)}")
+            return
+        
         total = len(extracted)
-
-        # --- Handle specific occurrences ---
         selected = extracted
+        
         if occurrence_arg:
             if "-" in occurrence_arg:
                 try:
@@ -4325,30 +4435,23 @@ class TextTool(cmd2.Cmd):
                 except ValueError:
                     self.poutput("Error: Invalid occurrence number.")
                     return
-
-        # --- Update current buffer ---
+        
         self.previous_lines = self.current_lines.copy()
         self.previous_words = self.words.copy()
         self.current_lines = [seg.strip() + "\n" for seg in selected]
-
+        
         try:
             self.do_fill_words('')
         except Exception:
             pass
+        
         self.update_live_view()
-
+        
+        filter_info = f" (filtered by requiring ALL: {' '.join(filter_words)})" if filter_words else ""
         if occurrence_arg:
-            self.poutput(
-                f"Extracted {self.COLOR_COMMAND}{len(selected)}{self.COLOR_RESET} of {self.COLOR_COMMAND}{total}{self.COLOR_RESET} "
-                f"matches between '{start_pattern}' and '{end_pattern}' "
-                f"({self.COLOR_EXAMPLE}{occurrence_arg}{self.COLOR_RESET})."
-            )
+            self.poutput(f"Extracted {len(selected)} of {total} occurrences between '{start_pattern}' and '{end_pattern}'{filter_info}.")
         else:
-            self.poutput(
-                f"Extracted {self.COLOR_COMMAND}{len(selected)}{self.COLOR_RESET} matches "
-                f"between '{start_pattern}' and '{end_pattern}'."
-            )
-
+            self.poutput(f"Extracted {len(selected)} blocks between '{start_pattern}' and '{end_pattern}'{filter_info}.")
 
 
 
@@ -6305,59 +6408,75 @@ class TextTool(cmd2.Cmd):
 
 
     def do_replace_between(self, arg):
-        """Replace text between two delimiters (supports multi-line, regex, and keep_delimiters).
-
-        Usage:
-            replace_between "start_pattern" "end_pattern" "replacement" [keep_delimiters] [case_sensitive]
-
-        Type:
-            replace_between ?      → Show detailed help with examples
-        """
+        """Replace text between two delimiters (supports multi-line, regex, and keep_delimiters)."""
         import re, shlex
-
-        # --- Help text ---
         if arg.strip() == "?":
-            help_text = (
-                f"{self.COLOR_HEADER}Replace Between - Modify Text Between Delimiters{self.COLOR_RESET}\n\n"
-                f"{self.COLOR_COMMAND}Description:{self.COLOR_RESET}\n"
-                f"  Replaces text located between two delimiters. Works across multiple lines.\n"
-                f"  Supports literal or regex delimiters, and optional delimiter preservation.\n\n"
-                f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
-                f"  {self.COLOR_EXAMPLE}replace_between \"start\" \"end\" \"replacement\" [keep_delimiters] [case_sensitive]{self.COLOR_RESET}\n\n"
-                f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
-                f"  1. Replace content between XML tags:\n"
-                f"     {self.COLOR_EXAMPLE}replace_between \"<tag>\" \"</tag>\" \"NEW CONTENT\"{self.COLOR_RESET}\n\n"
-                f"  2. Keep the start and end tags:\n"
-                f"     {self.COLOR_EXAMPLE}replace_between \"<tag>\" \"</tag>\" \"NEW\" keep_delimiters{self.COLOR_RESET}\n\n"
-                f"  3. Case-sensitive replacement:\n"
-                f"     {self.COLOR_EXAMPLE}replace_between \"Start\" \"End\" \"value\" case_sensitive{self.COLOR_RESET}\n"
-            )
+            help_text = f"""
+    {self.COLOR_HEADER}=== REPLACE BETWEEN - Enhanced Block Replacement ==={self.COLOR_RESET}
+
+    {self.COLOR_COMMAND}Basic Usage:{self.COLOR_RESET}
+      {self.COLOR_EXAMPLE}replace_between "start" "end" "replacement"{self.COLOR_RESET}
+      {self.COLOR_EXAMPLE}replace_between "start" "end" "replacement" keep_delimiters case_sensitive{self.COLOR_RESET}
+
+    {self.COLOR_COMMAND}With Content Filtering:{self.COLOR_RESET}
+      {self.COLOR_EXAMPLE}replace_between "filter_text" "start" "end" "replacement"{self.COLOR_RESET}
+      {self.COLOR_EXAMPLE}replace_between "filter1 filter2" "start" "end" "replacement"{self.COLOR_RESET}
+
+    {self.COLOR_COMMAND}Parameters:{self.COLOR_RESET}
+      {self.COLOR_EXAMPLE}filter_text{self.COLOR_RESET}    - {self.COLOR_HEADER}Optional:{self.COLOR_RESET} Only process blocks containing {self.COLOR_COMMAND}ALL{self.COLOR_RESET} these words
+      {self.COLOR_EXAMPLE}start{self.COLOR_RESET}         - Start delimiter pattern
+      {self.COLOR_EXAMPLE}end{self.COLOR_RESET}           - End delimiter pattern  
+      {self.COLOR_EXAMPLE}replacement{self.COLOR_RESET}   - Text to replace the content with
+      {self.COLOR_EXAMPLE}keep_delimiters{self.COLOR_RESET} - Keep start/end delimiters in output
+      {self.COLOR_EXAMPLE}case_sensitive{self.COLOR_RESET}  - Case-sensitive matching
+
+    {self.COLOR_COMMAND}Examples:{self.COLOR_RESET}
+      {self.COLOR_EXAMPLE}replace_between "{{ " " }}" "new content"{self.COLOR_RESET}
+      {self.COLOR_EXAMPLE}replace_between "<!--" "-->" "<!-- updated -->"{self.COLOR_RESET}
+      {self.COLOR_EXAMPLE}replace_between "important" "/*" "*/" "/* fixed */"{self.COLOR_RESET}
+      {self.COLOR_EXAMPLE}replace_between "error warning" "/*" "*/" "/* resolved */"{self.COLOR_RESET} {self.COLOR_HEADER}← Only blocks with BOTH words{self.COLOR_RESET}
+      {self.COLOR_EXAMPLE}replace_between "todo" "//" "\\n" "// DONE" keep_delimiters{self.COLOR_RESET}
+
+    {self.COLOR_COMMAND}Notes:{self.COLOR_RESET}
+      • Content filter requires {self.COLOR_COMMAND}ALL{self.COLOR_RESET} specified words to be present in the block
+      • Use quotes for multi-word filters or patterns with spaces
+      • Perfect for updating code comments, configuration blocks, or template sections
+      • Combine with {self.COLOR_EXAMPLE}keep_delimiters{self.COLOR_RESET} to preserve the block structure
+    """
             self.poutput(help_text)
             return
-
-        # --- Validation ---
+        
         if not self.current_lines:
             self.poutput("Error: No file is loaded.")
             return
-
+        
         try:
             args = shlex.split(arg)
         except ValueError:
             self.poutput("Error: Invalid quotes in arguments.")
             return
-
-        # Parse arguments
+        
+        # Parse optional flags
         case_sensitive = "case_sensitive" in args
         keep_delims = "keep_delimiters" in args
         args = [a for a in args if a not in ("case_sensitive", "keep_delimiters")]
-
-        if len(args) < 3:
-            self.poutput("Error: Missing parameters. Type 'replace_between ?' for help.")
-            return
-
-        start_delim, end_delim, replacement = args[:3]
-
-        # --- Compile regex safely ---
+        
+        # Determine if we have content filtering
+        has_filter = len(args) >= 4  # filter + start + end + replacement
+        
+        if has_filter:
+            if len(args) < 4:
+                self.poutput("Error: With filtering, need: filter start end replacement")
+                return
+            filter_text, start_delim, end_delim, replacement = args[:4]
+            filter_words = filter_text.split()
+        else:
+            if len(args) < 3:
+                self.poutput("Error: Need: start end replacement")
+                return
+            start_delim, end_delim, replacement = args[:3]
+            filter_words = []
+        
         regex, msg = self._compile_regex_safely(
             start_delim,
             end_delim,
@@ -6365,37 +6484,50 @@ class TextTool(cmd2.Cmd):
             case_sensitive=case_sensitive,
             multiline=True
         )
+        
         if not regex:
             self.poutput(f"Error: {msg}")
             return
-
-        # --- Perform replacement ---
+        
         text = "".join(self.current_lines)
+        
         if keep_delims:
-            # Replace only the inner part (group 2)
-            new_text = regex.sub(lambda m: m.group(1) + replacement, text)
+            def replacement_func(match):
+                # Check content filtering - ALL words must be present
+                if filter_words:
+                    block_text = match.group(2)  # The content between delimiters
+                    if not all(word in block_text for word in filter_words):
+                        return match.group(0)  # Return original if filter doesn't match
+                return match.group(1) + replacement  # Keep delimiters + replacement
+            
+            new_text = regex.sub(replacement_func, text)
         else:
-            new_text = regex.sub(replacement, text)
-
+            def replacement_func(match):
+                # Check content filtering - ALL words must be present
+                if filter_words:
+                    if not all(word in match.group(0) for word in filter_words):
+                        return match.group(0)  # Return original if filter doesn't match
+                return replacement  # Replace the entire block
+            
+            new_text = regex.sub(replacement_func, text)
+        
         if new_text == text:
-            self.poutput("No matches found.")
+            filter_info = " Filter may have excluded all matches." if filter_words else ""
+            self.poutput(f"No matching blocks found.{filter_info}")
             return
-
-        # --- Apply updates ---
+        
         self.previous_lines = self.current_lines.copy()
         self.current_lines = new_text.splitlines(keepends=True)
-
+        
         try:
             self.do_fill_words('')
         except Exception:
             pass
+        
         self.update_live_view()
-
-        self.poutput(
-            f"Replaced text between '{start_delim}' and '{end_delim}' "
-            f"({'case-sensitive' if case_sensitive else 'case-insensitive'})."
-        )
-
+        
+        filter_info = f" with filter requiring ALL: '{' '.join(filter_words)}'" if filter_words else ""
+        self.poutput(f"Replaced content between '{start_delim}' and '{end_delim}'{filter_info}.")
 
     def complete_replace_between(self, text, line, begidx, endidx):      
         FRIENDS_T = self.words[:]+['case_sensitive', 'keep_delimiters','?']
@@ -7499,87 +7631,117 @@ class TextTool(cmd2.Cmd):
         return completions
 
     def do_remove_blocks(self, arg):
-        """Remove text blocks between two delimiters (multi-line delete).
-
-        Usage:
-            remove_blocks "start_pattern" "end_pattern" [case_sensitive]
-
-        Type:
-            remove_blocks ?      → Show detailed help with examples
-        """
+        """Remove text blocks between two delimiters with optional content filtering."""
         import shlex
-
-        # --- Help text ---
         if arg.strip() == "?":
-            help_text = (
-                f"{self.COLOR_HEADER}Remove Blocks - Delete Text Between Delimiters{self.COLOR_RESET}\n\n"
-                f"{self.COLOR_COMMAND}Description:{self.COLOR_RESET}\n"
-                f"  Deletes all text between two delimiters (including the delimiters themselves).\n"
-                f"  Works across multiple lines and supports regex delimiters.\n\n"
-                f"{self.COLOR_COMMAND}Usage:{self.COLOR_RESET}\n"
-                f"  {self.COLOR_EXAMPLE}remove_blocks \"start_pattern\" \"end_pattern\" [case_sensitive]{self.COLOR_RESET}\n\n"
-                f"{self.COLOR_COMMAND}Examples:{self.COLOR_RESET}\n"
-                f"  1. Remove C-style comments:\n"
-                f"     {self.COLOR_EXAMPLE}remove_blocks \"/\\*\" \"\\*/\"{self.COLOR_RESET}\n\n"
-                f"  2. Remove XML debug sections (case-sensitive):\n"
-                f"     {self.COLOR_EXAMPLE}remove_blocks \"<debug>\" \"</debug>\" case_sensitive{self.COLOR_RESET}\n\n"
-                f"  3. Remove everything between BEGIN and END:\n"
-                f"     {self.COLOR_EXAMPLE}remove_blocks \"BEGIN\" \"END\"{self.COLOR_RESET}\n"
-            )
+            help_text = f"""
+    {self.COLOR_HEADER}=== REMOVE BLOCKS - Targeted Block Deletion ==={self.COLOR_RESET}
+
+    {self.COLOR_COMMAND}Basic Usage:{self.COLOR_RESET}
+      {self.COLOR_EXAMPLE}remove_blocks "start" "end"{self.COLOR_RESET}
+      {self.COLOR_EXAMPLE}remove_blocks "start" "end" case_sensitive{self.COLOR_RESET}
+
+    {self.COLOR_COMMAND}With Content Filtering:{self.COLOR_RESET}
+      {self.COLOR_EXAMPLE}remove_blocks "filter_text" "start" "end"{self.COLOR_RESET}
+      {self.COLOR_EXAMPLE}remove_blocks "filter1 filter2" "start" "end"{self.COLOR_RESET}
+
+    {self.COLOR_COMMAND}Parameters:{self.COLOR_RESET}
+      {self.COLOR_EXAMPLE}filter_text{self.COLOR_RESET}    - {self.COLOR_HEADER}Optional:{self.COLOR_RESET} Only remove blocks containing {self.COLOR_COMMAND}ALL{self.COLOR_RESET} these words
+      {self.COLOR_EXAMPLE}start{self.COLOR_RESET}         - Start delimiter pattern
+      {self.COLOR_EXAMPLE}end{self.COLOR_RESET}           - End delimiter pattern
+      {self.COLOR_EXAMPLE}case_sensitive{self.COLOR_RESET} - Case-sensitive matching
+
+    {self.COLOR_COMMAND}Examples:{self.COLOR_RESET}
+      {self.COLOR_EXAMPLE}remove_blocks "/*" "*/"{self.COLOR_RESET}
+      {self.COLOR_EXAMPLE}remove_blocks "<!--" "-->" case_sensitive{self.COLOR_RESET}
+      {self.COLOR_EXAMPLE}remove_blocks "debug" "{{" "}}"{self.COLOR_RESET}
+      {self.COLOR_EXAMPLE}remove_blocks "todo fixme" "/*" "*/"{self.COLOR_RESET} {self.COLOR_HEADER}← Only blocks with BOTH words{self.COLOR_RESET}
+      {self.COLOR_EXAMPLE}remove_blocks "temp experimental" "//" "\\n"{self.COLOR_RESET}
+      {self.COLOR_EXAMPLE}remove_blocks "deprecated" "<!--" "-->" case_sensitive{self.COLOR_RESET}
+
+    {self.COLOR_COMMAND}Notes:{self.COLOR_RESET}
+      • Content filter requires {self.COLOR_COMMAND}ALL{self.COLOR_RESET} specified words to be present in the block
+      • Use quotes for multi-word filters or patterns with spaces
+      • Perfect for cleaning up debug code, removing temporary sections, or deleting deprecated content
+      • Combine with filtering to surgically remove specific blocks while preserving others
+      • Use {self.COLOR_EXAMPLE}revert{self.COLOR_RESET} command to undo if needed
+
+    {self.COLOR_COMMAND}Common Use Cases:{self.COLOR_RESET}
+      • Remove debug statements: {self.COLOR_EXAMPLE}remove_blocks "console.log" "/*" "*/"{self.COLOR_RESET}
+      • Clean TODO comments: {self.COLOR_EXAMPLE}remove_blocks "TODO" "//" "\\n"{self.COLOR_RESET}
+      • Delete experimental features: {self.COLOR_EXAMPLE}remove_blocks "experimental test" "{{" "}}"{self.COLOR_RESET}
+    """
             self.poutput(help_text)
             return
-
-        # --- Validation ---
+        
         if not self.current_lines:
             self.poutput("Error: No file is loaded.")
             return
-
+        
         try:
             args = shlex.split(arg) if '"' in arg or "'" in arg else arg.strip().split()
         except ValueError:
             self.poutput("Error: Invalid quotes in arguments.")
             return
-
-        if len(args) < 2:
-            self.poutput("Error: Missing parameters. Type 'remove_blocks ?' for help.")
-            return
-
-        start_pat, end_pat = args[:2]
+        
         case_sensitive = "case_sensitive" in args
-
-        # --- Compile regex safely ---
+        args = [a for a in args if a != "case_sensitive"]
+        
+        # Determine if we have content filtering
+        has_filter = len(args) >= 3  # filter + start + end
+        
+        if has_filter:
+            if len(args) < 3:
+                self.poutput("Error: With filtering, need: filter start end")
+                return
+            filter_text, start_pat, end_pat = args[:3]
+            filter_words = filter_text.split()
+        else:
+            if len(args) < 2:
+                self.poutput("Error: Missing parameters. Need: start end")
+                return
+            start_pat, end_pat = args[:2]
+            filter_words = []
+        
         regex, msg = self._compile_regex_safely(
             start_pat,
             end_pat,
             case_sensitive=case_sensitive,
             multiline=True
         )
+        
         if not regex:
             self.poutput(f"Error: {msg}")
             return
-
-        # --- Apply deletion ---
+        
         text = "".join(self.current_lines)
-        new_text, count = regex.subn("", text)
-
+        
+        def removal_func(match):
+            # Check content filtering - ALL words must be present
+            if filter_words:
+                if not all(word in match.group(0) for word in filter_words):
+                    return match.group(0)  # Keep the block if filter doesn't match
+            return ""  # Remove the block
+        
+        new_text, count = regex.subn(removal_func, text)
+        
         if count == 0:
-            self.poutput(f"No blocks found between '{start_pat}' and '{end_pat}'.")
+            filter_info = " (filter may have excluded matches)" if filter_words else ""
+            self.poutput(f"No blocks found between '{start_pat}' and '{end_pat}'{filter_info}.")
             return
-
-        # --- Update text ---
+        
         self.previous_lines = self.current_lines.copy()
         self.current_lines = new_text.splitlines(keepends=True)
-
+        
         try:
             self.do_fill_words('')
         except Exception:
             pass
+        
         self.update_live_view()
-
-        self.poutput(
-            f"Removed {self.COLOR_COMMAND}{count}{self.COLOR_RESET} block(s) "
-            f"between '{start_pat}' and '{end_pat}'."
-        )
+        
+        filter_info = f" with filter requiring ALL: '{' '.join(filter_words)}'" if filter_words else ""
+        self.poutput(f"Removed {count} blocks between '{start_pat}' and '{end_pat}'{filter_info}.")
 
 
     def complete_remove_blocks(self, text, line, begidx, endidx):      

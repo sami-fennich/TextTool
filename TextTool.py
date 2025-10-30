@@ -178,73 +178,62 @@ class TextTool(cmd2.Cmd):
         self.COLOR_RESET = "\033[0m"  # Reset to default color        
         #self.original_file_path = "c:/clipboard.txt"  # Default file path for clipboard content
         self.prompt= "TextTool> "
-        self.intro = (
-            f"{self.COLOR_HEADER}Welcome to the Text Manipulation Tool!{self.COLOR_RESET}\n\n"
-            f"{self.COLOR_COMMAND}New to the tool? Type 'tutorial' to start an interactive guide!{self.COLOR_RESET}\n\n"
-            "This tool allows you to perform advanced operations on text files or clipboard content.\n\n"
-            f"{self.COLOR_HEADER}Main Features:{self.COLOR_RESET}\n"
-            f"1. {self.COLOR_COMMAND}Load Content{self.COLOR_RESET}:\n"
-            "   - Load a text file: " + f"{self.COLOR_COMMAND}`load <file_path>`{self.COLOR_RESET}\n"
-            "   - Load from clipboard: " + f"{self.COLOR_COMMAND}`load`{self.COLOR_RESET} (no arguments)\n\n"
-            f"2. {self.COLOR_COMMAND}Show Lines{self.COLOR_RESET}:\n"
-            "   - Show all lines: " + f"{self.COLOR_COMMAND}`show`{self.COLOR_RESET}\n"
-            "   - Show lines containing a string or regex: " + f"{self.COLOR_COMMAND}`show <string>`{self.COLOR_RESET}\n"
-            "   - Show lines containing multiple strings/regex: " + f"{self.COLOR_COMMAND}`show \"string1 OR string2\"`{self.COLOR_RESET}\n\n"
-            f"3. {self.COLOR_COMMAND}Select Lines{self.COLOR_RESET}:\n"
-            "   - Select lines containing a string or regex: " + f"{self.COLOR_COMMAND}`select <string>`{self.COLOR_RESET}\n"
-            "   - Select lines NOT containing a string/regex: " + f"{self.COLOR_COMMAND}`select \"!string1\"`{self.COLOR_RESET}\n"
-            "   - Select lines containing multiple strings/regex: " + f"{self.COLOR_COMMAND}`select \"string1 OR string2\"`{self.COLOR_RESET}\n\n"
-            f"4. {self.COLOR_COMMAND}Unselect Lines{self.COLOR_RESET}:\n"
-            "   - Revert the last select action while keeping other replace modifications: " + f"{self.COLOR_COMMAND}`unselect`{self.COLOR_RESET}\n\n"
-            f"5. {self.COLOR_COMMAND}Replace Text{self.COLOR_RESET}:\n"
-            "   - Replace a string with another: " + f"{self.COLOR_COMMAND}`replace \"string1\" \"string2\"`{self.COLOR_RESET}\n"
-            "   - Supports " + f"{self.COLOR_COMMAND}regex patterns{self.COLOR_RESET} and " + f"{self.COLOR_COMMAND}capture groups{self.COLOR_RESET}:\n"
-            "     - Example: Replace dates (dd-mm-yyyy) with (yyyy/mm/dd):\n"
-            "       " + f"{self.COLOR_EXAMPLE}`replace \"(\\d{{2}})-(\\d{{2}})-(\\d{{4}})\" \"\\3/\\2/\\1\"`{self.COLOR_RESET}\n"
-            "     - Example: Replace all occurrences of 'error' with 'warning':\n"
-            "       " + f"{self.COLOR_EXAMPLE}`replace \"error\" \"warning\"`{self.COLOR_RESET}\n"
-            "     - Example: Insert a newline after each sentence:\n"
-            "       " + f"{self.COLOR_EXAMPLE}`replace \"([.!?]) \" \"\\1\\n\"`{self.COLOR_RESET}\n\n"
-            f"6. {self.COLOR_COMMAND}Save Content{self.COLOR_RESET}:\n"
-            "   - Save to a new file: " + f"{self.COLOR_COMMAND}`save <file_path>`{self.COLOR_RESET}\n"
-            "   - Overwrite the original file: " + f"{self.COLOR_COMMAND}`save`{self.COLOR_RESET} (no arguments)\n\n"
-            f"7. {self.COLOR_COMMAND}Revert Changes{self.COLOR_RESET}:\n"
-            "   - Undo the last action: " + f"{self.COLOR_COMMAND}`revert`{self.COLOR_RESET}\n\n"
-            f"8. {self.COLOR_COMMAND}Exit the Tool{self.COLOR_RESET}:\n"
-            "   - Exit the application: " + f"{self.COLOR_COMMAND}`exit`{self.COLOR_RESET}\n\n"
-            f"{self.COLOR_HEADER}Advanced Features:{self.COLOR_RESET}\n"
-            f"- {self.COLOR_COMMAND}Regex Support{self.COLOR_RESET}: All commands (`show`, `select`, `replace`) support regex patterns. You can use the command cheat_sheet_regex for regex help.\n"
-            f"- {self.COLOR_COMMAND}Capture Groups{self.COLOR_RESET}: Use `\\1`, `\\2`, etc., in `replace` to reference capture groups.\n"
-            f"- {self.COLOR_COMMAND}Clipboard Integration{self.COLOR_RESET}: Load and save content directly from/to the clipboard.\n"
-            f"- {self.COLOR_COMMAND}History{self.COLOR_RESET}: Command history is preserved across sessions.\n\n"
-            f"{self.COLOR_HEADER}Examples:{self.COLOR_RESET}\n"
-            f"- Load a file: {self.COLOR_EXAMPLE}`load \"C:/example.txt\"`{self.COLOR_RESET}\n"
-            f"- Show lines containing 'error': {self.COLOR_EXAMPLE}`show \"error\"`{self.COLOR_RESET}\n"
-            f"- Replace 'error' with 'warning': {self.COLOR_EXAMPLE}`replace \"error\" \"warning\"`{self.COLOR_RESET}\n"
-            f"- Save the modified text: {self.COLOR_EXAMPLE}`save \"C:/output.txt\"`{self.COLOR_RESET}\n"
-            f"- Revert the last action: {self.COLOR_EXAMPLE}`revert`{self.COLOR_RESET}\n"
-            f"- Unselect the last selection: {self.COLOR_EXAMPLE}`unselect`{self.COLOR_RESET}\n\n"
-            f"{self.COLOR_HEADER}Advanced Functions (Enable with `advanced` command):{self.COLOR_RESET}\n"
-            "This tool also provides additional advanced text processing functions, which are disabled by default.\n"
-            f"To enable them, use `{self.COLOR_COMMAND}advanced{self.COLOR_RESET}`.\n\n"
-            "Once enabled, you can use the following commands:\n\n"
-            f"- {self.COLOR_COMMAND}extract_between{self.COLOR_RESET}: Extract text between two patterns.\n"
-            f"- {self.COLOR_COMMAND}insert_line{self.COLOR_RESET}: Insert a new line at a specific position.\n"
-            f"- {self.COLOR_COMMAND}merge_lines{self.COLOR_RESET}: Merge multiple lines into a single line.\n"
-            f"- {self.COLOR_COMMAND}split_lines{self.COLOR_RESET}: Split lines using a specified delimiter.\n"
-            f"- {self.COLOR_COMMAND}convert_case{self.COLOR_RESET}: Change text case (upper, lower, title).\n"
-            f"- {self.COLOR_COMMAND}trim_whitespace{self.COLOR_RESET}: Remove leading and trailing spaces.\n"
-            f"- {self.COLOR_COMMAND}reverse_lines{self.COLOR_RESET}: Reverse the order of lines.\n"
-            f"- {self.COLOR_COMMAND}extract_emails{self.COLOR_RESET}: Extract email addresses from text.\n"
-            f"- {self.COLOR_COMMAND}extract_urls{self.COLOR_RESET}: Extract URLs from text.\n"
-            f"- {self.COLOR_COMMAND}replace_confirm{self.COLOR_RESET}: Interactive find-and-replace with user confirmation.\n"
-            f"- {self.COLOR_COMMAND}conditional_replace{self.COLOR_RESET}: Replace text only in matching lines.\n"
-			f"- {self.COLOR_COMMAND}bulk_replace{self.COLOR_RESET}: Replace multiple strings in the current text using a mapping file.\n"
-            f"- {self.COLOR_COMMAND}select_from_file{self.COLOR_RESET}: Select lines containing strings from a file.\n\n"
-            f"To disable these functions and return to standard mode, use `{self.COLOR_COMMAND}standard{self.COLOR_RESET}`.\n\n"			
-            f"{self.COLOR_COMMAND}Remember: Type 'tutorial' for an interactive guide through these features!{self.COLOR_RESET}\n\n"
-            f"Type {self.COLOR_COMMAND}`[command] ?`{self.COLOR_RESET} for more details on each command.\n"
-        )
+        self.intro = f"""
+    {self.COLOR_HEADER}╔══════════════════════════════════════════════════════════════╗
+    ║                    TEXT TOOL - Advanced Text Manipulation    ║
+    ╚══════════════════════════════════════════════════════════════╝{self.COLOR_RESET}
+
+    {self.COLOR_COMMAND}🚀 Quick Start:{self.COLOR_RESET}
+      {self.COLOR_EXAMPLE}load "filename.txt"{self.COLOR_RESET}          - Load a file
+      {self.COLOR_EXAMPLE}load{self.COLOR_RESET}                       - Load from clipboard
+      {self.COLOR_EXAMPLE}show "pattern"{self.COLOR_RESET}             - Display matching lines
+      {self.COLOR_EXAMPLE}select "pattern"{self.COLOR_RESET}           - Filter lines
+      {self.COLOR_EXAMPLE}replace "old" "new"{self.COLOR_RESET}        - Replace text
+      {self.COLOR_EXAMPLE}save{self.COLOR_RESET}                       - Save changes
+
+    {self.COLOR_COMMAND}📊 Core Features:{self.COLOR_RESET}
+      • {self.COLOR_EXAMPLE}Live View{self.COLOR_RESET} - Real-time editing with syntax highlighting
+      • {self.COLOR_EXAMPLE}Multi-line Operations{self.COLOR_RESET} - Replace/extract between delimiters
+      • {self.COLOR_EXAMPLE}Content Filtering{self.COLOR_RESET} - Process only blocks containing specific text
+      • {self.COLOR_EXAMPLE}Bulk Operations{self.COLOR_RESET} - Replace multiple patterns at once
+      • {self.COLOR_EXAMPLE}Regex Support{self.COLOR_RESET} - Powerful pattern matching
+      • {self.COLOR_EXAMPLE}Smart Selection{self.COLOR_RESET} - Filter by content, length, or position
+
+    {self.COLOR_COMMAND}🎯 Advanced Capabilities:{self.COLOR_RESET}
+      • {self.COLOR_EXAMPLE}replace_between{self.COLOR_RESET}    - Replace text between delimiters
+      • {self.COLOR_EXAMPLE}extract_between{self.COLOR_RESET}    - Extract content with filtering
+      • {self.COLOR_EXAMPLE}replace_multiline{self.COLOR_RESET}  - Multi-line regex replacement
+      • {self.COLOR_EXAMPLE}remove_blocks{self.COLOR_RESET}      - Delete specific code sections
+      • {self.COLOR_EXAMPLE}indented_select/remove{self.COLOR_RESET} - Work with structured text
+      • {self.COLOR_EXAMPLE}conditional_replace{self.COLOR_RESET} - Replace only in matching lines
+
+    {self.COLOR_COMMAND}🛠️ GUI Tools:{self.COLOR_RESET}
+      • {self.COLOR_EXAMPLE}liveview{self.COLOR_RESET}           - Open/refresh Live View window
+      • {self.COLOR_EXAMPLE}highlight_toggle{self.COLOR_RESET}   - Toggle line highlighting
+      • Use {self.COLOR_EXAMPLE}Ctrl+F{self.COLOR_RESET} in Live View for search
+      • Use {self.COLOR_EXAMPLE}Ctrl+R{self.COLOR_RESET} in Live View for smart replace
+      • Right-click in Live View for context menu
+
+    {self.COLOR_COMMAND}📖 Learning Resources:{self.COLOR_RESET}
+      • {self.COLOR_EXAMPLE}help{self.COLOR_RESET}               - List all commands
+      • {self.COLOR_EXAMPLE}command_name ?{self.COLOR_RESET}     - Detailed help for any command
+      • {self.COLOR_EXAMPLE}cheat_sheet_regex{self.COLOR_RESET}  - Regex reference
+      • {self.COLOR_EXAMPLE}tutorial{self.COLOR_RESET}           - Interactive tutorial
+      • {self.COLOR_EXAMPLE}advanced{self.COLOR_RESET}           - Enable advanced functions
+
+    {self.COLOR_COMMAND}⚡ Productivity Tips:{self.COLOR_RESET}
+      • Use {self.COLOR_EXAMPLE}autocompletion_from_text{self.COLOR_RESET} for context-aware suggestions
+      • Chain commands: {self.COLOR_EXAMPLE}select "error" | replace "old" "new" | save{self.COLOR_RESET}
+      • Use {self.COLOR_EXAMPLE}> filename.txt{self.COLOR_RESET} to redirect output to file
+      • Use {self.COLOR_EXAMPLE}> {self.COLOR_RESET} (alone) to copy output to clipboard
+
+    {self.COLOR_HEADER}💡 Pro Tip:{self.COLOR_RESET} The Live View window provides a modern GUI interface with real-time 
+    preview, search/replace dialogs, and visual feedback while maintaining full 
+    CLI power. Best of both worlds!
+
+    Type {self.COLOR_EXAMPLE}help{self.COLOR_RESET} to explore all commands or {self.COLOR_EXAMPLE}tutorial{self.COLOR_RESET} for a guided tour.
+    """
+ 
         self.hidden_commands.append('shortcuts')
         self.hidden_commands.append('shell')
         #self.hidden_commands.append('run_script')

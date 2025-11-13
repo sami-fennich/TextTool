@@ -168,6 +168,7 @@ class TextTool(cmd2.Cmd):
         self.previous_lines = []
         self.previous_words = []
         self.original_full_text = []
+        self.filter_status = ''
         self.text_changed = False
         self.highlight_enabled = False
         self.auotocomplete_from_text = False        
@@ -272,6 +273,7 @@ class TextTool(cmd2.Cmd):
         self.hidden_commands.append('remove_blocks')
         self.hidden_commands.append('replace_multiline')
         self.hidden_commands.append('extract_context')
+        self.hidden_commands.append('unfilter')
         
 
         self.liveview_box = None  # keep reference to the text box
@@ -779,6 +781,18 @@ class TextTool(cmd2.Cmd):
             replace_button.pack(side="left", padx=5, pady=2)
             ToolTip(replace_button, "replace, right replace, left replace and replace in specific lines")
 
+            # Add this with the other buttons in the save_frame section
+            filter_button = tk.Button(save_frame, text="🔍 Filter...", font=("Consolas", 10), 
+                                     command=lambda: open_filter_dialog())
+            filter_button.pack(side="left", padx=5, pady=2)
+            ToolTip(filter_button, "Select, delete, extract context, or filter by length")
+
+            # Add this right after the filter button
+            unfilter_button = tk.Button(save_frame, text="↶ Unfilter", font=("Consolas", 10), 
+                                       command=lambda: self.do_unfilter(""))
+            unfilter_button.pack(side="left", padx=5, pady=2)
+            ToolTip(unfilter_button, "Revert last select and delete operations")
+
             multiline_button = tk.Button(save_frame, text="📜 Multiline...", font=("Consolas", 10),
                                          command=lambda: open_multiline_dialog())
             multiline_button.pack(side="left", padx=5, pady=2)
@@ -958,6 +972,212 @@ class TextTool(cmd2.Cmd):
                 x = self.liveview_root.winfo_x() + (self.liveview_root.winfo_width() - dialog.winfo_width()) // 2
                 y = self.liveview_root.winfo_y() + (self.liveview_root.winfo_height() - dialog.winfo_height()) // 2
                 dialog.geometry(f"+{x}+{y}")
+
+
+
+            def open_filter_dialog():
+                """Open the smart filter dialog combining multiple filter operations."""
+                import tkinter as tk
+                from tkinter import ttk
+                
+                dialog = tk.Toplevel()
+                dialog.title("Smart Text Filtering")
+                dialog.geometry("500x300")
+                dialog.resizable(False, False)
+                dialog.transient(self.liveview_root)
+                dialog.attributes('-topmost', True)
+                dialog.attributes('-toolwindow', True)
+                
+                main_frame = ttk.Frame(dialog, padding="15")
+                main_frame.pack(fill=tk.BOTH, expand=True)
+                
+                # Operation type selection
+                ttk.Label(main_frame, text="Filter Operation:").grid(row=0, column=0, sticky=tk.W, pady=8)
+                operation_var = tk.StringVar(value="select")
+                operation_combo = ttk.Combobox(main_frame, textvariable=operation_var, 
+                                             values=["select", "delete", "extract_context", "filter_length"],
+                                             state="readonly", width=20)
+                operation_combo.grid(row=0, column=1, sticky=(tk.W, tk.E), pady=8, padx=5)
+                
+                # Pattern input (for select, delete, extract_context)
+                pattern_label = ttk.Label(main_frame, text="Pattern:")
+                pattern_label.grid(row=1, column=0, sticky=tk.W, pady=8)
+                pattern_entry = ttk.Entry(main_frame, width=30)
+                pattern_entry.grid(row=1, column=1, sticky=(tk.W, tk.E), pady=8, padx=5)
+                
+                # Context lines (for extract_context)
+                context_frame = ttk.Frame(main_frame)
+                context_frame.grid(row=2, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=8)
+                ttk.Label(context_frame, text="Lines before:").pack(side=tk.LEFT)
+                before_entry = ttk.Entry(context_frame, width=8)
+                before_entry.pack(side=tk.LEFT, padx=5)
+                before_entry.insert(0, "1")
+                
+                ttk.Label(context_frame, text="Lines after:").pack(side=tk.LEFT, padx=(10, 0))
+                after_entry = ttk.Entry(context_frame, width=8)
+                after_entry.pack(side=tk.LEFT, padx=5)
+                after_entry.insert(0, "1")
+                
+                # Length filter (for filter_length)
+                length_frame = ttk.Frame(main_frame)
+                length_frame.grid(row=3, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=8)
+                ttk.Label(length_frame, text="Min length:").pack(side=tk.LEFT)
+                min_length_entry = ttk.Entry(length_frame, width=8)
+                min_length_entry.pack(side=tk.LEFT, padx=5)
+                
+                ttk.Label(length_frame, text="Max length:").pack(side=tk.LEFT, padx=(10, 0))
+                max_length_entry = ttk.Entry(length_frame, width=8)
+                max_length_entry.pack(side=tk.LEFT, padx=5)
+                
+                ttk.Label(length_frame, text="Action:").pack(side=tk.LEFT, padx=(10, 0))
+                length_action_var = tk.StringVar(value="keep")
+                length_action_combo = ttk.Combobox(length_frame, textvariable=length_action_var, 
+                                                 values=["keep", "remove"], width=8, state="readonly")
+                length_action_combo.pack(side=tk.LEFT, padx=5)
+                
+                # Options
+                options_frame = ttk.Frame(main_frame)
+                options_frame.grid(row=4, column=0, columnspan=2, sticky=tk.W, pady=8)
+                case_var = tk.BooleanVar(value=False)
+                case_check = ttk.Checkbutton(options_frame, text="Case Sensitive", variable=case_var)
+                case_check.pack(side=tk.LEFT, padx=5)
+                
+                negate_var = tk.BooleanVar(value=False)
+                negate_check = ttk.Checkbutton(options_frame, text="Negate (exclude)", variable=negate_var)
+                negate_check.pack(side=tk.LEFT, padx=5)
+                
+                # Status label
+                status_label = ttk.Label(main_frame, text="", foreground="green")
+                status_label.grid(row=5, column=0, columnspan=2, pady=5)
+                
+                # Button frame
+                button_frame = ttk.Frame(main_frame)
+                button_frame.grid(row=6, column=0, columnspan=2, pady=15)
+                
+                def update_field_visibility(*args):
+                    """Show/hide fields based on selected operation."""
+                    operation = operation_var.get()
+                    
+                    # Show/hide pattern fields
+                    if operation in ["select", "delete", "extract_context"]:
+                        pattern_label.grid()
+                        pattern_entry.grid()
+                        negate_check.pack(side=tk.LEFT, padx=5)
+                    else:
+                        pattern_label.grid_remove()
+                        pattern_entry.grid_remove()
+                        negate_check.pack_forget()
+                    
+                    # Show/hide context fields
+                    if operation == "extract_context":
+                        context_frame.grid()
+                    else:
+                        context_frame.grid_remove()
+                    
+                    # Show/hide length fields
+                    if operation == "filter_length":
+                        length_frame.grid()
+                    else:
+                        length_frame.grid_remove()
+                    
+                    # Show/hide case sensitivity
+                    if operation in ["select", "delete", "extract_context"]:
+                        case_check.pack(side=tk.LEFT, padx=5)
+                    else:
+                        case_check.pack_forget()
+                
+                def apply_filter():
+                    """Apply the selected filter operation."""
+                    try:
+                        operation = operation_var.get()
+                        case_sensitive = case_var.get()
+                        negate = negate_var.get()
+                        
+                        if operation == "select":
+                            pattern = pattern_entry.get().strip()
+                            if not pattern:
+                                status_label.config(text="Error: Pattern is required for select")
+                                return
+                            
+                            cmd = f'select "{pattern}"'
+                            if negate:
+                                cmd = f'select "!{pattern}"'
+                            if case_sensitive:
+                                cmd += " case_sensitive"
+                                
+                        elif operation == "delete":
+                            pattern = pattern_entry.get().strip()
+                            if not pattern:
+                                status_label.config(text="Error: Pattern is required for delete")
+                                return
+                            
+                            cmd = f'delete "{pattern}"'
+                            if negate:
+                                cmd = f'delete "!{pattern}"'
+                            if case_sensitive:
+                                cmd += " case_sensitive"
+                                
+                        elif operation == "extract_context":
+                            pattern = pattern_entry.get().strip()
+                            if not pattern:
+                                status_label.config(text="Error: Pattern is required for extract_context")
+                                return
+                            
+                            before = before_entry.get().strip() or "1"
+                            after = after_entry.get().strip() or "1"
+                            cmd = f'extract_context "{pattern}" {before} {after}'
+                            if case_sensitive:
+                                cmd += " case_sensitive"
+                                
+                        elif operation == "filter_length":
+                            min_len = min_length_entry.get().strip()
+                            max_len = max_length_entry.get().strip()
+                            action = length_action_var.get()
+                            
+                            if not min_len and not max_len:
+                                status_label.config(text="Error: Specify at least min or max length")
+                                return
+                            
+                            cmd = f'filter_length {min_len or "0"}'
+                            if max_len:
+                                cmd += f" {max_len}"
+                            cmd += f" {action}"
+                            
+                        else:
+                            status_label.config(text="Error: Unknown operation")
+                            return
+                        
+                        # Execute the command
+                        self.onecmd(cmd)
+                        self.update_live_view()
+                        status_label.config(text=f"✅ {operation} applied successfully")
+                        
+                    except Exception as e:
+                        status_label.config(text=f"Error: {str(e)}")
+                
+                # Set up event handlers
+                operation_var.trace('w', update_field_visibility)
+                
+                # Create buttons
+                ttk.Button(button_frame, text="Apply Filter", command=apply_filter).pack(side=tk.LEFT, padx=8)
+                ttk.Button(button_frame, text="Close", command=dialog.destroy).pack(side=tk.LEFT, padx=8)
+                
+                # Initialize field visibility
+                update_field_visibility()
+                
+                # Configure grid weights
+                main_frame.columnconfigure(1, weight=1)
+                
+                # Center the dialog
+                dialog.update_idletasks()
+                x = self.liveview_root.winfo_x() + (self.liveview_root.winfo_width() - dialog.winfo_width()) // 2
+                y = self.liveview_root.winfo_y() + (self.liveview_root.winfo_height() - dialog.winfo_height()) // 2
+                dialog.geometry(f"+{x}+{y}")
+                
+                # Set focus to pattern entry
+                pattern_entry.focus()
+
+
 
             def open_multiline_dialog():
                 """Dialog window for multiline operations with content filtering."""
@@ -1299,7 +1519,7 @@ class TextTool(cmd2.Cmd):
                 def get_all_commands():
                     """Get all available commands with their help text."""
                     commands = []
-                    excluded_commands = ['py', 'ipy','quit','help','liveview','highlight_toggle','alias','bulk_replace','conditional_replace','extract_between','left_replace','right_replace','load','remove_blocks','replace','replace_between','replace_multiline','revert','run_script','save']  # Commands to exclude from the list
+                    excluded_commands = ['py', 'ipy','quit','help','liveview','highlight_toggle','alias','bulk_replace','conditional_replace','extract_between','left_replace','right_replace','load','remove_blocks','replace','replace_between','replace_multiline','revert','run_script','save','unfilter']  # Commands to exclude from the list
                     
                     for attr_name in dir(self):
                         if attr_name.startswith('do_'):
@@ -1528,6 +1748,7 @@ class TextTool(cmd2.Cmd):
             # Initial display
             self.update_live_view()
             self.liveview_root.mainloop()
+
 
 
         threading.Thread(target=run_viewer, daemon=True).start()
@@ -2019,6 +2240,9 @@ class TextTool(cmd2.Cmd):
         
         # Set focus to search entry
         search_entry.focus()
+
+
+
 
     def do_replace_in_selection(self, arg):
         """Replace text within a selected range."""
@@ -2606,6 +2830,7 @@ class TextTool(cmd2.Cmd):
 
             
             self.poutput(f"File '{file_path}' loaded successfully.")
+            self.filter_status = ''
         else:
             # Load content from the clipboard
             clipboard_content = cmd2.clipboard.get_paste_buffer()
@@ -2626,6 +2851,7 @@ class TextTool(cmd2.Cmd):
 
                 
                 self.poutput("Clipboard content loaded successfully.")
+                self.filter_status = ''
             else:
                 file_path = get_copied_file()
                 if file_path:
@@ -2873,6 +3099,7 @@ class TextTool(cmd2.Cmd):
             except:
                 a=0
             self.poutput(f"Selected {len(self.current_lines)} lines ({sensitivity}).")
+            self.filter_status = 'select'
         except re.error:
             self.poutput("Error: Invalid regex pattern.")
             
@@ -2935,6 +3162,8 @@ class TextTool(cmd2.Cmd):
         except:
             a=0          
         self.poutput("Reverted to the original full text with modified selected lines.")
+        self.filter_status = ''
+        self.selected_indices = []
     
 
     def do_delete(self, arg):
@@ -3058,6 +3287,7 @@ class TextTool(cmd2.Cmd):
             except:
                 a=0              
             self.poutput(f"Remaining {len(self.current_lines)} lines ({sensitivity}).")
+            self.filter_status = 'delete'
         except re.error:
             self.poutput("Error: Invalid regex pattern.")
 
@@ -3101,7 +3331,7 @@ class TextTool(cmd2.Cmd):
             self.poutput("Error: No original full text to revert to.")
             return
         if not hasattr(self, 'deleteed_indices') or not self.deleteed_indices:
-            self.poutput("Error: No deleteed lines to revert.")
+            self.poutput("Error: No deleted lines to revert.")
             return
 
         # Restore the original full text
@@ -3118,6 +3348,8 @@ class TextTool(cmd2.Cmd):
         self.current_lines = restored_text
         self.update_live_view()
         self.poutput("Reverted to the original full text with modified deleted lines.")
+        self.filter_status = ''
+        self.deleteed_indices = []
 
 
     def do_bulk_replace(self, arg):
@@ -7767,6 +7999,20 @@ class TextTool(cmd2.Cmd):
 
         # Filter out empty strings and get unique words
             self.words = sorted(filtered_words)
+
+
+    def do_unfilter(self, arg):
+        if self.filter_status:
+            if self.filter_status=='select':
+                try:
+                    self.do_unselect("")   
+                except:
+                    a=0
+            else:
+                try:
+                    self.do_undelete("")   
+                except:
+                    a=0           
 
         # Print as a table (one word per line)
             #for word in self.words:
